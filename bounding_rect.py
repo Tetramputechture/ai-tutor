@@ -11,8 +11,8 @@ class BoundingRect:
     def scale(self, factor=1.0):
         newWidth = self.width * factor
         newHeight = self.height * factor
-        newX = self.x + self.width / 2 - newWidth / 2
-        newY = self.y + self.height / 2 - newHeight / 2
+        newX = self.x + newWidth
+        newY = self.y + newHeight
         return BoundingRect((newX, newY), newWidth, newHeight)
 
     def shift(self, shift=(0, 0)):
