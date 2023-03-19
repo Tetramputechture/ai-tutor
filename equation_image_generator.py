@@ -3,6 +3,7 @@ import random
 import sympy
 import numpy as np
 import sys
+import os
 
 from io import BytesIO
 from PIL import Image
@@ -52,9 +53,18 @@ def white_to_transparency(img):
 
 
 class EquationImageGenerator:
-    def generate_equation_images(self, image_count, dpi=400):
+    def generate_equation_images(self, image_count, dpi=400, cache_dir=''):
+        if len(cache_dir) > 0 and self.images_cached(cache_dir):
+            print('Cached equation images found.')
+            return self.images_from_cache(cache_dir)
+
+        print('Generating equation images...')
         images = []
-        for i in range(image_count):
+        should_cache = len(cache_dir) > 0
+        if should_cache:
+            os.makedirs(cache_dir)
+
+        for idx in range(image_count):
             eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
                 a_num=rand_frac_number(),
                 a_denom=rand_frac_number(),
@@ -81,6 +91,26 @@ class EquationImageGenerator:
             im = Image.open(buffer_)
             im = white_to_transparency(im)
             images.append(im)
-            print('.', end='')
+            if should_cache:
+                filename = f'{cache_dir}/eq-{idx}.png'
+                im.save(filename)
+
+        if should_cache:
+            print('Equation images cached.')
+
+        return images
+
+    def images_cached(self, cache_dir):
+        return os.path.isdir(cache_dir) and len(
+            os.listdir(cache_dir)) != 0
+
+    def images_from_cache(self, cache_dir):
+        images = []
+
+        for filename in os.listdir(cache_dir):
+            image_file = os.path.join(cache_dir, filename)
+            if os.path.isfile(image_file):
+                equation_image = PIL.Image.open(image_file)
+                images.append(equation_image)
 
         return images

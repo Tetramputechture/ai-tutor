@@ -2,6 +2,7 @@ import random
 import PIL
 import math
 import json
+import os
 
 from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
@@ -18,14 +19,33 @@ class EquationSheetGenerator:
         self.equation_images = equation_images
         self.max_equations_per_sheet = max_equations_per_sheet
 
-    def generate_sheet_images(self, sheet_count):
-        sheet_images = []
-        for i in range(sheet_count):
-            sheet_images.append(self.generate_sheet_image())
-            print('.', end='')
-        return sheet_images
+    def generate_sheets(self, sheet_count, cache_dir=''):
+        if len(cache_dir) > 0 and self.sheets_cached(cache_dir):
+            print('Cached equation sheets found.')
+            return self.sheets_from_cache(cache_dir)
 
-    def generate_sheet_image(self):
+        print('Generating equation sheets...')
+        sheets = []
+        should_cache = len(cache_dir) > 0
+        if should_cache:
+            os.makedirs(cache_dir)
+
+        for idx in range(sheet_count):
+            sheet = self.generate_sheet()
+            sheets.append(sheet)
+
+            if should_cache:
+                file_prefix = f'{cache_dir}/eq-sheet-{idx}'
+                sheet[0].save(f'{file_prefix}.bmp')
+                with open(f'{file_prefix}.json', 'w') as coords_file:
+                    json.dump(sheet[1], coords_file)
+
+        if should_cache:
+            print('Equation sheets cached.')
+
+        return sheets
+
+    def generate_sheet(self):
         bounding_rects = []
         eq_coords = []
         sheet_image = PIL.Image.new(
@@ -37,11 +57,11 @@ class EquationSheetGenerator:
 
             iterations = 0
             while iterations < 1000000:
-                eq_position = (random.randint(1, 300), random.randint(1, 300))
+                eq_position = (random.randint(1, 250), random.randint(1, 250))
                 eq_bounding_rect = BoundingRect.from_coords(
                     (eq_position[0], eq_position[1]),
                     (eq_position[0] + image_width, eq_position[1] + image_height))
-                scale_factor = random.uniform(-0.4, 0.6) + 1
+                scale_factor = random.uniform(-0.5, 0.6) + 1
                 eq_bounding_rect = eq_bounding_rect.scale(scale_factor)
 
                 collision = False
@@ -51,7 +71,6 @@ class EquationSheetGenerator:
                 for rect in bounding_rects:
                     if rect.collision(eq_bounding_rect):
                         collision = True
-                        break
 
                 if collision:
                     iterations += 1
@@ -75,3 +94,23 @@ class EquationSheetGenerator:
             eq_coords.append({"x1": 0, "y1": 0, "x2": 0, "y2": 0})
 
         return (sheet_image, eq_coords)
+
+    def sheets_cached(self, cache_dir):
+        return os.path.isdir(cache_dir) and len(
+            os.listdir(cache_dir)) != 0
+
+    def sheets_from_cache(self, cache_dir):
+        sheets = []
+        for filename in os.listdir(cache_dir):
+            file_prefix, file_ext = os.path.splitext(filename)
+            if file_ext == '.bmp':
+                image_file = os.path.join(cache_dir, filename)
+                coords_file = os.path.join(
+                    cache_dir, f'{file_prefix}.json')
+                coords_file_data = open(coords_file)
+                if os.path.isfile(image_file):
+                    sheet_image = PIL.Image.open(image_file)
+                    sheet_coords = json.load(coords_file_data)
+                    sheets.append((sheet_image, sheet_coords))
+
+        return sheets

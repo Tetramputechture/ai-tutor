@@ -15,77 +15,31 @@ from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 from equation_sheet_generator import EquationSheetGenerator
 
-equation_count = 200
+equation_count = 20
 max_equations_per_sheet = 2
-sheet_count = 1000
+sheet_count = 10
 
-epochs = 10
+epochs = 1
 
-# Step 1: Fetch cached equation images, or generate them if they are not available
+# Step 1: Fetch equation images
 
 print('Initializing equation image data...')
 
 equation_images_path = 'data/equation-images'
-equation_images_cached = os.path.isdir(equation_images_path) and len(
-    os.listdir(equation_images_path)) != 0
-
-
-if equation_images_cached:
-    print('Cached equation images found. Loading images...')
-    equation_images = []
-    for filename in os.listdir(equation_images_path):
-        image_file = os.path.join(equation_images_path, filename)
-        if os.path.isfile(image_file):
-            equation_image = PIL.Image.open(image_file)
-            equation_images.append(equation_image)
-else:
-    print('Cached equation images not found. Generating equation images...')
-    equation_images = EquationImageGenerator().generate_equation_images(equation_count)
-    os.makedirs(equation_images_path)
-    for idx, equation_image in enumerate(equation_images):
-        filename = f'{equation_images_path}/eq-{idx}.png'
-        equation_image.save(filename)
+equation_images = EquationImageGenerator().generate_equation_images(
+    equation_count, cache_dir=equation_images_path)
 
 print('Equation images loaded.')
 
-# Step 2: Fetch cached equation sheets, or generate them if they are not available
+# Step 2: Fetch equation sheets
 
 print('Initializing equation sheet image data...')
 
 sheet_images_path = 'data/equation-sheet-images'
-sheet_images_cached = os.path.isdir(sheet_images_path) and len(
-    os.listdir(sheet_images_path)) != 0
+sheets = EquationSheetGenerator(
+    equation_images, max_equations_per_sheet).generate_sheets(sheet_count, cache_dir=sheet_images_path)
 
-if sheet_images_cached:
-    print('Cached equation sheet images found. Loading images...')
-    sheets = []
-    for filename in os.listdir(sheet_images_path):
-        file_prefix, file_ext = os.path.splitext(filename)
-        if file_ext == '.bmp':
-            image_file = os.path.join(sheet_images_path, filename)
-            coords_file = os.path.join(
-                sheet_images_path, f'{file_prefix}.json')
-            coords_file_data = open(coords_file)
-            if os.path.isfile(image_file):
-                sheet_image = PIL.Image.open(image_file)
-                sheet_coords = json.load(coords_file_data)
-                sheets.append((sheet_image, sheet_coords))
-else:
-    print('Cached equation sheet images not found. Generating equation sheet images...')
-    sheets = EquationSheetGenerator(
-        equation_images, max_equations_per_sheet).generate_sheet_images(sheet_count)
-    os.makedirs(sheet_images_path)
-    for idx, sheet in enumerate(sheets):
-        file_prefix = f'{sheet_images_path}/eq-sheet-{idx}'
-        # sheet is a tuple (image, eq_coords)
-        sheet[0].save(f'{file_prefix}.bmp')
-        with open(f'{file_prefix}.json', 'w') as coords_file:
-            json.dump(sheet[1], coords_file)
-
-
-# Step 3: Prepare train and test data by splitting sheet array into two
-# train_sheets = sheets[:int(sheet_count/2)]
-# test_sheets = sheets[int(sheet_count/2):]
+# Step 3: Prepare train and test data
 
 half_sheet_count = int(sheet_count/2)
 sheet_images = []
