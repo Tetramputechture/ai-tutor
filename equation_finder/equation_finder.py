@@ -39,6 +39,9 @@ sheet_images_path = '../data/equation-sheet-images'
 sheets = EquationSheetGenerator(
     equation_images, max_equations_per_sheet).generate_sheets(sheet_count, cache_dir=sheet_images_path)
 
+# We don't need equation images anymore, unload them from memory
+equation_images = None
+
 # Step 3: Prepare train and test data
 
 half_sheet_count = int(sheet_count/2)
@@ -62,6 +65,16 @@ train_eq_coords = sheet_eq_coords[:half_sheet_count]
 
 test_image_data = sheet_image_data[half_sheet_count:]
 test_eq_coords = sheet_eq_coords[half_sheet_count:]
+
+rand_test_image_idx = random.randint(0, half_sheet_count - 1)
+rand_test_image_data = test_image_data[rand_test_image_idx]
+rand_test_image = sheets[half_sheet_count + rand_test_image_idx - 1][0]
+rand_test_coords = sheets[half_sheet_count + rand_test_image_idx - 1][1]
+
+# We don't need raw sheet tuple data anymore, unload
+sheets = None
+sheet_image_data = None
+sheet_eq_coords = None
 
 train_image_data = np.array(train_image_data).astype('float32')
 train_eq_coords = np.array(train_eq_coords).astype('float32')
@@ -115,11 +128,6 @@ def infer_from_model(image_data):
 
     return coords
 
-
-rand_test_image_idx = random.randint(0, half_sheet_count - 1)
-rand_test_image_data = test_image_data[rand_test_image_idx]
-rand_test_image = sheets[half_sheet_count + rand_test_image_idx - 1][0]
-rand_test_coords = sheets[half_sheet_count + rand_test_image_idx - 1][1]
 
 fig, ax = plt.subplots()
 ax.imshow(rand_test_image)
