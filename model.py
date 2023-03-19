@@ -1,4 +1,3 @@
-from pdf2image import convert_from_path
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 import random
