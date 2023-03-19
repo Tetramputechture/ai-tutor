@@ -42,31 +42,31 @@ sheets = EquationSheetGenerator(
 # Step 3: Prepare train and test data
 
 half_sheet_count = int(sheet_count/2)
-sheet_images = []
-sheet_coords = []
+sheet_image_data = []
+sheet_eq_coords = []
 
 for sheet in sheets:
     image, eq_coords = sheet
     sample = dict()
     greyscale_image = image.convert('RGB')
     im_arr = np.array(greyscale_image).astype('float32')
-    sheet_images.append(im_arr)
+    sheet_image_data.append(im_arr)
     coords = []
     for coord in eq_coords:
         coords.extend(
             [coord['x1'], coord['y1'], coord['x2'], coord['y2']])
-    sheet_coords.append(coords)
+    sheet_eq_coords.append(coords)
 
-train_images = sheet_images[:half_sheet_count]
-train_coords = sheet_coords[:half_sheet_count]
+train_image_data = sheet_image_data[:half_sheet_count]
+train_eq_coords = sheet_eq_coords[:half_sheet_count]
 
-test_images = sheet_images[half_sheet_count:]
-test_coords = sheet_coords[half_sheet_count:]
+test_image_data = sheet_image_data[half_sheet_count:]
+test_eq_coords = sheet_eq_coords[half_sheet_count:]
 
-train_images = np.array(train_images).astype('float32')
-train_coords = np.array(train_coords).astype('float32')
-test_images = np.array(test_images).astype('float32')
-test_coords = np.array(test_coords).astype('float32')
+train_image_data = np.array(train_image_data).astype('float32')
+train_eq_coords = np.array(train_eq_coords).astype('float32')
+test_image_data = np.array(test_image_data).astype('float32')
+test_eq_coords = np.array(test_eq_coords).astype('float32')
 
 # Step 4: Train model
 
@@ -89,8 +89,8 @@ model.compile(optimizer='adam',
               loss='mse',
               metrics=['accuracy'])
 
-history = model.fit(train_images, train_coords, epochs=epochs,
-                    validation_data=(test_images, test_coords), batch_size=64)
+history = model.fit(train_image_data, train_eq_coords, epochs=epochs,
+                    validation_data=(test_image_data, test_eq_coords), batch_size=64)
 
 plt.plot(history.history['accuracy'], label='accuracy')
 plt.plot(history.history['val_accuracy'], label='val_accuracy')
@@ -98,7 +98,8 @@ plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 plt.legend(loc='lower right')
 
-test_loss, test_acc = model.evaluate(test_images, test_coords, verbose=2)
+test_loss, test_acc = model.evaluate(
+    test_image_data, test_eq_coords, verbose=2)
 
 print(test_acc)
 
@@ -116,7 +117,7 @@ def infer_from_model(image_data):
 
 
 rand_test_image_idx = random.randint(0, half_sheet_count - 1)
-rand_test_image_data = test_images[rand_test_image_idx]
+rand_test_image_data = test_image_data[rand_test_image_idx]
 rand_test_image = sheets[half_sheet_count + rand_test_image_idx - 1][0]
 rand_test_coords = sheets[half_sheet_count + rand_test_image_idx - 1][1]
 
