@@ -25,7 +25,7 @@ epochs = 1
 
 print('Initializing equation image data...')
 
-equation_images_path = 'data/equation-images'
+equation_images_path = '../data/equation-images'
 equation_images = EquationImageGenerator().generate_equation_images(
     equation_count, cache_dir=equation_images_path)
 
@@ -35,7 +35,7 @@ print('Equation images loaded.')
 
 print('Initializing equation sheet image data...')
 
-sheet_images_path = 'data/equation-sheet-images'
+sheet_images_path = '../data/equation-sheet-images'
 sheets = EquationSheetGenerator(
     equation_images, max_equations_per_sheet).generate_sheets(sheet_count, cache_dir=sheet_images_path)
 
