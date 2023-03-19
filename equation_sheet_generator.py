@@ -1,5 +1,4 @@
 import random
-from pdf2image import convert_from_path
 import PIL
 import math
 import json
