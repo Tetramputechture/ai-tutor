@@ -15,9 +15,11 @@ from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 from equation_sheet_generator import EquationSheetGenerator
 
-equation_count = 50
+equation_count = 200
 max_equations_per_sheet = 2
-sheet_count = 500
+sheet_count = 1000
+
+epochs = 10
 
 # Step 1: Fetch cached equation images, or generate them if they are not available
 
@@ -56,17 +58,18 @@ sheet_images_cached = os.path.isdir(sheet_images_path) and len(
 
 if sheet_images_cached:
     print('Cached equation sheet images found. Loading images...')
-    sheet_images = []
+    sheets = []
     for filename in os.listdir(sheet_images_path):
         file_prefix, file_ext = os.path.splitext(filename)
         if file_ext == '.bmp':
             image_file = os.path.join(sheet_images_path, filename)
             coords_file = os.path.join(
                 sheet_images_path, f'{file_prefix}.json')
+            coords_file_data = open(coords_file)
             if os.path.isfile(image_file):
                 sheet_image = PIL.Image.open(image_file)
-                sheet_coords = json.load(coords_file)
-                sheet_images.append((sheet_image, sheet_coords))
+                sheet_coords = json.load(coords_file_data)
+                sheets.append((sheet_image, sheet_coords))
 else:
     print('Cached equation sheet images not found. Generating equation sheet images...')
     sheets = EquationSheetGenerator(
@@ -81,38 +84,30 @@ else:
 
 
 # Step 3: Prepare train and test data by splitting sheet array into two
-train_sheets = sheets[:int(sheet_count/2)]
-test_sheets = sheets[int(sheet_count/2):]
+# train_sheets = sheets[:int(sheet_count/2)]
+# test_sheets = sheets[int(sheet_count/2):]
 
-train_images = []
-train_coords = []
+half_sheet_count = int(sheet_count/2)
+sheet_images = []
+sheet_coords = []
 
-for sheet in train_sheets:
+for sheet in sheets:
     image, eq_coords = sheet
     sample = dict()
     greyscale_image = image.convert('RGB')
     im_arr = np.array(greyscale_image).astype('float32')
-    train_images.append(im_arr)
+    sheet_images.append(im_arr)
     coords = []
     for coord in eq_coords:
         coords.extend(
             [coord['x1'], coord['y1'], coord['x2'], coord['y2']])
-    train_coords.append(coords)
+    sheet_coords.append(coords)
 
-test_images = []
-test_coords = []
+train_images = sheet_images[:half_sheet_count]
+train_coords = sheet_coords[:half_sheet_count]
 
-for sheet in test_sheets:
-    image, eq_coords = sheet
-    sample = dict()
-    greyscale_image = image.convert('RGB')
-    im_arr = np.array(greyscale_image).astype('float32')
-    test_images.append(im_arr)
-    coords = []
-    for coord in eq_coords:
-        coords.extend(
-            [coord['x1'], coord['y1'], coord['x2'], coord['y2']])
-    test_coords.append(coords)
+test_images = sheet_images[half_sheet_count:]
+test_coords = sheet_coords[half_sheet_count:]
 
 train_images = np.array(train_images).astype('float32')
 train_coords = np.array(train_coords).astype('float32')
@@ -140,7 +135,7 @@ model.compile(optimizer='adam',
               loss='mse',
               metrics=['accuracy'])
 
-history = model.fit(train_images, train_coords, epochs=10,
+history = model.fit(train_images, train_coords, epochs=epochs,
                     validation_data=(test_images, test_coords), batch_size=64)
 
 plt.plot(history.history['accuracy'], label='accuracy')
@@ -166,10 +161,10 @@ def infer_from_model(image_data):
     return coords
 
 
-rand_test_image_idx = random.randint(0, len(test_images) - 1)
+rand_test_image_idx = random.randint(0, half_sheet_count - 1)
 rand_test_image_data = test_images[rand_test_image_idx]
-rand_test_image = test_sheets[rand_test_image_idx][0]
-rand_test_coords = test_sheets[rand_test_image_idx][1]
+rand_test_image = sheets[half_sheet_count + rand_test_image_idx - 1][0]
+rand_test_coords = sheets[half_sheet_count + rand_test_image_idx - 1][1]
 
 fig, ax = plt.subplots()
 ax.imshow(rand_test_image)

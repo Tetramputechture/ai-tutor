@@ -33,19 +33,19 @@ class EquationSheetGenerator:
         num_equations = random.randint(1, self.max_equations_per_sheet)
         for equation_image in random.sample(self.equation_images, num_equations):
             # for each equation image, choose random location on sheet
-            eq_width, eq_height = equation_image.size
+            image_width, image_height = equation_image.size
 
             iterations = 0
             while iterations < 1000000:
                 eq_position = (random.randint(1, 300), random.randint(1, 300))
                 eq_bounding_rect = BoundingRect.from_coords(
                     (eq_position[0], eq_position[1]),
-                    (eq_position[0] + eq_width, eq_position[1] + eq_height))
-                scale_factor = random.uniform(-0.25, 0.4) + 1
+                    (eq_position[0] + image_width, eq_position[1] + image_height))
+                scale_factor = random.uniform(-0.4, 0.6) + 1
                 eq_bounding_rect = eq_bounding_rect.scale(scale_factor)
 
                 collision = False
-                if eq_position[0] + eq_width > 300 or eq_position[1] + eq_height > 300:
+                if eq_position[0] + image_width > 300 or eq_position[1] + image_height > 300:
                     collision = True
 
                 for rect in bounding_rects:
@@ -57,12 +57,13 @@ class EquationSheetGenerator:
                     iterations += 1
                 else:
                     bounding_rects.append(eq_bounding_rect)
-                    eq_coords.append({"x1": eq_position[0], "y1": eq_position[1],
-                                      "x2": eq_position[0] + eq_width, "y2": eq_position[1] + eq_height})
 
-                    image_width, image_height = equation_image.size
                     equation_image = equation_image.resize(
                         (int(image_width * scale_factor), int(image_height * scale_factor)))
+                    image_width, image_height = equation_image.size
+
+                    eq_coords.append({"x1": eq_position[0], "y1": eq_position[1],
+                                      "x2": eq_position[0] + image_width, "y2": eq_position[1] + image_height})
 
                     sheet_image.paste(
                         equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
