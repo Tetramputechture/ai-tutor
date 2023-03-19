@@ -1,13 +1,11 @@
 import PIL
 import random
 import sympy
-from pdf2image import convert_from_bytes
 import numpy as np
 import sys
 
 from io import BytesIO
 from PIL import Image
-from sympy import symbols, preview
 import matplotlib.pyplot as plt
 
 
