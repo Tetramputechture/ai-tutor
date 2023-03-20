@@ -28,7 +28,7 @@ def rand_math_font():
 
 def rand_mathtext():
     return random.choice([
-        'rm', 'it', 'tt', 'bf',
+        'rm', 'it', 'bf',
         'default', 'regular'
     ])
 
@@ -70,7 +70,7 @@ class EquationImageGenerator:
         print('Generating equation images...')
         images = []
         should_cache = len(cache_dir) > 0
-        if should_cache:
+        if should_cache and not os.path.isdir(cache_dir):
             os.makedirs(cache_dir)
 
         for idx in range(image_count):
