@@ -4,10 +4,12 @@ import sympy
 import numpy as np
 import sys
 import os
+import shutil
 
 from io import BytesIO
 from PIL import Image
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 
 def rand_frac_number():
@@ -21,6 +23,13 @@ def rand_math_font():
         'cm',
         'stix',
         'stixsans'
+    ])
+
+
+def rand_mathtext():
+    return random.choice([
+        'rm', 'it', 'tt', 'bf',
+        'default', 'regular'
     ])
 
 
@@ -74,8 +83,9 @@ class EquationImageGenerator:
                 c_denom=rand_frac_number()
             )
             fig = plt.figure()
+            mpl.rcParams["mathtext.default"] = rand_mathtext()
             text = fig.text(0, 0, u'${0}$'.format(
-                eq_latex), fontsize=2, math_fontfamily=rand_math_font(), color=rand_text_color())
+                eq_latex), fontsize=2, math_fontfamily=rand_math_font(), color=rand_text_color(), fontweight=20)
             fig.savefig(BytesIO(), dpi=dpi)
             bbox = text.get_window_extent()
             width, height = bbox.size / float(dpi) + 0.005
