@@ -19,7 +19,7 @@ equation_count = 200
 max_equations_per_sheet = 2
 sheet_count = 2000
 
-epochs = 20
+epochs = 15
 
 # Step 1: Fetch equation images
 
@@ -92,6 +92,7 @@ base_model = tf.keras.applications.resnet.ResNet50(
 model = models.Sequential()
 model.add(base_model)
 model.add(layers.Flatten())
+model.add(layers.Dropout(rate=0.3))
 model.add(layers.Dense(max_equations_per_sheet * 4, activation='relu'))
 
 for layer in base_model.layers:
