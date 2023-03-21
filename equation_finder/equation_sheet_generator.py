@@ -33,6 +33,25 @@ def random_color():
     return tuple(random.choices(range(256), k=3))
 
 
+def random_sheet_color():
+    return random.choice([
+        'aliceblue',
+        'fuchsia',
+        'khaki',
+        'white',
+        'lawngreen',
+        'lightpink',
+        'lightslategray',
+        'linen',
+        'mediumblue',
+        'palegreen',
+        'snow',
+        'skyblue',
+        'yellowgreen',
+        'seashell'
+    ])
+
+
 def random_font():
     return random.choice([
         './assets/fonts/ArefRuqaa-Regular.ttf',
@@ -79,8 +98,9 @@ class EquationSheetGenerator:
         bounding_rects = []
         eq_coords = []
         sheet_image = Image.new(
-            mode="RGBA", size=(300, 300), color=(tuple(random.choices(range(256), k=3))))
+            mode="RGBA", size=(300, 300), color=random_sheet_color())
         num_equations = random.randint(1, self.max_equations_per_sheet)
+        sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
         for equation_image in random.sample(self.equation_images, num_equations):
             # for each equation image, choose random location on sheet
             image_width, image_height = equation_image.size
@@ -107,7 +127,6 @@ class EquationSheetGenerator:
                 if collision:
                     iterations += 1
                 else:
-                    bounding_rects.append(eq_bounding_rect)
 
                     equation_image = equation_image.resize(
                         (int(image_width * scale_factor), int(image_height * scale_factor)))
@@ -115,6 +134,8 @@ class EquationSheetGenerator:
 
                     eq_coords.append({"x1": eq_position[0], "y1": eq_position[1],
                                       "x2": eq_position[0] + image_width, "y2": eq_position[1] + image_height})
+
+                    bounding_rects.append(eq_bounding_rect)
 
                     sheet_image.paste(
                         equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
@@ -124,23 +145,21 @@ class EquationSheetGenerator:
             eq_coords.append({"x1": 0, "y1": 0, "x2": 0, "y2": 0})
 
         # add misc other text
-        for i in range(random.randint(3, RANDOM_TEXT_COUNT_MAX)):
+        for i in range(random.randint(5, RANDOM_TEXT_COUNT_MAX)):
             iterations = 0
+            text_image = Image.new(
+                'RGBA', sheet_image.size, (255, 255, 255, 0))
+            fnt = ImageFont.truetype(random_font(), random.randint(6, 14))
+            image_draw_ctx = ImageDraw.Draw(text_image)
+            text = random_text()
             while iterations < 1000000:
-                text_image = Image.new(
-                    'RGBA', sheet_image.size, (255, 255, 255, 0))
-                fnt = ImageFont.truetype(random_font(), random.randint(6, 14))
-
-                image_draw_ctx = ImageDraw.Draw(text_image)
-
-                text = random_text()
                 text_position = (random.randint(1, 250),
                                  random.randint(1, 250))
                 image_draw_ctx.text(text_position, text,
-                                    font=fnt, fill=(*random_color(), random.randint(150, 255)))
+                                    font=fnt, fill=(*random_color(), 0))
 
                 text_width, text_height = image_draw_ctx.textsize(
-                    text, font=fnt, spacing=8)
+                    text, font=fnt, spacing=4)
 
                 text_bounding_rect = BoundingRect.from_coords(
                     text_position,
@@ -151,10 +170,15 @@ class EquationSheetGenerator:
                 collision = False
                 for rect in bounding_rects:
                     collision = rect.collision(text_bounding_rect)
+                    if collision:
+                        break
 
                 if collision:
                     iterations += 1
                 else:
+                    image_draw_ctx.text(text_position, text,
+                                        font=fnt, fill=(*random_color(), random.randint(150, 255)))
+
                     sheet_image = Image.alpha_composite(
                         sheet_image, text_image)
                     break
@@ -165,7 +189,7 @@ class EquationSheetGenerator:
             line_position = (random.randint(15, 250), random.randint(15, 250))
             line_size = (random.randint(50, 200), random.randint(50, 200))
             sheet_image_draw_ctx.line(
-                line_position + line_size, fill=(*random_color(), random.randint(150, 255)), width=random.randint(1, 2))
+                line_position + line_size, fill=(*random_color(), random.randint(150, 255)), width=1)
 
         # add ellipses
         for i in range(random.randint(0, RANDOM_ELLIPSE_COUNT_MAX)):
@@ -185,8 +209,9 @@ class EquationSheetGenerator:
                 collision = False
 
                 for rect in bounding_rects:
-                    if rect.collision(ellipse_bounding_rect):
-                        collision = True
+                    collision = rect.collision(ellipse_bounding_rect)
+                    if collision:
+                        break
 
                 if collision:
                     iterations += 1

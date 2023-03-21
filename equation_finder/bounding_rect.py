@@ -13,7 +13,7 @@ class BoundingRect:
         newHeight = self.height * factor
         newX = self.x + newWidth
         newY = self.y + newHeight
-        return BoundingRect((newX, newY), newWidth, newHeight)
+        return BoundingRect((self.x, self.y), newWidth, newHeight)
 
     def shift(self, shift=(0, 0)):
         newWidth = self.width
@@ -23,7 +23,7 @@ class BoundingRect:
         return BoundingRect((newX, newY), newWidth, newHeight)
 
     def collision(self, rect):
-        return self.x < rect.x + rect.width \
-            and self.x + self.width > rect.x \
-            and self.y < rect.y + rect.height \
-            and self.height + self.y > rect.y
+        return self.x + self.width >= rect.x and \
+            self.x <= rect.x + rect.width and \
+            self.y + self.height >= rect.y and \
+            self.y <= rect.y + rect.height

@@ -15,7 +15,7 @@ from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 from equation_sheet_generator import EquationSheetGenerator
 
-equation_count = 200
+equation_count = 500
 max_equations_per_sheet = 2
 sheet_count = 2000
 
@@ -64,7 +64,7 @@ for sheet in sheets:
 rand_test_image_idx = random.randint(half_sheet_count, sheet_count - 1)
 rand_test_image = sheets[rand_test_image_idx][0]
 rand_test_image_data = sheet_image_data[rand_test_image_idx]
-rand_test_coords = sheet_eq_coords[rand_test_image_idx]
+rand_test_coords = sheets[rand_test_image_idx][1]
 
 train_image_data = sheet_image_data[:half_sheet_count]
 train_eq_coords = sheet_eq_coords[:half_sheet_count]
