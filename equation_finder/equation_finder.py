@@ -92,13 +92,20 @@ base_model = tf.keras.applications.resnet.ResNet50(
 model = models.Sequential()
 model.add(base_model)
 model.add(layers.Flatten())
-model.add(layers.Dropout(rate=0.3))
+model.add(layers.Dropout(rate=0.15))
 model.add(layers.Dense(max_equations_per_sheet * 4, activation='relu'))
 
-for layer in base_model.layers:
+# for layer in base_model.layers:
+#     layer.trainable = False
+
+# for layer in base_model.layers[-26:]:
+#     layer.trainable = True
+
+# We will try to train the last stage of ResNet50
+for layer in base_model.layers[0:143]:
     layer.trainable = False
 
-for layer in base_model.layers[-26:]:
+for layer in base_model.layers[143:]:
     layer.trainable = True
 
 model.compile(optimizer='adam',
