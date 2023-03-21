@@ -79,8 +79,12 @@ sheet_image_data = None
 sheet_eq_coords = None
 
 train_image_data = np.array(train_image_data).astype('float32')
+train_image_data = tf.keras.applications.resnet50.preprocess_input(
+    train_image_data)
 train_eq_coords = np.array(train_eq_coords).astype('float32')
 test_image_data = np.array(test_image_data).astype('float32')
+test_image_data = tf.keras.applications.resnet50.preprocess_input(
+    test_image_data)
 test_eq_coords = np.array(test_eq_coords).astype('float32')
 
 # Step 4: Train model
@@ -92,20 +96,13 @@ base_model = tf.keras.applications.resnet.ResNet50(
 model = models.Sequential()
 model.add(base_model)
 model.add(layers.Flatten())
-model.add(layers.Dropout(rate=0.15))
+model.add(layers.Dropout(rate=0.3))
 model.add(layers.Dense(max_equations_per_sheet * 4, activation='relu'))
 
-# for layer in base_model.layers:
-#     layer.trainable = False
-
-# for layer in base_model.layers[-26:]:
-#     layer.trainable = True
-
-# We will try to train the last stage of ResNet50
-for layer in base_model.layers[0:143]:
+for layer in base_model.layers:
     layer.trainable = False
 
-for layer in base_model.layers[143:]:
+for layer in base_model.layers[-26:]:
     layer.trainable = True
 
 model.compile(optimizer='adam',
@@ -113,7 +110,7 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 history = model.fit(train_image_data, train_eq_coords, epochs=epochs,
-                    validation_data=(test_image_data, test_eq_coords), batch_size=64)
+                    validation_data=(test_image_data, test_eq_coords), batch_size=128)
 
 plt.plot(history.history['accuracy'], label='accuracy')
 plt.plot(history.history['val_accuracy'], label='val_accuracy')
@@ -128,7 +125,9 @@ print(test_acc)
 
 
 def infer_from_model(image_data):
-    predictions = model.predict(np.expand_dims(image_data, 0))[0]
+    image_data = tf.keras.applications.resnet50.preprocess_input(
+        np.expand_dims(image_data, 0))
+    predictions = model.predict(image_data)[0]
     coords = []
     # predictions is a len 160 array
     # iterate through and get coords
