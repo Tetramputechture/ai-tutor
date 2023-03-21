@@ -216,7 +216,7 @@ class EquationSheetGenerator:
                 if collision:
                     iterations += 1
                 else:
-                    fill_color = (0, 0, 0, 0)
+                    fill_color = None
                     if random.random() > 0.5:
                         fill_color = random_color()
                     sheet_image_draw_ctx.ellipse(

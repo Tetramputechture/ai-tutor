@@ -15,7 +15,7 @@ from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 from equation_sheet_generator import EquationSheetGenerator
 
-equation_count = 500
+equation_count = 200
 max_equations_per_sheet = 2
 sheet_count = 2000
 

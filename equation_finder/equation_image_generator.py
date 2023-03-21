@@ -85,7 +85,7 @@ class EquationImageGenerator:
             fig = plt.figure()
             mpl.rcParams["mathtext.default"] = rand_mathtext()
             text = fig.text(0, 0, u'${0}$'.format(
-                eq_latex), fontsize=2, math_fontfamily=rand_math_font(), color=rand_text_color(), fontweight=20)
+                eq_latex), fontsize=2, math_fontfamily=rand_math_font(), color=rand_text_color())
             fig.savefig(BytesIO(), dpi=dpi)
             bbox = text.get_window_extent()
             width, height = bbox.size / float(dpi) + 0.005
