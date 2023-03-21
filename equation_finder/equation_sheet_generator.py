@@ -123,6 +123,7 @@ class EquationSheetGenerator:
                 for rect in bounding_rects:
                     if rect.collision(eq_bounding_rect):
                         collision = True
+                        break
 
                 if collision:
                     iterations += 1
@@ -169,8 +170,8 @@ class EquationSheetGenerator:
 
                 collision = False
                 for rect in bounding_rects:
-                    collision = rect.collision(text_bounding_rect)
-                    if collision:
+                    if rect.collision(text_bounding_rect):
+                        collision = True
                         break
 
                 if collision:
@@ -209,8 +210,8 @@ class EquationSheetGenerator:
                 collision = False
 
                 for rect in bounding_rects:
-                    collision = rect.collision(ellipse_bounding_rect)
-                    if collision:
+                    if rect.collision(ellipse_bounding_rect):
+                        collision = True
                         break
 
                 if collision:
