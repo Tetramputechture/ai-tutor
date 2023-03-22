@@ -16,9 +16,9 @@ from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 from equation_sheet_generator import EquationSheetGenerator
 
-equation_count = 200
+equation_count = 10
 max_equations_per_sheet = 2
-sheet_count = 2000
+sheet_count = 50
 
 epochs = 10
 
@@ -52,6 +52,7 @@ sheet_eq_coords = []
 for sheet in sheets:
     eq_image, eq_coords = sheet
     sample = dict()
+    eq_image = eq_image.convert('RGB')
     im_arr = image.img_to_array(eq_image)
     # im_arr = tf.image.central_crop(im_arr, 0.866)
     # im_arr = tf.image.resize(im_arr, [260, 260])
