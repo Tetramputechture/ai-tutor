@@ -5,6 +5,7 @@ import math
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras import datasets, layers, models
+from tensorflow.keras.preprocessing import image
 
 import PIL
 import os
@@ -19,7 +20,7 @@ equation_count = 200
 max_equations_per_sheet = 2
 sheet_count = 2000
 
-epochs = 15
+epochs = 10
 
 # Step 1: Fetch equation images
 
@@ -49,10 +50,11 @@ sheet_image_data = []
 sheet_eq_coords = []
 
 for sheet in sheets:
-    image, eq_coords = sheet
+    eq_image, eq_coords = sheet
     sample = dict()
-    greyscale_image = image.convert('RGB')
-    im_arr = np.array(greyscale_image).astype('float32')
+    im_arr = image.img_to_array(eq_image)
+    # im_arr = tf.image.central_crop(im_arr, 0.866)
+    # im_arr = tf.image.resize(im_arr, [260, 260])
     sheet_image_data.append(im_arr)
     coords = []
     for coord in eq_coords:
@@ -95,14 +97,14 @@ base_model = tf.keras.applications.resnet.ResNet50(
 )
 model = models.Sequential()
 model.add(base_model)
+model.add(layers.Dropout(rate=0.2))
 model.add(layers.Flatten())
-model.add(layers.Dropout(rate=0.3))
 model.add(layers.Dense(max_equations_per_sheet * 4, activation='relu'))
 
 for layer in base_model.layers:
     layer.trainable = False
 
-for layer in base_model.layers[-26:]:
+for layer in base_model.layers[-6:]:
     layer.trainable = True
 
 model.compile(optimizer='adam',
@@ -110,7 +112,7 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 history = model.fit(train_image_data, train_eq_coords, epochs=epochs,
-                    validation_data=(test_image_data, test_eq_coords), batch_size=128)
+                    validation_data=(test_image_data, test_eq_coords), batch_size=16)
 
 plt.plot(history.history['accuracy'], label='accuracy')
 plt.plot(history.history['val_accuracy'], label='val_accuracy')
@@ -125,6 +127,7 @@ print(test_acc)
 
 
 def infer_from_model(image_data):
+    imdata = np.expand_dims(image_data, 0)
     image_data = tf.keras.applications.resnet50.preprocess_input(
         np.expand_dims(image_data, 0))
     predictions = model.predict(image_data)[0]
@@ -155,6 +158,21 @@ print('Ground truth:')
 print(rand_test_coords)
 print('Inferred:')
 print(inferred_coords)
+print('Differential:')
+
+
+def diff(idx, coord):
+    return {
+        'x1': abs(coord['x1'] - inferred_coords[idx]['x1']),
+        'y1': abs(coord['y1'] - inferred_coords[idx]['y1']),
+        'x2': abs(coord['x2'] - inferred_coords[idx]['x2']),
+        'y2': abs(coord['y2'] - inferred_coords[idx]['y2'])
+    }
+
+
+differential = [diff(idx, coord) for idx, coord in enumerate(rand_test_coords)]
+print(list(differential))
+
 for eq_coord in inferred_coords:
     xy = (eq_coord['x1'], eq_coord['y1'])
     width = eq_coord['x2'] - xy[0]

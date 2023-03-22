@@ -62,7 +62,7 @@ def white_to_transparency(img):
 
 
 class EquationImageGenerator:
-    def generate_equation_images(self, image_count, dpi=400, cache_dir=''):
+    def generate_equation_images(self, image_count, dpi=500, cache_dir=''):
         if len(cache_dir) > 0 and self.images_cached(cache_dir):
             print('Cached equation images found.')
             return self.images_from_cache(cache_dir)

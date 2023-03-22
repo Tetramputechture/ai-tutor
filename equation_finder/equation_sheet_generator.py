@@ -18,7 +18,7 @@ MAX_EQUATION_HEIGHT = 50
 
 RANDOM_TEXT_COUNT_MAX = 30
 
-RANDOM_LINE_COUNT_MAX = 30
+RANDOM_LINE_COUNT_MAX = 20
 
 RANDOM_ELLIPSE_COUNT_MAX = 30
 
@@ -226,6 +226,23 @@ class EquationSheetGenerator:
                         fill=fill_color, outline=random_color(), width=1
                     )
                     break
+
+        # various image enhancements
+        # sharpness
+        sharpness_enhancer = PIL.ImageEnhance.Sharpness(sheet_image)
+        sheet_image = sharpness_enhancer.enhance(random.uniform(0.2, 2))
+
+        # brightness
+        brightness_enhancer = PIL.ImageEnhance.Brightness(sheet_image)
+        sheet_image = brightness_enhancer.enhance(random.uniform(0.5, 1.2))
+
+        # contrast
+        contrast_enhancer = PIL.ImageEnhance.Contrast(sheet_image)
+        sheet_image = contrast_enhancer.enhance(random.uniform(0.5, 1.5))
+
+        # color
+        color_enhancer = PIL.ImageEnhance.Color(sheet_image)
+        sheet_image = color_enhancer.enhance(random.uniform(0.1, 1.5))
 
         return (sheet_image, eq_coords)
 
