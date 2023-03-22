@@ -16,11 +16,11 @@ from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 from equation_sheet_generator import EquationSheetGenerator
 
-equation_count = 10
-max_equations_per_sheet = 2
-sheet_count = 50
+equation_count = 100
+max_equations_per_sheet = 1
+sheet_count = 1000
 
-epochs = 10
+epochs = 15
 
 # Step 1: Fetch equation images
 
