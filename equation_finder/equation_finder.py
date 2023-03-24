@@ -16,9 +16,9 @@ from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 from equation_sheet_generator import EquationSheetGenerator
 
-equation_count = 100
+equation_count = 10
 max_equations_per_sheet = 1
-sheet_count = 1000
+sheet_count = 2000
 
 epochs = 15
 
@@ -26,9 +26,9 @@ epochs = 15
 
 print('Initializing equation image data...')
 
-equation_images_path = './data/equation-images'
-equation_images = EquationImageGenerator().generate_equation_images(
-    equation_count, cache_dir=equation_images_path)
+# equation_images_path = './data/equation-images'
+# equation_images = EquationImageGenerator().generate_equation_images(
+#     equation_count, cache_dir=equation_images_path)
 
 print('Equation images loaded.')
 
@@ -37,11 +37,8 @@ print('Equation images loaded.')
 print('Initializing equation sheet image data...')
 
 sheet_images_path = './data/equation-sheet-images'
-sheets = EquationSheetGenerator(
-    equation_images, max_equations_per_sheet).generate_sheets(sheet_count, cache_dir=sheet_images_path)
-
-# We don't need equation images anymore, unload them from memory
-equation_images = None
+sheets = EquationSheetGenerator(max_equations_per_sheet).generate_sheets(
+    sheet_count, cache_dir=sheet_images_path)
 
 # Step 3: Prepare train and test data
 
@@ -105,7 +102,7 @@ model.add(layers.Dense(max_equations_per_sheet * 4, activation='relu'))
 for layer in base_model.layers:
     layer.trainable = False
 
-for layer in base_model.layers[-6:]:
+for layer in base_model.layers[-24:]:
     layer.trainable = True
 
 model.compile(optimizer='adam',
@@ -113,7 +110,7 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 history = model.fit(train_image_data, train_eq_coords, epochs=epochs,
-                    validation_data=(test_image_data, test_eq_coords), batch_size=16)
+                    validation_data=(test_image_data, test_eq_coords), batch_size=64)
 
 plt.plot(history.history['accuracy'], label='accuracy')
 plt.plot(history.history['val_accuracy'], label='val_accuracy')

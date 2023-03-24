@@ -64,8 +64,7 @@ def random_font():
 
 
 class EquationSheetGenerator:
-    def __init__(self, equation_images, max_equations_per_sheet):
-        self.equation_images = equation_images
+    def __init__(self, max_equations_per_sheet):
         self.max_equations_per_sheet = max_equations_per_sheet
 
     def generate_sheets(self, sheet_count, cache_dir=''):
@@ -101,7 +100,9 @@ class EquationSheetGenerator:
             mode="RGBA", size=(300, 300), color=random_sheet_color())
         num_equations = random.randint(1, self.max_equations_per_sheet)
         sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
-        for equation_image in random.sample(self.equation_images, num_equations):
+        eq_im_generator = EquationImageGenerator()
+        for i in range(num_equations):
+            equation_image = eq_im_generator.generate_equation_image()
             # for each equation image, choose random location on sheet
             image_width, image_height = equation_image.size
 
@@ -113,11 +114,11 @@ class EquationSheetGenerator:
                     (eq_position[0] + image_width,
                      eq_position[1] + image_height)
                 )
-                scale_factor = random.uniform(-0.5, 0.6) + 1
+                scale_factor = random.uniform(0.1, 0.6) + 1
                 eq_bounding_rect = eq_bounding_rect.scale(scale_factor)
 
                 collision = False
-                if eq_position[0] + image_width > 300 or eq_position[1] + image_height > 300:
+                if eq_position[0] + eq_bounding_rect.width > 300 or eq_position[1] + eq_bounding_rect.height > 300:
                     collision = True
 
                 for rect in bounding_rects:
@@ -244,6 +245,12 @@ class EquationSheetGenerator:
         color_enhancer = PIL.ImageEnhance.Color(sheet_image)
         sheet_image = color_enhancer.enhance(random.uniform(0.1, 1.5))
 
+        # rotate 0, 90, 180, or 270 degrees
+        random_degree = random.choice([90, 270])
+        eq_coords = list(map(lambda coord: BoundingRect.from_coords(
+            (coord['x1'], coord['y1']), (coord['x2'], coord['y2'])).rotate((150, 150), random_degree).to_eq_coord(), eq_coords))
+        sheet_image = sheet_image.rotate(
+            -random_degree, PIL.Image.NEAREST)
         return (sheet_image, eq_coords)
 
     def sheets_cached(self, cache_dir):
