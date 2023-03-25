@@ -12,7 +12,7 @@ class ResnetModel:
         model = models.Sequential([
             resnet_base,
             layers.Flatten(),
-            layers.Dropout(rate=0.3),
+            layers.Dropout(rate=0.5),
             layers.Dense(4, activation='relu')
         ])
 
