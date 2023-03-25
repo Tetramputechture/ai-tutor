@@ -69,7 +69,7 @@ class EquationSheetGenerator:
     def generate_sheets(self, sheet_count):
         if len(self.cache_dir) > 0 and self.sheets_cached():
             print('Cached equation sheets found.')
-            return self.sheets_from_cache(cache_dir, sheet_count)
+            return self.sheets_from_cache(self.cache_dir, sheet_count)
 
         print('Generating equation sheets...')
         sheets = []
