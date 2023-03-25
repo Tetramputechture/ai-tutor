@@ -19,7 +19,7 @@ class ResnetModel:
         for layer in resnet_base.layers:
             layer.trainable = False
 
-        for layer in resnet_base.layers[-24:]:
+        for layer in resnet_base.layers[-16:]:
             layer.trainable = True
 
         model.compile(optimizer='adam',

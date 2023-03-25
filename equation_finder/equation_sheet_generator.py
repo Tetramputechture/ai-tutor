@@ -73,7 +73,7 @@ class EquationSheetGenerator:
 
         print('Generating equation sheets...')
         sheets = []
-        should_cache = len(cache_dir) > 0
+        should_cache = len(self.cache_dir) > 0
         if should_cache and not os.path.isdir(self.cache_dir):
             os.makedirs(self.cache_dir)
 

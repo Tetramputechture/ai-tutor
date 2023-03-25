@@ -33,8 +33,11 @@ train_split = 0.7
 print('Initializing equation sheet image data...')
 
 sheet_images_path = './data/equation-sheet-images'
-sheets = EquationSheetGenerator(max_equations_per_sheet).generate_sheets(
-    sheet_count, cache_dir=sheet_images_path)
+sheets = EquationSheetGenerator(
+    max_equations_per_sheet,
+    sheet_size=(200, 200),
+    cache_dir=sheet_images_path
+).generate_sheets(sheet_count)
 
 # Step 2: Prepare train and test data
 
