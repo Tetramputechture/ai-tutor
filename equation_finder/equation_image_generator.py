@@ -26,13 +26,6 @@ def rand_math_font():
     ])
 
 
-def rand_mathtext():
-    return random.choice([
-        'rm', 'it', 'bf',
-        'default', 'regular'
-    ])
-
-
 def rand_text_color():
     return random.choice([
         'black',
@@ -80,7 +73,7 @@ class EquationImageGenerator:
 
         return images
 
-    def generate_equation_image(self, dpi=600):
+    def generate_equation_image(self, dpi=500):
         eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
             a_num=rand_frac_number(),
             a_denom=rand_frac_number(),
@@ -90,9 +83,8 @@ class EquationImageGenerator:
             c_denom=rand_frac_number()
         )
         fig = plt.figure()
-        mpl.rcParams["mathtext.default"] = rand_mathtext()
         text = fig.text(0, 0, u'${0}$'.format(
-            eq_latex), fontsize=2, math_fontfamily=rand_math_font(), color=rand_text_color())
+            eq_latex), fontsize=3, math_fontfamily=rand_math_font(), color=rand_text_color())
         fig.savefig(BytesIO(), dpi=dpi)
         bbox = text.get_window_extent()
         width, height = bbox.size / float(dpi) + 0.005

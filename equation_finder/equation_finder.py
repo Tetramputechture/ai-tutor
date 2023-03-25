@@ -26,7 +26,7 @@ sheet_count = 1000
 
 epochs = 15
 
-train_split = 0.5
+train_split = 0.7
 
 # Step 1: Fetch equation sheets
 
@@ -118,7 +118,7 @@ for eq_coord in rand_test_coords:
     xy = (eq_coord['x1'], eq_coord['y1'])
     width = eq_coord['x2'] - xy[0]
     height = eq_coord['y2'] - xy[1]
-    ax.add_patch(Rectangle(xy, width, height, fill=False))
+    ax.add_patch(Rectangle(xy, width, height, fill=False, edgecolor="r"))
 
 fig, ax = plt.subplots()
 ax.imshow(rand_test_image)
@@ -129,7 +129,7 @@ for eq_coord in inferred_coords:
     xy = (eq_coord['x1'], eq_coord['y1'])
     width = eq_coord['x2'] - xy[0]
     height = eq_coord['y2'] - xy[1]
-    ax.add_patch(Rectangle(xy, width, height, fill=False))
+    ax.add_patch(Rectangle(xy, width, height, fill=False, edgecolor="r"))
 
 print('Ground truth:')
 print(rand_test_coords)

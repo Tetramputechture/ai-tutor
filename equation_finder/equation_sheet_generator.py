@@ -4,11 +4,12 @@ import math
 import json
 import os
 import string
+import sys
 
 from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 MIN_EQUATION_WIDTH = 40
 MIN_EQUATION_HEIGHT = 10
@@ -36,18 +37,13 @@ def random_color():
 def random_sheet_color():
     return random.choice([
         'aliceblue',
-        'fuchsia',
-        'khaki',
+        'whitesmoke',
         'white',
-        'lightpink',
-        'lightslategray',
+        'lightgray',
         'linen',
-        'mediumblue',
-        'mediumslateblue',
-        'crimson',
+        'lavender',
         'snow',
-        'skyblue',
-        'seashell'
+        'bisque'
     ])
 
 
@@ -81,6 +77,7 @@ class EquationSheetGenerator:
         for idx in range(sheet_count):
             sheet = self.generate_sheet()
             sheets.append(sheet)
+            sys.stdout.write('.')
 
             if should_cache:
                 file_prefix = f'{cache_dir}/eq-sheet-{idx}'
@@ -100,46 +97,49 @@ class EquationSheetGenerator:
             mode="RGBA", size=self.sheet_size, color=random_sheet_color())
         num_equations = random.randint(1, self.max_equations_per_sheet)
         sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
-        eq_im_generator = EquationImageGenerator()
 
-        equation_image = eq_im_generator.generate_equation_image()
-        original_image_width, original_image_height = equation_image.size
+        # 95% chance to inclue equation in image
+        has_eq_image = random.random() < 0.95
+        if has_eq_image:
+            eq_im_generator = EquationImageGenerator()
 
-        iterations = 0
-        while iterations < 100000:
-            max_x_pos, max_y_pos = (
-                (self.sheet_size[0] - original_image_width - 20),
-                (self.sheet_size[1] - original_image_height - 20)
-            )
-            eq_position = (random.randint(
-                1, max_x_pos), random.randint(1, max_y_pos))
+            equation_image = eq_im_generator.generate_equation_image()
+            original_image_width, original_image_height = equation_image.size
 
-            scale_factor = random.uniform(-0.3, 0.3) + 1
+            iterations = 0
+            while iterations < 100000:
+                max_x_pos, max_y_pos = (
+                    (self.sheet_size[0] - original_image_width - 10),
+                    (self.sheet_size[1] - original_image_height - 10)
+                )
+                eq_position = (random.randint(
+                    1, max_x_pos), random.randint(1, max_y_pos))
 
-            equation_image = equation_image.resize(
-                (int(original_image_width * scale_factor), int(original_image_height * scale_factor)))
+                scale_factor = random.uniform(-0.4, 0.4) + 1
 
-            rotation_degrees = random.randint(-45, 45)
+                equation_image = equation_image.resize(
+                    (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), PIL.Image.BILINEAR)
 
-            equation_image = equation_image.rotate(
-                -rotation_degrees, PIL.Image.BICUBIC, expand=1)
+                rotation_degrees = random.randint(-45, 45)
+                equation_image = equation_image.rotate(
+                    -rotation_degrees, PIL.Image.BICUBIC, expand=1)
 
-            image_width, image_height = equation_image.size
+                image_width, image_height = equation_image.size
 
-            eq_bounding_rect = BoundingRect.from_coords(
-                eq_position,
-                (eq_position[0] + image_width,
-                 eq_position[1] + image_height)
-            )
+                eq_bounding_rect = BoundingRect.from_coords(
+                    eq_position,
+                    (eq_position[0] + image_width,
+                     eq_position[1] + image_height)
+                )
 
-            if eq_position[0] + image_width > self.sheet_size[0] or eq_position[1] + image_height > self.sheet_size[1]:
-                iterations += 1
-            else:
-                eq_coords.append(eq_bounding_rect.to_eq_coord())
-                bounding_rects.append(eq_bounding_rect)
-                sheet_image.paste(
-                    equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
-                break
+                if eq_position[0] + image_width > self.sheet_size[0] or eq_position[1] + image_height > self.sheet_size[1]:
+                    iterations += 1
+                else:
+                    eq_coords.append(eq_bounding_rect.to_eq_coord())
+                    bounding_rects.append(eq_bounding_rect)
+                    sheet_image.paste(
+                        equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
+                    break
 
         while len(eq_coords) < self.max_equations_per_sheet:
             eq_coords.append({"x1": 0, "y1": 0, "x2": 0, "y2": 0})
@@ -253,12 +253,16 @@ class EquationSheetGenerator:
         color_enhancer = PIL.ImageEnhance.Color(sheet_image)
         sheet_image = color_enhancer.enhance(random.uniform(0.1, 1.5))
 
-        # # rotate 0, 90, 180, or 270 degrees
-        # random_degree = random.choice([90, 270])
-        # eq_coords = list(map(lambda coord: BoundingRect.from_coords(
-        #     (coord['x1'], coord['y1']), (coord['x2'], coord['y2'])).rotate((100, 100), random_degree).to_eq_coord(), eq_coords))
-        # sheet_image = sheet_image.rotate(
-        #     -random_degree, PIL.Image.BICUBIC)
+        # 0.5 chance to invert colors
+        if random.random() < 0.5:
+            sheet_image = PIL.ImageOps.invert(sheet_image.convert('RGB'))
+
+            # # rotate 0, 90, 180, or 270 degrees
+            # random_degree = random.choice([90, 270])
+            # eq_coords = list(map(lambda coord: BoundingRect.from_coords(
+            #     (coord['x1'], coord['y1']), (coord['x2'], coord['y2'])).rotate((100, 100), random_degree).to_eq_coord(), eq_coords))
+            # sheet_image = sheet_image.rotate(
+            #     -random_degree, PIL.Image.BICUBIC)
 
         return (sheet_image, eq_coords)
 
