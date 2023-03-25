@@ -6,6 +6,8 @@ import os
 import string
 import sys
 
+from multiprocessing import Pool
+
 from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 
@@ -59,20 +61,21 @@ def random_font():
 
 
 class EquationSheetGenerator:
-    def __init__(self, max_equations_per_sheet, sheet_size=(200, 200)):
+    def __init__(self, max_equations_per_sheet, sheet_size=(200, 200), cache_dir=''):
         self.max_equations_per_sheet = max_equations_per_sheet
         self.sheet_size = sheet_size
+        self.cache_dir = cache_dir
 
-    def generate_sheets(self, sheet_count, cache_dir=''):
-        if len(cache_dir) > 0 and self.sheets_cached(cache_dir):
+    def generate_sheets(self, sheet_count):
+        if len(self.cache_dir) > 0 and self.sheets_cached(self.cache_dir):
             print('Cached equation sheets found.')
-            return self.sheets_from_cache(cache_dir)
+            return self.sheets_from_cache(cache_dir, sheet_count)
 
         print('Generating equation sheets...')
         sheets = []
         should_cache = len(cache_dir) > 0
-        if should_cache and not os.path.isdir(cache_dir):
-            os.makedirs(cache_dir)
+        if should_cache and not os.path.isdir(self.cache_dir):
+            os.makedirs(self.cache_dir)
 
         for idx in range(sheet_count):
             sheet = self.generate_sheet()
@@ -80,7 +83,7 @@ class EquationSheetGenerator:
             sys.stdout.write('.')
 
             if should_cache:
-                file_prefix = f'{cache_dir}/eq-sheet-{idx}'
+                file_prefix = f'{self.cache_dir}/eq-sheet-{idx}'
                 sheet[0].save(f'{file_prefix}.bmp')
                 with open(f'{file_prefix}.json', 'w') as coords_file:
                     json.dump(sheet[1], coords_file)
@@ -266,22 +269,27 @@ class EquationSheetGenerator:
 
         return (sheet_image, eq_coords)
 
-    def sheets_cached(self, cache_dir):
-        return os.path.isdir(cache_dir) and len(
-            os.listdir(cache_dir)) != 0
+    def sheets_cached(self):
+        return os.path.isdir(self.cache_dir) and len(
+            os.listdir(self.cache_dir)) != 0
 
-    def sheets_from_cache(self, cache_dir):
+    def sheet_from_file(self, filename):
+        file_prefix = os.path.splitext(filename)[0]
+        image_file = os.path.join(self.cache_dir, filename)
+        coords_file = os.path.join(
+            self.cache_dir, f'{file_prefix}.json')
+        coords_file_data = open(coords_file)
+        if os.path.isfile(image_file):
+            sheet_image = Image.open(image_file)
+            sheet_coords = json.load(coords_file_data)
+            sheets.append((sheet_image, sheet_coords))
+
+    def sheets_from_cache(self, sheet_count):
+        bmp_files = [f for f in os.listdir(
+            self.cache_dir) if f.endswith('.bmp')]
         sheets = []
-        for filename in os.listdir(cache_dir):
-            file_prefix, file_ext = os.path.splitext(filename)
-            if file_ext == '.bmp':
-                image_file = os.path.join(cache_dir, filename)
-                coords_file = os.path.join(
-                    cache_dir, f'{file_prefix}.json')
-                coords_file_data = open(coords_file)
-                if os.path.isfile(image_file):
-                    sheet_image = Image.open(image_file)
-                    sheet_coords = json.load(coords_file_data)
-                    sheets.append((sheet_image, sheet_coords))
+        with Pool() as pool:
+            sheets = pool.map(
+                bmp_files, self.sheet_from_file, chunksize=20)
 
-        return sheets
+        return sheets[:sheet_count]
