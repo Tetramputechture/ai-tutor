@@ -16,10 +16,13 @@ from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 from equation_sheet_generator import EquationSheetGenerator
 
-max_equations_per_sheet = 1
-sheet_count = 500
+from resnet_model import ResnetModel
+from conv_model import ConvModel
 
-epochs = 10
+max_equations_per_sheet = 1
+sheet_count = 2000
+
+epochs = 15
 
 # Step 1: Fetch equation sheets
 
@@ -76,25 +79,8 @@ test_eq_coords = np.array(test_eq_coords).astype('float32')
 
 # Step 3: Train model
 
-base_model = tf.keras.applications.resnet.ResNet50(
-    include_top=False,
-    input_shape=(300, 300, 3)
-)
-model = models.Sequential()
-model.add(base_model)
-model.add(layers.Dropout(rate=0.2))
-model.add(layers.Flatten())
-model.add(layers.Dense(max_equations_per_sheet * 4, activation='relu'))
-
-for layer in base_model.layers:
-    layer.trainable = False
-
-for layer in base_model.layers[-24:]:
-    layer.trainable = True
-
-model.compile(optimizer='adam',
-              loss='mse',
-              metrics=['accuracy'])
+model = ResnetModel().create_model()
+# model = ConvModel().create_model()
 
 history = model.fit(train_image_data, train_eq_coords, epochs=epochs,
                     validation_data=(test_image_data, test_eq_coords), batch_size=64)

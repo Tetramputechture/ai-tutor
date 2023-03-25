@@ -44,12 +44,9 @@ def rand_text_color():
         'darkred',
         'orange',
         'moccasin',
-        'tan',
         'lime',
         'darkgreen',
-        'lightsteelblue',
         'blue',
-        'green',
         'red',
         'navy',
         'purple'

@@ -103,18 +103,17 @@ class EquationSheetGenerator:
         eq_im_generator = EquationImageGenerator()
 
         equation_image = eq_im_generator.generate_equation_image()
+        original_image_width, original_image_height = equation_image.size
 
         iterations = 0
         while iterations < 100000:
             eq_position = (random.randint(1, 175), random.randint(1, 175))
             scale_factor = random.uniform(-0.1, 0.3) + 1
 
-            image_width, image_height = equation_image.size
-
             equation_image = equation_image.resize(
-                (int(image_width * scale_factor), int(image_height * scale_factor)))
+                (int(original_image_width * scale_factor), int(original_image_height * scale_factor)))
 
-            rotation_degrees = random.randint(-180, 0)
+            rotation_degrees = random.randint(0, 90)
 
             equation_image = equation_image.rotate(
                 rotation_degrees, PIL.Image.NEAREST, expand=1)
