@@ -16,23 +16,12 @@ from bounding_rect import BoundingRect
 from equation_image_generator import EquationImageGenerator
 from equation_sheet_generator import EquationSheetGenerator
 
-equation_count = 10
 max_equations_per_sheet = 1
-sheet_count = 2000
+sheet_count = 500
 
-epochs = 15
+epochs = 10
 
-# Step 1: Fetch equation images
-
-print('Initializing equation image data...')
-
-# equation_images_path = './data/equation-images'
-# equation_images = EquationImageGenerator().generate_equation_images(
-#     equation_count, cache_dir=equation_images_path)
-
-print('Equation images loaded.')
-
-# Step 2: Fetch equation sheets
+# Step 1: Fetch equation sheets
 
 print('Initializing equation sheet image data...')
 
@@ -40,7 +29,7 @@ sheet_images_path = './data/equation-sheet-images'
 sheets = EquationSheetGenerator(max_equations_per_sheet).generate_sheets(
     sheet_count, cache_dir=sheet_images_path)
 
-# Step 3: Prepare train and test data
+# Step 2: Prepare train and test data
 
 half_sheet_count = int(sheet_count/2)
 sheet_image_data = []
@@ -51,8 +40,6 @@ for sheet in sheets:
     sample = dict()
     eq_image = eq_image.convert('RGB')
     im_arr = image.img_to_array(eq_image)
-    # im_arr = tf.image.central_crop(im_arr, 0.866)
-    # im_arr = tf.image.resize(im_arr, [260, 260])
     sheet_image_data.append(im_arr)
     coords = []
     for coord in eq_coords:
@@ -87,7 +74,7 @@ test_image_data = tf.keras.applications.resnet50.preprocess_input(
     test_image_data)
 test_eq_coords = np.array(test_eq_coords).astype('float32')
 
-# Step 4: Train model
+# Step 3: Train model
 
 base_model = tf.keras.applications.resnet.ResNet50(
     include_top=False,

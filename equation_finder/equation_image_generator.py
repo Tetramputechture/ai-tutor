@@ -36,7 +36,8 @@ def rand_mathtext():
 def rand_text_color():
     return random.choice([
         'black',
-        'dimgray',
+        'firebrick',
+        'midnightblue',
         'gray',
         'silver',
         'brown',
