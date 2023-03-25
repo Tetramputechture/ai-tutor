@@ -18,7 +18,7 @@ MAX_EQUATION_HEIGHT = 50
 
 RANDOM_TEXT_COUNT_MAX = 35
 
-RANDOM_LINE_COUNT_MAX = 20
+RANDOM_LINE_COUNT_MAX = 15
 
 RANDOM_ELLIPSE_COUNT_MAX = 30
 
@@ -47,7 +47,6 @@ def random_sheet_color():
         'crimson',
         'snow',
         'skyblue',
-        'yellowgreen',
         'seashell'
     ])
 
@@ -64,8 +63,9 @@ def random_font():
 
 
 class EquationSheetGenerator:
-    def __init__(self, max_equations_per_sheet):
+    def __init__(self, max_equations_per_sheet, sheet_size=(200, 200)):
         self.max_equations_per_sheet = max_equations_per_sheet
+        self.sheet_size = sheet_size
 
     def generate_sheets(self, sheet_count, cache_dir=''):
         if len(cache_dir) > 0 and self.sheets_cached(cache_dir):
@@ -97,7 +97,7 @@ class EquationSheetGenerator:
         bounding_rects = []
         eq_coords = []
         sheet_image = Image.new(
-            mode="RGBA", size=(300, 300), color=random_sheet_color())
+            mode="RGBA", size=self.sheet_size, color=random_sheet_color())
         num_equations = random.randint(1, self.max_equations_per_sheet)
         sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
         eq_im_generator = EquationImageGenerator()
@@ -107,16 +107,22 @@ class EquationSheetGenerator:
 
         iterations = 0
         while iterations < 100000:
-            eq_position = (random.randint(1, 175), random.randint(1, 175))
-            scale_factor = random.uniform(-0.1, 0.3) + 1
+            max_x_pos, max_y_pos = (
+                (self.sheet_size[0] - original_image_width - 20),
+                (self.sheet_size[1] - original_image_height - 20)
+            )
+            eq_position = (random.randint(
+                1, max_x_pos), random.randint(1, max_y_pos))
+
+            scale_factor = random.uniform(-0.3, 0.3) + 1
 
             equation_image = equation_image.resize(
                 (int(original_image_width * scale_factor), int(original_image_height * scale_factor)))
 
-            rotation_degrees = random.randint(0, 90)
+            rotation_degrees = random.randint(-45, 45)
 
             equation_image = equation_image.rotate(
-                rotation_degrees, PIL.Image.NEAREST, expand=1)
+                -rotation_degrees, PIL.Image.BICUBIC, expand=1)
 
             image_width, image_height = equation_image.size
 
@@ -126,7 +132,7 @@ class EquationSheetGenerator:
                  eq_position[1] + image_height)
             )
 
-            if eq_position[0] + image_width > 300 or eq_position[1] + image_height > 300:
+            if eq_position[0] + image_width > self.sheet_size[0] or eq_position[1] + image_height > self.sheet_size[1]:
                 iterations += 1
             else:
                 eq_coords.append(eq_bounding_rect.to_eq_coord())
@@ -180,8 +186,14 @@ class EquationSheetGenerator:
         # add random lines
         sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
         for i in range(random.randint(0, RANDOM_LINE_COUNT_MAX)):
-            line_position = (random.randint(15, 250), random.randint(15, 250))
-            line_size = (random.randint(50, 200), random.randint(50, 200))
+            max_x_pos, max_y_pos = (
+                (self.sheet_size[0] - 20),
+                (self.sheet_size[1] - 20)
+            )
+            line_position = (random.randint(1, max_x_pos),
+                             random.randint(1, max_y_pos))
+            line_size = (random.randint(
+                20, max_x_pos - line_position[0] + 20), random.randint(20, max_y_pos - line_position[1] + 20))
             sheet_image_draw_ctx.line(
                 line_position + line_size, fill=(*random_color(), random.randint(150, 255)), width=1)
 
@@ -189,10 +201,14 @@ class EquationSheetGenerator:
         for i in range(random.randint(0, RANDOM_ELLIPSE_COUNT_MAX)):
             iterations = 0
             while iterations < 1000000:
-                ellipse_position = (random.randint(1, 250),
-                                    random.randint(1, 250))
+                max_x_pos, max_y_pos = (
+                    (self.sheet_size[0]),
+                    (self.sheet_size[1])
+                )
+                ellipse_position = (random.randint(1, max_x_pos),
+                                    random.randint(1, max_y_pos))
                 ellipse_width, ellipse_height = (
-                    random.randint(5, 20), random.randint(5, 20))
+                    random.randint(5, 30), random.randint(5, 30))
 
                 ellipse_bounding_rect = BoundingRect.from_coords(
                     ellipse_position,
@@ -231,18 +247,18 @@ class EquationSheetGenerator:
 
         # contrast
         contrast_enhancer = PIL.ImageEnhance.Contrast(sheet_image)
-        sheet_image = contrast_enhancer.enhance(random.uniform(0.5, 1.5))
+        sheet_image = contrast_enhancer.enhance(random.uniform(0.6, 1.5))
 
         # color
         color_enhancer = PIL.ImageEnhance.Color(sheet_image)
         sheet_image = color_enhancer.enhance(random.uniform(0.1, 1.5))
 
-        # rotate 0, 90, 180, or 270 degrees
-        random_degree = random.choice([90, 270])
-        eq_coords = list(map(lambda coord: BoundingRect.from_coords(
-            (coord['x1'], coord['y1']), (coord['x2'], coord['y2'])).rotate((150, 150), random_degree).to_eq_coord(), eq_coords))
-        sheet_image = sheet_image.rotate(
-            -random_degree, PIL.Image.NEAREST)
+        # # rotate 0, 90, 180, or 270 degrees
+        # random_degree = random.choice([90, 270])
+        # eq_coords = list(map(lambda coord: BoundingRect.from_coords(
+        #     (coord['x1'], coord['y1']), (coord['x2'], coord['y2'])).rotate((100, 100), random_degree).to_eq_coord(), eq_coords))
+        # sheet_image = sheet_image.rotate(
+        #     -random_degree, PIL.Image.BICUBIC)
 
         return (sheet_image, eq_coords)
 

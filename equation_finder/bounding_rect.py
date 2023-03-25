@@ -64,10 +64,10 @@ class BoundingRect:
 
     def to_eq_coord(self):
         return {
-            "x1": self.x,
-            "y1": self.y,
-            "x2": self.x + self.width,
-            "y2": self.y + self.height
+            "x1": int(self.x),
+            "y1": int(self.y),
+            "x2": int(self.x + self.width),
+            "y2": int(self.y + self.height)
         }
 
     def center(self):
