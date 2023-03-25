@@ -6,12 +6,12 @@ import os
 import string
 import sys
 
-from multiprocessing import Pool
-
-from bounding_rect import BoundingRect
-from equation_image_generator import EquationImageGenerator
+from .bounding_rect import BoundingRect
+from .equation_image_generator import EquationImageGenerator
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+
+from multiprocessing import Pool
 
 MIN_EQUATION_WIDTH = 40
 MIN_EQUATION_HEIGHT = 10
@@ -69,7 +69,7 @@ class EquationSheetGenerator:
     def generate_sheets(self, sheet_count):
         if len(self.cache_dir) > 0 and self.sheets_cached():
             print('Cached equation sheets found.')
-            return self.sheets_from_cache(self.cache_dir, sheet_count)
+            return self.sheets_from_cache(sheet_count)
 
         print('Generating equation sheets...')
         sheets = []
@@ -80,7 +80,6 @@ class EquationSheetGenerator:
         for idx in range(sheet_count):
             sheet = self.generate_sheet()
             sheets.append(sheet)
-            sys.stdout.write('.')
 
             if should_cache:
                 file_prefix = f'{self.cache_dir}/eq-sheet-{idx}'
@@ -276,13 +275,14 @@ class EquationSheetGenerator:
     def sheet_from_file(self, filename):
         file_prefix = os.path.splitext(filename)[0]
         image_file = os.path.join(self.cache_dir, filename)
-        coords_file = os.path.join(
+        coords_data_file = os.path.join(
             self.cache_dir, f'{file_prefix}.json')
-        coords_file_data = open(coords_file)
         if os.path.isfile(image_file):
             sheet_image = Image.open(image_file)
-            sheet_coords = json.load(coords_file_data)
-            sheets.append((sheet_image, sheet_coords))
+            with open(coords_data_file) as coords_file:
+                sheet_coords = json.loads(coords_file.read())
+
+        return (sheet_image, sheet_coords)
 
     def sheets_from_cache(self, sheet_count):
         bmp_files = [f for f in os.listdir(
@@ -290,6 +290,6 @@ class EquationSheetGenerator:
         sheets = []
         with Pool() as pool:
             sheets = pool.map(
-                bmp_files, self.sheet_from_file, chunksize=20)
+                self.sheet_from_file, bmp_files, chunksize=20)
 
         return sheets[:sheet_count]
