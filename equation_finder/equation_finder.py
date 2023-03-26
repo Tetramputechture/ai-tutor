@@ -22,7 +22,7 @@ from .resnet_model import ResnetModel
 from .conv_model import ConvModel
 
 max_equations_per_sheet = 1
-sheet_count = 1000
+sheet_count = 5
 
 epochs = 1
 

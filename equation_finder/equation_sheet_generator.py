@@ -77,8 +77,15 @@ class EquationSheetGenerator:
         if should_cache and not os.path.isdir(self.cache_dir):
             os.makedirs(self.cache_dir)
 
-        for idx in range(sheet_count):
-            sheet = self.generate_sheet()
+        sheet_gen_results = []
+        with Pool(processes=4) as pool:
+            for _ in range(sheet_count):
+                sheet_gen_results.append(pool.apply_async(self.generate_sheet))
+            pool.close()
+            pool.join()
+
+        for idx, sheet_gen_result in enumerate(sheet_gen_results):
+            sheet = sheet_gen_result.get()
             sheets.append(sheet)
 
             if should_cache:
@@ -117,7 +124,7 @@ class EquationSheetGenerator:
                 eq_position = (random.randint(
                     1, max_x_pos), random.randint(1, max_y_pos))
 
-                scale_factor = random.uniform(-0.4, 0.4) + 1
+                scale_factor = random.uniform(-0.5, 0) + 1
 
                 equation_image = equation_image.resize(
                     (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), PIL.Image.BILINEAR)
@@ -259,13 +266,14 @@ class EquationSheetGenerator:
         if random.random() < 0.5:
             sheet_image = PIL.ImageOps.invert(sheet_image.convert('RGB'))
 
-            # # rotate 0, 90, 180, or 270 degrees
-            # random_degree = random.choice([90, 270])
-            # eq_coords = list(map(lambda coord: BoundingRect.from_coords(
-            #     (coord['x1'], coord['y1']), (coord['x2'], coord['y2'])).rotate((100, 100), random_degree).to_eq_coord(), eq_coords))
-            # sheet_image = sheet_image.rotate(
-            #     -random_degree, PIL.Image.BICUBIC)
+        # # rotate 0, 90, 180, or 270 degrees
+        random_degree = random.choice([90, 270])
+        eq_coords = list(map(lambda coord: BoundingRect.from_coords(
+            (coord['x1'], coord['y1']), (coord['x2'], coord['y2'])).rotate((100, 100), random_degree).to_eq_coord(), eq_coords))
+        sheet_image = sheet_image.rotate(
+            -random_degree, PIL.Image.BICUBIC)
 
+        sys.stdout.write('.')
         return (sheet_image, eq_coords)
 
     def sheets_cached(self):
@@ -288,8 +296,10 @@ class EquationSheetGenerator:
         bmp_files = [f for f in os.listdir(
             self.cache_dir) if f.endswith('.bmp')]
         sheets = []
-        with Pool() as pool:
+        with Pool(processes=4) as pool:
             sheets = pool.map(
-                self.sheet_from_file, bmp_files, chunksize=20)
+                self.sheet_from_file, bmp_files, chunksize=50)
+            pool.close()
+            pool.join()
 
         return sheets[:sheet_count]

@@ -73,7 +73,7 @@ class EquationImageGenerator:
 
         return images
 
-    def generate_equation_image(self, dpi=500):
+    def generate_equation_image(self, dpi=400):
         eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
             a_num=rand_frac_number(),
             a_denom=rand_frac_number(),
