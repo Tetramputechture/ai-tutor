@@ -12,14 +12,15 @@ class ResnetModel:
         model = models.Sequential([
             resnet_base,
             layers.Flatten(),
-            layers.Dropout(rate=0.5),
+            # layers.Dense(64, activation='relu'),
+            # layers.Dropout(0.5),
             layers.Dense(4, activation='relu')
         ])
 
         for layer in resnet_base.layers:
             layer.trainable = False
 
-        for layer in resnet_base.layers[-16:]:
+        for layer in resnet_base.layers[-24:]:
             layer.trainable = True
 
         model.compile(optimizer='adam',

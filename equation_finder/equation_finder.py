@@ -13,7 +13,7 @@ import os
 import json
 import sys
 
-from .bounding_rect import BoundingRect
+from .equation_box import EquationBox
 from .equation_image_generator import EquationImageGenerator
 from .equation_sheet_generator import EquationSheetGenerator
 
@@ -22,9 +22,9 @@ from .resnet_model import ResnetModel
 from .conv_model import ConvModel
 
 max_equations_per_sheet = 1
-sheet_count = 5
+sheet_count = 2000
 
-epochs = 1
+epochs = 15
 
 train_split = 0.7
 
@@ -68,16 +68,10 @@ class EquationFinder:
         sheet_eq_coords = []
 
         for sheet in sheets:
-            eq_image, eq_coords = sheet
-            sample = dict()
-            eq_image = eq_image.convert('RGB')
-            im_arr = image.img_to_array(eq_image)
-            sheet_image_data.append(im_arr)
-            coords = []
-            for coord in eq_coords:
-                coords.extend(
-                    [coord['x1'], coord['y1'], coord['x2'], coord['y2']])
-            sheet_eq_coords.append(coords)
+            sheet_image, eq_box = sheet
+            sheet_image = sheet_image.convert('RGB')
+            sheet_image_data.append(image.img_to_array(sheet_image))
+            sheet_eq_coords.append(eq_box.to_array())
 
         sheet_image_data = np.array(sheet_image_data).astype('float32')
         sheet_eq_coords = np.array(sheet_eq_coords).astype('float32')
@@ -113,43 +107,38 @@ class EquationFinder:
     def infer_from_model(self, image_data):
         imdata = np.expand_dims(image_data, axis=0)
         predictions = self.model.predict(imdata)[0]
-        coords = []
-        for i in range(0, len(predictions), 4):
-            coords.append({'x1': predictions[i], 'y1': predictions[i+1],
-                           'x2': predictions[i+2], 'y2': predictions[i+3]})
-
-        return coords
+        return EquationBox((int(predictions[0]), int(predictions[1])),
+                           (int(predictions[2]), int(predictions[3])))
 
     def show_validation(self):
         validation_sheet = EquationSheetGenerator(
-            max_equations_per_sheet).generate_sheet()
+            max_equations_per_sheet).clean_sheet_with_equation()
 
         rand_test_image = validation_sheet[0]
-        rand_test_coords = validation_sheet[1]
-        rand_test_image_data = rand_test_image.convert('RGB')
-        rand_test_image_data = image.img_to_array(rand_test_image_data)
+        rand_test_coords = validation_sheet[1].to_eq_coord()
+        rand_test_image_data = image.img_to_array(
+            rand_test_image.convert('RGB'))
 
         fig, ax = plt.subplots()
         ax.imshow(rand_test_image)
 
-        for eq_coord in rand_test_coords:
-            xy = (eq_coord['x1'], eq_coord['y1'])
-            width = eq_coord['x2'] - xy[0]
-            height = eq_coord['y2'] - xy[1]
-            ax.add_patch(Rectangle(xy, width, height,
-                         fill=False, edgecolor="r"))
+        xy = (rand_test_coords['x1'], rand_test_coords['y1'])
+        width = rand_test_coords['x2'] - xy[0]
+        height = rand_test_coords['y2'] - xy[1]
+        ax.add_patch(Rectangle(xy, width, height,
+                               fill=False, edgecolor="r"))
 
         fig, ax = plt.subplots()
         ax.imshow(rand_test_image)
 
-        inferred_coords = self.infer_from_model(rand_test_image_data)
+        inferred_coords = self.infer_from_model(
+            rand_test_image_data).to_eq_coord()
 
-        for eq_coord in inferred_coords:
-            xy = (eq_coord['x1'], eq_coord['y1'])
-            width = eq_coord['x2'] - xy[0]
-            height = eq_coord['y2'] - xy[1]
-            ax.add_patch(Rectangle(xy, width, height,
-                         fill=False, edgecolor="r"))
+        xy = (inferred_coords['x1'], inferred_coords['y1'])
+        width = inferred_coords['x2'] - xy[0]
+        height = inferred_coords['y2'] - xy[1]
+        ax.add_patch(Rectangle(xy, width, height,
+                               fill=False, edgecolor="r"))
 
         print('Ground truth:')
         print(rand_test_coords)
@@ -158,11 +147,11 @@ class EquationFinder:
         print('Differential:')
 
         differential = [coord_diff(coord, inferred_coord)
-                        for coord, inferred_coord in zip(rand_test_coords, inferred_coords)]
+                        for coord, inferred_coord in zip([rand_test_coords], [inferred_coords])]
         print(list(differential))
 
         accuracies = [coord_accuracy(coord, inferred_coord)
-                      for coord, inferred_coord in zip(rand_test_coords, inferred_coords)]
+                      for coord, inferred_coord in zip([rand_test_coords], [inferred_coords])]
         print('Accuracy (%):')
         print(accuracies)
 
