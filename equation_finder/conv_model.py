@@ -7,7 +7,7 @@ class ConvModel:
     def create_model(self):
         model = models.Sequential([
             layers.Conv2D(32, (7, 7), padding="same",
-                          activation="relu", input_shape=(200, 200, 3)),
+                          activation="relu", input_shape=(227, 227, 3)),
             layers.BatchNormalization(),
             layers.MaxPooling2D(pool_size=(2, 2)),
 

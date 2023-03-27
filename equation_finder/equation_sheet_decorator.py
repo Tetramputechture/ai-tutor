@@ -46,6 +46,7 @@ class EquationSheetDecorator:
         text_image = Image.new(
             'RGBA', sheet_image.size, (255, 255, 255, 0))
         image_draw_ctx = ImageDraw.Draw(text_image)
+        sheet_size = sheet_image.size
 
         # add misc other text
         for i in range(text_count):
@@ -54,8 +55,8 @@ class EquationSheetDecorator:
             fnt = ImageFont.truetype(random_font(), random.randint(6, 14))
             text = random_text()
             while iterations < 1000000:
-                text_position = (random.randint(1, 250),
-                                 random.randint(1, 250))
+                text_position = (random.randint(1, sheet_size[0]),
+                                 random.randint(1, sheet_size[1]))
                 image_draw_ctx.text(text_position, text,
                                     font=fnt, fill=(*random_color(), 0))
 
@@ -162,7 +163,7 @@ class EquationSheetDecorator:
         eq_position = (random.randint(
             1, max_x_pos), random.randint(1, max_y_pos))
 
-        scale_factor = random.uniform(-0.4, 0) + 1
+        scale_factor = random.uniform(-0.4, 0.2) + 1
 
         equation_image = equation_image.resize(
             (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BILINEAR)

@@ -6,7 +6,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras import datasets, layers, models
 from tensorflow.keras.preprocessing import image
-
+from sklearn.model_selection import train_test_split
 
 import PIL
 import os
@@ -24,7 +24,7 @@ from .conv_model import ConvModel
 max_equations_per_sheet = 1
 sheet_count = 2000
 
-epochs = 15
+epochs = 20
 
 train_split = 0.7
 
@@ -58,7 +58,7 @@ class EquationFinder:
         sheet_images_path = './data/equation-sheet-images'
         sheets = EquationSheetGenerator(
             max_equations_per_sheet,
-            sheet_size=(200, 200),
+            sheet_size=(227, 227),
             cache_dir=sheet_images_path
         ).generate_sheets(sheet_count)
 
@@ -74,12 +74,18 @@ class EquationFinder:
             sheet_eq_coords.append(eq_box.to_array())
 
         sheet_image_data = np.array(sheet_image_data).astype('float32')
-        sheet_eq_coords = np.array(sheet_eq_coords).astype('float32')
+        # np.random.shuffle(sheet_image_data)
 
-        train_image_data, test_image_data = np.split(
-            sheet_image_data, [int(len(sheet_image_data)*train_split)])
-        train_eq_coords, test_eq_coords = np.split(
-            sheet_eq_coords, [int(len(sheet_eq_coords)*train_split)]
+        sheet_eq_coords = np.array(sheet_eq_coords).astype('float32')
+        # np.random.shuffle(sheet_eq_coords)
+
+        # train_image_data, test_image_data = np.split(
+        #     sheet_image_data, [int(len(sheet_image_data)*train_split)])
+        # train_eq_coords, test_eq_coords = np.split(
+        #     sheet_eq_coords, [int(len(sheet_eq_coords)*train_split)]
+        # )
+        train_image_data, test_image_data, train_eq_coords, test_eq_coords = train_test_split(
+            sheet_image_data, sheet_eq_coords, test_size=0.33
         )
 
         # We don't need raw sheet tuple data anymore, unload

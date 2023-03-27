@@ -4,7 +4,7 @@ from tensorflow.keras import datasets, layers, models, applications
 
 
 class ResnetModel:
-    def create_model(self, input_shape=(200, 200, 3)):
+    def create_model(self, input_shape=(227, 227, 3)):
         resnet_base = applications.resnet.ResNet50(
             include_top=False,
             input_shape=input_shape

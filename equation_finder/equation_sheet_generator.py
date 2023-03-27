@@ -14,17 +14,9 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from multiprocessing import Pool
 
-MIN_EQUATION_WIDTH = 40
-MIN_EQUATION_HEIGHT = 10
-
-MAX_EQUATION_WIDTH = 150
-MAX_EQUATION_HEIGHT = 50
-
-RANDOM_TEXT_COUNT_MAX = 10
-
-RANDOM_LINE_COUNT_MAX = 4
-
-RANDOM_ELLIPSE_COUNT_MAX = 10
+RANDOM_TEXT_COUNT_MAX = 12
+RANDOM_LINE_COUNT_MAX = 6
+RANDOM_ELLIPSE_COUNT_MAX = 12
 
 
 def random_text():
@@ -62,7 +54,7 @@ def random_font():
 
 
 class EquationSheetGenerator:
-    def __init__(self, max_equations_per_sheet, sheet_size=(200, 200), cache_dir=''):
+    def __init__(self, max_equations_per_sheet, sheet_size=(227, 227), cache_dir=''):
         self.max_equations_per_sheet = max_equations_per_sheet
         self.sheet_size = sheet_size
         self.cache_dir = cache_dir
@@ -130,8 +122,8 @@ class EquationSheetGenerator:
         sheet_image = self.new_sheet_image(color=random_sheet_color())
         eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
-        # 50% chance to add random text
-        if random.random() < 0.5:
+        # 70% chance to add random text
+        if random.random() < 0.7:
             text_count = random.randint(1, RANDOM_TEXT_COUNT_MAX)
             sheet_image = EquationSheetDecorator.add_text(
                 sheet_image, text_count, [eq_box])
@@ -148,7 +140,7 @@ class EquationSheetGenerator:
             sheet_image = EquationSheetDecorator.add_ellipses(
                 sheet_image, ellipse_count, [eq_box])
 
-        # adjust
+        # sharpness
         sheet_image = EquationSheetDecorator.adjust_sharpness(
             sheet_image, random.uniform(0.2, 2))
 
