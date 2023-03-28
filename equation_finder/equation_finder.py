@@ -22,11 +22,13 @@ from .resnet_model import ResnetModel
 from .conv_model import ConvModel
 
 max_equations_per_sheet = 1
-sheet_count = 2000
+sheet_count = 1000
 
-epochs = 20
+epochs = 15
 
 train_split = 0.7
+
+MODEL_PATH = './equation_finder/equation_finder.h5'
 
 
 def coord_diff(coord, inferred_coords):
@@ -74,16 +76,7 @@ class EquationFinder:
             sheet_eq_coords.append(eq_box.to_array())
 
         sheet_image_data = np.array(sheet_image_data).astype('float32')
-        # np.random.shuffle(sheet_image_data)
-
         sheet_eq_coords = np.array(sheet_eq_coords).astype('float32')
-        # np.random.shuffle(sheet_eq_coords)
-
-        # train_image_data, test_image_data = np.split(
-        #     sheet_image_data, [int(len(sheet_image_data)*train_split)])
-        # train_eq_coords, test_eq_coords = np.split(
-        #     sheet_eq_coords, [int(len(sheet_eq_coords)*train_split)]
-        # )
         train_image_data, test_image_data, train_eq_coords, test_eq_coords = train_test_split(
             sheet_image_data, sheet_eq_coords, test_size=0.33
         )
@@ -109,6 +102,18 @@ class EquationFinder:
             test_image_data, test_eq_coords, verbose=2)
 
         print(test_acc)
+
+    def load_model(self):
+        if os.path.exists(MODEL_PATH):
+            print('Model cached. Loading model...')
+            self.model = models.load_model(MODEL_PATH)
+        else:
+            print('Model not cached. Training and saving model...')
+            self.train_model()
+            self.save_model()
+
+    def save_model(self):
+        self.model.save(MODEL_PATH)
 
     def infer_from_model(self, image_data):
         imdata = np.expand_dims(image_data, axis=0)

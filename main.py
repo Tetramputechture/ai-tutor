@@ -5,7 +5,7 @@ from equation_finder.equation_finder import EquationFinder
 
 def main():
     ef = EquationFinder()
-    ef.train_model()
+    ef.load_model()
     ef.show_validation()
 
 
