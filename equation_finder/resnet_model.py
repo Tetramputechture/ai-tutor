@@ -13,7 +13,6 @@ class ResnetModel:
             resnet_base,
             layers.Flatten(),
             # layers.Dense(64, activation='relu'),
-            # layers.Dropout(0.5),
             layers.Dense(4, activation='relu')
         ])
 

@@ -157,18 +157,18 @@ class EquationSheetDecorator:
         original_image_width, original_image_height = equation_image.size
 
         max_x_pos, max_y_pos = (
-            (sheet_width - original_image_width - 20),
-            (sheet_height - original_image_height - 20)
+            (sheet_width - original_image_width - 15),
+            (sheet_height - original_image_height - 30)
         )
         eq_position = (random.randint(
             1, max_x_pos), random.randint(1, max_y_pos))
 
-        scale_factor = random.uniform(-0.4, 0.2) + 1
+        scale_factor = random.uniform(-0.5, 0.0) + 1
 
         equation_image = equation_image.resize(
             (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BILINEAR)
 
-        rotation_degrees = random.randint(-30, 30)
+        rotation_degrees = random.randint(-20, 20)
         equation_image = equation_image.rotate(
             -rotation_degrees, Image.BICUBIC, expand=1)
 

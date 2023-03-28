@@ -83,14 +83,14 @@ class EquationFinder:
 
         # We don't need raw sheet tuple data anymore, unload
 
-        sheets = None
-        sheet_image_data = None
-        sheet_eq_coords = None
+        del sheets
+        del sheet_image_data
+        del sheet_eq_coords
 
         # Step 3: Train model
 
         history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
-                                 validation_data=(test_image_data, test_eq_coords), batch_size=128)
+                                 validation_data=(test_image_data, test_eq_coords), batch_size=64)
 
         plt.plot(history.history['accuracy'], label='accuracy')
         plt.plot(history.history['val_accuracy'], label='val_accuracy')
