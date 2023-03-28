@@ -21,10 +21,9 @@ from .equation_sheet_generator import EquationSheetGenerator
 from .resnet_model import ResnetModel
 from .conv_model import ConvModel
 
-max_equations_per_sheet = 1
-sheet_count = 20
+sheet_count = 2000
 
-epochs = 15
+epochs = 20
 
 train_split = 0.7
 
@@ -59,7 +58,6 @@ class EquationFinder:
 
         sheet_images_path = './data/equation-sheet-images'
         sheets = EquationSheetGenerator(
-            max_equations_per_sheet,
             sheet_size=(227, 227),
             cache_dir=sheet_images_path
         ).generate_sheets(sheet_count)
@@ -106,7 +104,8 @@ class EquationFinder:
     def load_model(self):
         if os.path.exists(MODEL_PATH):
             print('Model cached. Loading model...')
-            self.model = models.load_model(MODEL_PATH)
+            self.model = models.load_model(MODEL_PATH, compile=False)
+            self.model.compile()
         else:
             print('Model not cached. Training and saving model...')
             self.train_model()
@@ -122,8 +121,7 @@ class EquationFinder:
                            (int(predictions[2]), int(predictions[3])))
 
     def show_validation(self):
-        validation_sheet = EquationSheetGenerator(
-            max_equations_per_sheet).clean_sheet_with_equation()
+        validation_sheet = EquationSheetGenerator().clean_sheet_with_equation()
 
         rand_test_image = validation_sheet[0]
         rand_test_coords = validation_sheet[1].to_eq_coord()

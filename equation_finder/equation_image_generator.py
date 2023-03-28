@@ -35,7 +35,8 @@ def rand_text_color():
         'brown',
         'darkred',
         'orange',
-        'lime',
+        'violet',
+        'plum',
         'darkgreen',
         'blue',
         'red',
@@ -73,7 +74,7 @@ class EquationImageGenerator:
 
         return images
 
-    def generate_equation_image(self, dpi=400):
+    def generate_equation_image(self, dpi=800):
         eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
             a_num=rand_frac_number(),
             a_denom=rand_frac_number(),
@@ -83,15 +84,17 @@ class EquationImageGenerator:
             c_denom=rand_frac_number()
         )
         fig = plt.figure()
+        rotation_degrees = random.randint(-45, 45)
         text = fig.text(0, 0, u'${0}$'.format(
-            eq_latex), fontsize=3, math_fontfamily=rand_math_font(), color=rand_text_color())
+            eq_latex), fontsize=6, math_fontfamily=rand_math_font(), color=rand_text_color(), rotation=rotation_degrees, rotation_mode="anchor")
         fig.savefig(BytesIO(), dpi=dpi)
         bbox = text.get_window_extent()
-        width, height = bbox.size / float(dpi) + 0.005
+        width, height = bbox.size / float(dpi)
         fig.set_size_inches((width, height))
 
         dy = (bbox.ymin / float(dpi)) / height
-        text.set_position((0.01, -dy))
+        dx = (bbox.xmin / float(dpi)) / width
+        text.set_position((-dx, -dy))
 
         buffer_ = BytesIO()
         fig.savefig(buffer_, dpi=dpi, transparent=True, format='png')

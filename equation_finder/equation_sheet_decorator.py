@@ -1,5 +1,6 @@
 import string
 import random
+import sys
 
 from .equation_box import EquationBox
 from .equation_image_generator import EquationImageGenerator
@@ -89,12 +90,12 @@ class EquationSheetDecorator:
     def add_lines(sheet_image, line_count):
         sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
         sheet_size = sheet_image.size
+        max_x_pos, max_y_pos = (
+            (sheet_size[0] - 20),
+            (sheet_size[1] - 20)
+        )
 
         for i in range(line_count):
-            max_x_pos, max_y_pos = (
-                (sheet_size[0] - 20),
-                (sheet_size[1] - 20)
-            )
             line_position = (random.randint(1, max_x_pos),
                              random.randint(1, max_y_pos))
             line_size = (random.randint(
@@ -107,14 +108,14 @@ class EquationSheetDecorator:
     def add_ellipses(sheet_image, ellipse_count, eq_boxes):
         sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
         sheet_size = sheet_image.size
+        max_x_pos, max_y_pos = (
+            (sheet_size[0]),
+            (sheet_size[1])
+        )
 
         for i in range(ellipse_count):
             iterations = 0
             while iterations < 1000000:
-                max_x_pos, max_y_pos = (
-                    (sheet_size[0]),
-                    (sheet_size[1])
-                )
                 ellipse_position = (random.randint(1, max_x_pos),
                                     random.randint(1, max_y_pos))
                 ellipse_width, ellipse_height = (
@@ -148,32 +149,48 @@ class EquationSheetDecorator:
 
         return sheet_image
 
-    def add_equation(sheet_image):
+    def add_equation(sheet_image, eq_boxes=[]):
         sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
         sheet_width, sheet_height = sheet_image.size
 
         equation_image = EquationImageGenerator().generate_equation_image()
         original_image_width, original_image_height = equation_image.size
 
-        max_x_pos, max_y_pos = (
-            (sheet_width - original_image_width - 15),
-            (sheet_height - original_image_height - 30)
-        )
-        eq_position = (random.randint(
-            1, max_x_pos), random.randint(1, max_y_pos))
+        iterations = 0
+        while iterations < 1000000:
+            scale_factor = random.uniform(0.15, 0.25)
 
-        scale_factor = random.uniform(-0.5, 0.0) + 1
+            equation_image = equation_image.resize(
+                (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
-        equation_image = equation_image.resize(
-            (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BILINEAR)
+            image_width, image_height = equation_image.size
 
-        rotation_degrees = random.randint(-20, 20)
-        equation_image = equation_image.rotate(
-            -rotation_degrees, Image.BICUBIC, expand=1)
+            max_x_pos, max_y_pos = (
+                (sheet_width - image_width - 15),
+                (sheet_height - image_height - 30)
+            )
 
-        image_width, image_height = equation_image.size
-        sheet_image.paste(
-            equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
+            eq_position = (random.randint(
+                15, max_x_pos), random.randint(15, max_y_pos))
+
+            eq_box = EquationBox(
+                eq_position, (eq_position[0] + image_width, eq_position[1] + image_height))
+
+            collision = False
+
+            sys.stdout.flush()
+
+            for box in eq_boxes:
+                if box.collision(eq_box):
+                    collision = True
+                    break
+
+            if collision:
+                iterations += 1
+            else:
+                sheet_image.paste(
+                    equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
+                break
 
         return EquationBox(
             eq_position,

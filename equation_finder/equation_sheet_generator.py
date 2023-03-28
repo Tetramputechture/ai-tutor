@@ -54,8 +54,7 @@ def random_font():
 
 
 class EquationSheetGenerator:
-    def __init__(self, max_equations_per_sheet, sheet_size=(227, 227), cache_dir=''):
-        self.max_equations_per_sheet = max_equations_per_sheet
+    def __init__(self, sheet_size=(227, 227), cache_dir=''):
         self.sheet_size = sheet_size
         self.cache_dir = cache_dir
 
@@ -77,19 +76,31 @@ class EquationSheetGenerator:
             os.makedirs(self.cache_dir)
 
         sheet_gen_results = []
-        with Pool() as pool:
-            for _ in range(clean_eq_sheet_count):
-                sheet_gen_results.append(pool.apply_async(
-                    self.clean_sheet_with_equation))
-            for _ in range(dirty_eq_sheet_count):
-                sheet_gen_results.append(pool.apply_async(
-                    self.dirty_sheet_with_equation))
-            for _ in range(blank_sheet_count):
-                sheet_gen_results.append(pool.apply_async(
-                    self.blank_sheet
-                ))
-            pool.close()
-            pool.join()
+        # generate 100 sheets at a time
+        for i in range(0, clean_eq_sheet_count, 100):
+            with Pool(processes=4) as pool:
+                for _ in range(min(100, clean_eq_sheet_count - i)):
+                    sheet_gen_results.append(pool.apply_async(
+                        self.clean_sheet_with_equation))
+                pool.close()
+                pool.join()
+
+        for i in range(0, dirty_eq_sheet_count, 100):
+            with Pool(processes=4) as pool:
+                for _ in range(min(100, dirty_eq_sheet_count - i)):
+                    sheet_gen_results.append(pool.apply_async(
+                        self.dirty_sheet_with_equation))
+                pool.close()
+                pool.join()
+
+        for i in range(0, blank_sheet_count, 100):
+            with Pool(processes=4) as pool:
+                for _ in range(min(100, blank_sheet_count - i)):
+                    sheet_gen_results.append(pool.apply_async(
+                        self.blank_sheet
+                    ))
+                pool.close()
+                pool.join()
 
         for idx, sheet_gen_result in enumerate(sheet_gen_results):
             sheet = sheet_gen_result.get()
@@ -111,7 +122,7 @@ class EquationSheetGenerator:
             mode="RGBA", size=self.sheet_size, color=color)
 
     # sheet with white background and equation image; no misc background images
-    def clean_sheet_with_equation(self):
+    def clean_sheet_with_equation(self,):
         sheet_image = self.new_sheet_image()
         eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
