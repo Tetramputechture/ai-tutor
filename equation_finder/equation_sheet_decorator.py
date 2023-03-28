@@ -35,7 +35,6 @@ def random_font():
         './assets/fonts/ArefRuqaa-Regular.ttf',
         './assets/fonts/BungeeColor-Regular_colr_Windows.ttf',
         './assets/fonts/FreeMono.ttf',
-        './assets/fonts/KhmerOSBattambang-Regular.ttf',
         './assets/fonts/NotoSans-Regular.ttf',
         './assets/fonts/OpenSansCondensed-LightItalic.ttf'
     ])
