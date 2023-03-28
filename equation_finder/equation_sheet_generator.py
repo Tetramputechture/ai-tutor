@@ -77,7 +77,7 @@ class EquationSheetGenerator:
             os.makedirs(self.cache_dir)
 
         sheet_gen_results = []
-        with Pool(processes=8) as pool:
+        with Pool() as pool:
             for _ in range(clean_eq_sheet_count):
                 sheet_gen_results.append(pool.apply_async(
                     self.clean_sheet_with_equation))
