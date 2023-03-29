@@ -23,23 +23,23 @@ class EquationSheetProcessor:
         new_sheet_image = self.sheet_image.copy()
         draw = ImageDraw.Draw(new_sheet_image)
 
+        previous_inferred_box = None
         while True:
             sheet_image_data = image.img_to_array(
                 new_sheet_image.convert('RGB'))
             inferred_box = self.equation_finder.infer_from_model(
                 sheet_image_data)
 
-            print("Inferred:", inferred_box.topLeft, inferred_box.bottomRight)
-
-            if is_zero(inferred_box):
+            if is_zero(inferred_box) or inferred_box == previous_inferred_box:
                 break
             else:
                 equations.append(inferred_box)
+                previous_inferred_box = inferred_box
                 cropped_center = [
-                    inferred_box.topLeft[0] + 10,
-                    inferred_box.topLeft[1] + 10,
-                    inferred_box.bottomRight[0] - 10,
-                    inferred_box.bottomRight[1] - 10
+                    inferred_box.topLeft[0],
+                    inferred_box.topLeft[1],
+                    inferred_box.bottomRight[0],
+                    inferred_box.bottomRight[1]
                 ]
                 draw.rectangle(cropped_center, fill="white")
 

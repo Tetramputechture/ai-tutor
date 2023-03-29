@@ -12,7 +12,7 @@ def main():
     # eq_boxes = []
     # equation_sheet_image, eq_box = EquationSheetGenerator().clean_sheet_with_equation()
     # eq_boxes.append(eq_box)
-    # for i in range(1):
+    # for i in range(2):
     #     eq_boxes.append(EquationSheetDecorator.add_equation(
     #         equation_sheet_image, eq_boxes))
 
@@ -22,7 +22,7 @@ def main():
     # fig, ax = plt.subplots()
     # ax.imshow(equation_sheet_image)
 
-    # for box in eq_boxes:
+    # for box in predictions:
     #     width, height = box.size()
     #     ax.add_patch(Rectangle(box.topLeft, width, height,
     #                            fill=False, edgecolor="r"))

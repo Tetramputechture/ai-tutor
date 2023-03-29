@@ -21,11 +21,11 @@ from .equation_sheet_generator import EquationSheetGenerator
 from .resnet_model import ResnetModel
 from .conv_model import ConvModel
 
-sheet_count = 2000
+sheet_count = 5000
 
 epochs = 20
 
-train_split = 0.7
+batch_size = 64
 
 MODEL_PATH = './equation_finder/equation_finder.h5'
 
@@ -88,7 +88,7 @@ class EquationFinder:
         # Step 3: Train model
 
         history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
-                                 validation_data=(test_image_data, test_eq_coords), batch_size=64)
+                                 validation_data=(test_image_data, test_eq_coords), batch_size=batch_size)
 
         plt.plot(history.history['accuracy'], label='accuracy')
         plt.plot(history.history['val_accuracy'], label='val_accuracy')

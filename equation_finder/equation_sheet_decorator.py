@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
 
 def random_text():
-    text_len = random.randint(3, 12)
+    text_len = random.randint(3, 16)
     return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
                    for _ in range(text_len))
 
@@ -150,7 +150,6 @@ class EquationSheetDecorator:
         return sheet_image
 
     def add_equation(sheet_image, eq_boxes=[]):
-        sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
         sheet_width, sheet_height = sheet_image.size
 
         equation_image = EquationImageGenerator().generate_equation_image()
@@ -158,8 +157,7 @@ class EquationSheetDecorator:
 
         iterations = 0
         while iterations < 1000000:
-            scale_factor = random.uniform(0.15, 0.25)
-
+            scale_factor = 0.1
             equation_image = equation_image.resize(
                 (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
@@ -192,11 +190,10 @@ class EquationSheetDecorator:
                     equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
                 break
 
-        return EquationBox(
-            eq_position,
-            (eq_position[0] + image_width,
-                eq_position[1] + image_height)
-        )
+        eq_box = EquationBox((eq_position[0] - 3, eq_position[1] - 3),
+                             (eq_position[0] + image_width + 3, eq_position[1] + image_height + 3))
+
+        return eq_box
 
     def adjust_sharpness(sheet_image, value=1):
         return ImageEnhance.Sharpness(sheet_image).enhance(value)

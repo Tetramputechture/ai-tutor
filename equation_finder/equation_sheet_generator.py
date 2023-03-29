@@ -77,25 +77,25 @@ class EquationSheetGenerator:
 
         sheet_gen_results = []
         # generate 100 sheets at a time
-        for i in range(0, clean_eq_sheet_count, 100):
-            with Pool(processes=4) as pool:
-                for _ in range(min(100, clean_eq_sheet_count - i)):
+        for i in range(0, clean_eq_sheet_count, 200):
+            with Pool(processes=8) as pool:
+                for _ in range(min(200, clean_eq_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.clean_sheet_with_equation))
                 pool.close()
                 pool.join()
 
-        for i in range(0, dirty_eq_sheet_count, 100):
-            with Pool(processes=4) as pool:
-                for _ in range(min(100, dirty_eq_sheet_count - i)):
+        for i in range(0, dirty_eq_sheet_count, 200):
+            with Pool(processes=8) as pool:
+                for _ in range(min(200, dirty_eq_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.dirty_sheet_with_equation))
                 pool.close()
                 pool.join()
 
-        for i in range(0, blank_sheet_count, 100):
-            with Pool(processes=4) as pool:
-                for _ in range(min(100, blank_sheet_count - i)):
+        for i in range(0, blank_sheet_count, 200):
+            with Pool(processes=8) as pool:
+                for _ in range(min(200, blank_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.blank_sheet
                     ))
@@ -134,19 +134,19 @@ class EquationSheetGenerator:
         eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
         # 70% chance to add random text
-        if random.random() < 0.7:
+        if random.random() < 0.5:
             text_count = random.randint(1, RANDOM_TEXT_COUNT_MAX)
             sheet_image = EquationSheetDecorator.add_text(
                 sheet_image, text_count, [eq_box])
 
         # 50% chance to add random lines
-        if random.random() < 0.5:
+        if random.random() < 0.3:
             line_count = random.randint(1, RANDOM_LINE_COUNT_MAX)
             sheet_image = EquationSheetDecorator.add_lines(
                 sheet_image, line_count)
 
         # 50% chance to add random ellipses
-        if random.random() < 0.5:
+        if random.random() < 0.3:
             ellipse_count = random.randint(1, RANDOM_ELLIPSE_COUNT_MAX)
             sheet_image = EquationSheetDecorator.add_ellipses(
                 sheet_image, ellipse_count, [eq_box])
@@ -183,20 +183,21 @@ class EquationSheetGenerator:
     def blank_sheet(self):
         sheet_image = self.new_sheet_image()
 
-        # random text
-        text_count = random.randint(1, RANDOM_TEXT_COUNT_MAX)
-        sheet_image = EquationSheetDecorator.add_text(
-            sheet_image, text_count, [])
+        if random.random() < 0.8:
+            # random text
+            text_count = random.randint(1, RANDOM_TEXT_COUNT_MAX)
+            sheet_image = EquationSheetDecorator.add_text(
+                sheet_image, text_count, [])
 
-        # random lines
-        line_count = random.randint(1, RANDOM_LINE_COUNT_MAX)
-        sheet_image = EquationSheetDecorator.add_lines(
-            sheet_image, line_count)
+            # random lines
+            line_count = random.randint(1, RANDOM_LINE_COUNT_MAX)
+            sheet_image = EquationSheetDecorator.add_lines(
+                sheet_image, line_count)
 
-        # random ellipses
-        ellipse_count = random.randint(1, RANDOM_ELLIPSE_COUNT_MAX)
-        sheet_image = EquationSheetDecorator.add_ellipses(
-            sheet_image, ellipse_count, [])
+            # random ellipses
+            ellipse_count = random.randint(1, RANDOM_ELLIPSE_COUNT_MAX)
+            sheet_image = EquationSheetDecorator.add_ellipses(
+                sheet_image, ellipse_count, [])
 
         # adjust
         sheet_image = EquationSheetDecorator.adjust_sharpness(
