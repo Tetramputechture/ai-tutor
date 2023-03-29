@@ -65,28 +65,50 @@ class EquationSheetGenerator:
 
         print('Generating equation sheets...')
 
-        eq_sheet_count = int(sheet_count * 0.7)
-        dirty_eq_sheet_count = int(eq_sheet_count * 0.8)
-        clean_eq_sheet_count = eq_sheet_count - dirty_eq_sheet_count
-        blank_sheet_count = sheet_count - clean_eq_sheet_count - dirty_eq_sheet_count
+        eq_sheet_count = int(sheet_count * 0.5)
+        dirty_eq_sheet_count = int(eq_sheet_count * 0.5)
+        clean_single_eq_sheet_count = int(
+            (eq_sheet_count - dirty_eq_sheet_count) * 0.8)
+        clean_multiple_eq_sheet_count = int(
+            (eq_sheet_count - dirty_eq_sheet_count) * 0.2)
+        blank_sheet_count = sheet_count - clean_single_eq_sheet_count - \
+            clean_multiple_eq_sheet_count - dirty_eq_sheet_count
 
         sheets = []
         should_cache = len(self.cache_dir) > 0
         if should_cache and not os.path.isdir(self.cache_dir):
             os.makedirs(self.cache_dir)
 
+        print('Sheets with one equation and clean background: ',
+              clean_single_eq_sheet_count)
+        print('Sheets with multiple equations and clean background: ',
+              clean_multiple_eq_sheet_count)
+        print('Sheets with one equation and dirty background: ',
+              dirty_eq_sheet_count)
+        print('Sheets no with equation and dirty background: ', blank_sheet_count)
+        print('Total sheets with equation: ', eq_sheet_count)
+        print('Total sheets: ', sheet_count)
+
         sheet_gen_results = []
         # generate 100 sheets at a time
-        for i in range(0, clean_eq_sheet_count, 200):
-            with Pool(processes=8) as pool:
-                for _ in range(min(200, clean_eq_sheet_count - i)):
+        for i in range(0, clean_single_eq_sheet_count, 200):
+            with Pool() as pool:
+                for _ in range(min(200, clean_single_eq_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.clean_sheet_with_equation))
                 pool.close()
                 pool.join()
 
+        for i in range(0, clean_multiple_eq_sheet_count, 200):
+            with Pool() as pool:
+                for _ in range(min(200, clean_single_eq_sheet_count - i)):
+                    sheet_gen_results.append(pool.apply_async(
+                        self.clean_sheet_with_equations))
+                pool.close()
+                pool.join()
+
         for i in range(0, dirty_eq_sheet_count, 200):
-            with Pool(processes=8) as pool:
+            with Pool() as pool:
                 for _ in range(min(200, dirty_eq_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.dirty_sheet_with_equation))
@@ -94,7 +116,7 @@ class EquationSheetGenerator:
                 pool.join()
 
         for i in range(0, blank_sheet_count, 200):
-            with Pool(processes=8) as pool:
+            with Pool() as pool:
                 for _ in range(min(200, blank_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.blank_sheet
@@ -102,9 +124,12 @@ class EquationSheetGenerator:
                 pool.close()
                 pool.join()
 
+        print('Sheets generated. Loading into memory...')
+
         for idx, sheet_gen_result in enumerate(sheet_gen_results):
             sheet = sheet_gen_result.get()
             sheets.append(sheet)
+            sys.stdout.write('.')
 
             if should_cache:
                 file_prefix = f'{self.cache_dir}/eq-sheet-{idx}'
@@ -121,16 +146,36 @@ class EquationSheetGenerator:
         return Image.new(
             mode="RGBA", size=self.sheet_size, color=color)
 
-    # sheet with white background and equation image; no misc background images
-    def clean_sheet_with_equation(self,):
-        sheet_image = self.new_sheet_image()
+    # sheet with white background and 1 equation image; no misc background images
+    def clean_sheet_with_equation(self, noise=True):
+        sheet_image = self.new_sheet_image(color=random_sheet_color())
+        if noise:
+            sheet_image = EquationSheetDecorator.add_noise(sheet_image)
         eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
         return (sheet_image, eq_box)
 
-    # sheet with colored background and equation image; includes misc background images
+    def clean_sheet_with_equations(self):
+        sheet_image, eq_box = self.clean_sheet_with_equation()
+        sheet_image = EquationSheetDecorator.add_noise(sheet_image)
+        eq_boxes = [eq_box]
+        eq_boxes.append(EquationSheetDecorator.add_equation(
+            sheet_image, eq_boxes))
+
+        return (sheet_image, eq_box)
+
+    # sheet with colored background and equation image + other misc equation images;
+    # includes misc background images
     def dirty_sheet_with_equation(self):
         sheet_image = self.new_sheet_image(color=random_sheet_color())
+        sheet_image = EquationSheetDecorator.add_noise(sheet_image)
+
+        # 50% chance to add random lines
+        if random.random() < 0.3:
+            line_count = random.randint(1, RANDOM_LINE_COUNT_MAX)
+            sheet_image = EquationSheetDecorator.add_lines(
+                sheet_image, line_count)
+
         eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
         # 70% chance to add random text
@@ -138,12 +183,6 @@ class EquationSheetGenerator:
             text_count = random.randint(1, RANDOM_TEXT_COUNT_MAX)
             sheet_image = EquationSheetDecorator.add_text(
                 sheet_image, text_count, [eq_box])
-
-        # 50% chance to add random lines
-        if random.random() < 0.3:
-            line_count = random.randint(1, RANDOM_LINE_COUNT_MAX)
-            sheet_image = EquationSheetDecorator.add_lines(
-                sheet_image, line_count)
 
         # 50% chance to add random ellipses
         if random.random() < 0.3:
@@ -157,15 +196,15 @@ class EquationSheetGenerator:
 
         # brightness
         sheet_image = EquationSheetDecorator.adjust_brightness(
-            sheet_image, random.uniform(0.5, 1.5))
+            sheet_image, random.uniform(0.8, 1.2))
 
         # contrast
         sheet_image = EquationSheetDecorator.adjust_contrast(
-            sheet_image, random.uniform(0.6, 1.5))
+            sheet_image, random.uniform(0.9, 1.1))
 
         # color
         sheet_image = EquationSheetDecorator.adjust_color(
-            sheet_image, random.uniform(0.5, 1.5))
+            sheet_image, random.uniform(0.9, 1.1))
 
         # 0.5 chance to invert color
         if random.random() < 0.5:
@@ -219,6 +258,8 @@ class EquationSheetGenerator:
         rotation_degrees = random.choice([0, 90, 180, 270])
         sheet_image, eq_boxes = EquationSheetDecorator.rotate_sheet(
             sheet_image, [], rotation_degrees)
+
+        sheet_image = EquationSheetDecorator.add_noise(sheet_image)
 
         return (sheet_image, EquationBox((0, 0), (0, 0)))
 

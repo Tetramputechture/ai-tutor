@@ -23,7 +23,7 @@ from .conv_model import ConvModel
 
 sheet_count = 2000
 
-epochs = 30
+epochs = 20
 
 batch_size = 64
 
@@ -87,7 +87,7 @@ class EquationFinder:
 
         # Step 3: Train model
 
-        callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
+        callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=6)
 
         history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
                                  validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])

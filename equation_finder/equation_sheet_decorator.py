@@ -1,6 +1,9 @@
 import string
 import random
 import sys
+import numpy as np
+
+from skimage.util import random_noise
 
 from .equation_box import EquationBox
 from .equation_image_generator import EquationImageGenerator
@@ -157,11 +160,13 @@ class EquationSheetDecorator:
 
         iterations = 0
         while iterations < 1000000:
-            scale_factor = random.uniform(0.1, 0.2)
+            scale_factor = random.uniform(0.18, 0.23)
             equation_image = equation_image.resize(
                 (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
             image_width, image_height = equation_image.size
+
+            # pick 1 from 4 possible sides to choose from, where sides = eq_boxes max of all points
 
             max_x_pos, max_y_pos = (
                 (sheet_width - image_width - 15),
@@ -175,8 +180,6 @@ class EquationSheetDecorator:
                 eq_position, (eq_position[0] + image_width, eq_position[1] + image_height))
 
             collision = False
-
-            sys.stdout.flush()
 
             for box in eq_boxes:
                 if box.collision(eq_box):
@@ -209,6 +212,13 @@ class EquationSheetDecorator:
 
     def invert_color(sheet_image):
         return ImageOps.invert(sheet_image.convert('RGB'))
+
+    def add_noise(sheet_image):
+        im_arr = np.asarray(sheet_image)
+        rand_variance = random.uniform(0.001, 0.002)
+        noise_img = random_noise(im_arr, mode='gaussian', var=rand_variance)
+        noise_img = (255*noise_img).astype(np.uint8)
+        return Image.fromarray(noise_img)
 
     def rotate_sheet(sheet_image, eq_boxes, rotation_degrees):
         sheet_size = sheet_image.size
