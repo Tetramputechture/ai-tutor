@@ -174,7 +174,7 @@ class EquationSheetDecorator:
             )
 
             eq_position = (random.randint(
-                15, max_x_pos), random.randint(15, max_y_pos))
+                5, max_x_pos), random.randint(5, max_y_pos))
 
             eq_box = EquationBox(
                 eq_position, (eq_position[0] + image_width, eq_position[1] + image_height))
@@ -197,6 +197,10 @@ class EquationSheetDecorator:
                              (eq_position[0] + image_width + 3, eq_position[1] + image_height + 3))
 
         return eq_box
+
+    def add_rectangle(sheet_image, xy, fill):
+        sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
+        sheet_image_draw_ctx.rectangle(xy, fill)
 
     def adjust_sharpness(sheet_image, value=1):
         return ImageEnhance.Sharpness(sheet_image).enhance(value)

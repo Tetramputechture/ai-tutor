@@ -29,7 +29,6 @@ def rand_math_font():
 def rand_text_color():
     return random.choice([
         'black',
-        'firebrick',
         'midnightblue',
         'indigo',
         'brown',
@@ -41,7 +40,6 @@ def rand_text_color():
         'blue',
         'red',
         'navy',
-        'purple'
     ])
 
 
@@ -84,7 +82,7 @@ class EquationImageGenerator:
             c_denom=rand_frac_number()
         )
         fig = plt.figure()
-        rotation_degrees = random.randint(-45, 45)
+        rotation_degrees = random.randint(-15, 15)
         text = fig.text(0, 0, u'${0}$'.format(
             eq_latex), fontsize=6, math_fontfamily=rand_math_font(), color=rand_text_color(), rotation=rotation_degrees, rotation_mode="anchor")
         fig.savefig(BytesIO(), dpi=dpi)

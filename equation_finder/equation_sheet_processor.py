@@ -45,4 +45,4 @@ class EquationSheetProcessor:
                 ]
                 draw.rectangle(cropped_center, fill="white")
 
-        return equations
+        return (new_sheet_image, equations)

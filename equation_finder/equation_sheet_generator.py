@@ -66,7 +66,7 @@ class EquationSheetGenerator:
         print('Generating equation sheets...')
 
         eq_sheet_count = int(sheet_count * 0.5)
-        dirty_eq_sheet_count = int(eq_sheet_count * 0.5)
+        dirty_eq_sheet_count = int(eq_sheet_count * 0.7)
         clean_single_eq_sheet_count = int(
             (eq_sheet_count - dirty_eq_sheet_count) * 0.8)
         clean_multiple_eq_sheet_count = int(
@@ -92,7 +92,7 @@ class EquationSheetGenerator:
         sheet_gen_results = []
         # generate 100 sheets at a time
         for i in range(0, clean_single_eq_sheet_count, 200):
-            with Pool() as pool:
+            with Pool(processes=8) as pool:
                 for _ in range(min(200, clean_single_eq_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.clean_sheet_with_equation))
@@ -100,7 +100,7 @@ class EquationSheetGenerator:
                 pool.join()
 
         for i in range(0, clean_multiple_eq_sheet_count, 200):
-            with Pool() as pool:
+            with Pool(processes=8) as pool:
                 for _ in range(min(200, clean_single_eq_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.clean_sheet_with_equations))
@@ -108,7 +108,7 @@ class EquationSheetGenerator:
                 pool.join()
 
         for i in range(0, dirty_eq_sheet_count, 200):
-            with Pool() as pool:
+            with Pool(processes=8)as pool:
                 for _ in range(min(200, dirty_eq_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.dirty_sheet_with_equation))
@@ -116,7 +116,7 @@ class EquationSheetGenerator:
                 pool.join()
 
         for i in range(0, blank_sheet_count, 200):
-            with Pool() as pool:
+            with Pool(processes=8) as pool:
                 for _ in range(min(200, blank_sheet_count - i)):
                     sheet_gen_results.append(pool.apply_async(
                         self.blank_sheet
@@ -129,7 +129,6 @@ class EquationSheetGenerator:
         for idx, sheet_gen_result in enumerate(sheet_gen_results):
             sheet = sheet_gen_result.get()
             sheets.append(sheet)
-            sys.stdout.write('.')
 
             if should_cache:
                 file_prefix = f'{self.cache_dir}/eq-sheet-{idx}'
@@ -178,6 +177,13 @@ class EquationSheetGenerator:
 
         eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
+        # random rectangles of color that are the same size as equation bounding boxes
+        for _ in range(random.randint(1, 4)):
+            rect_box = EquationSheetDecorator.add_equation(
+                sheet_image, [eq_box])
+            EquationSheetDecorator.add_rectangle(sheet_image, [
+                rect_box.topLeft[0], rect_box.topLeft[1], rect_box.bottomRight[0], rect_box.bottomRight[1]], random_color())
+
         # 70% chance to add random text
         if random.random() < 0.5:
             text_count = random.randint(1, RANDOM_TEXT_COUNT_MAX)
@@ -221,6 +227,13 @@ class EquationSheetGenerator:
 
     def blank_sheet(self):
         sheet_image = self.new_sheet_image()
+
+        # random rectangles of color that are the same size as equation bounding boxes
+        for _ in range(1, 4):
+            eq_box = EquationSheetDecorator.add_equation(
+                sheet_image, [])
+            EquationSheetDecorator.add_rectangle(sheet_image, [
+                eq_box.topLeft[0], eq_box.topLeft[1], eq_box.bottomRight[0], eq_box.bottomRight[1]], random_color())
 
         if random.random() < 0.8:
             # random text
