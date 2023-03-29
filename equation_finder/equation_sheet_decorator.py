@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
 
 def random_text():
-    text_len = random.randint(3, 16)
+    text_len = random.randint(5, 10)
     return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
                    for _ in range(text_len))
 
@@ -157,7 +157,7 @@ class EquationSheetDecorator:
 
         iterations = 0
         while iterations < 1000000:
-            scale_factor = 0.1
+            scale_factor = random.uniform(0.1, 0.2)
             equation_image = equation_image.resize(
                 (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 

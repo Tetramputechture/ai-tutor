@@ -72,5 +72,8 @@ class EquationBox:
             self.topLeft[1] + height >= rect.topLeft[1] and \
             self.topLeft[1] <= rect.topLeft[1] + rect_height
 
+    def __repr__(self):
+        return f'EquationBox(topLeft={self.topLeft}, bottomRight={self.bottomRight}'
+
     def __eq__(self, obj):
         return isinstance(obj, EquationBox) and obj.topLeft == self.topLeft and obj.bottomRight == self.bottomRight

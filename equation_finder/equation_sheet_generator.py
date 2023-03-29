@@ -65,9 +65,9 @@ class EquationSheetGenerator:
 
         print('Generating equation sheets...')
 
-        eq_sheet_count = int(sheet_count / 2)
-        dirty_eq_sheet_count = int(eq_sheet_count / 2)
-        clean_eq_sheet_count = dirty_eq_sheet_count
+        eq_sheet_count = int(sheet_count * 0.7)
+        dirty_eq_sheet_count = int(eq_sheet_count * 0.8)
+        clean_eq_sheet_count = eq_sheet_count - dirty_eq_sheet_count
         blank_sheet_count = sheet_count - clean_eq_sheet_count - dirty_eq_sheet_count
 
         sheets = []

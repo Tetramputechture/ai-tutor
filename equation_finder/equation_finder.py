@@ -21,9 +21,9 @@ from .equation_sheet_generator import EquationSheetGenerator
 from .resnet_model import ResnetModel
 from .conv_model import ConvModel
 
-sheet_count = 5000
+sheet_count = 2000
 
-epochs = 20
+epochs = 30
 
 batch_size = 64
 
@@ -76,7 +76,7 @@ class EquationFinder:
         sheet_image_data = np.array(sheet_image_data).astype('float32')
         sheet_eq_coords = np.array(sheet_eq_coords).astype('float32')
         train_image_data, test_image_data, train_eq_coords, test_eq_coords = train_test_split(
-            sheet_image_data, sheet_eq_coords, test_size=0.33
+            sheet_image_data, sheet_eq_coords, test_size=0.1
         )
 
         # We don't need raw sheet tuple data anymore, unload
@@ -87,8 +87,10 @@ class EquationFinder:
 
         # Step 3: Train model
 
+        callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
+
         history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
-                                 validation_data=(test_image_data, test_eq_coords), batch_size=batch_size)
+                                 validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])
 
         plt.plot(history.history['accuracy'], label='accuracy')
         plt.plot(history.history['val_accuracy'], label='val_accuracy')
