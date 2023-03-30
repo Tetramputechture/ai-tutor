@@ -12,8 +12,8 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
 
 def random_text():
-    text_len = random.randint(5, 10)
-    return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits)
+    text_len = random.randint(5, 15)
+    return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + (string.digits + '+-=') * 4)
                    for _ in range(text_len))
 
 
@@ -165,8 +165,6 @@ class EquationSheetDecorator:
                 (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
             image_width, image_height = equation_image.size
-
-            # pick 1 from 4 possible sides to choose from, where sides = eq_boxes max of all points
 
             max_x_pos, max_y_pos = (
                 (sheet_width - image_width - 15),

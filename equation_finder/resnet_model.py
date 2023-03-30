@@ -22,7 +22,7 @@ class ResnetModel:
         for layer in resnet_base.layers:
             layer.trainable = False
 
-        for layer in resnet_base.layers[-24:]:
+        for layer in resnet_base.layers[-20:]:
             layer.trainable = True
 
         # for layer in resnet_base.layers:
