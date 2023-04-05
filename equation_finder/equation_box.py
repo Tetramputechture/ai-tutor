@@ -72,6 +72,33 @@ class EquationBox:
             self.topLeft[1] + height >= rect.topLeft[1] and \
             self.topLeft[1] <= rect.topLeft[1] + rect_height
 
+    def iou(self, rect):
+        # iou is 0 if no collision
+        if not self.collision(rect):
+            return 0.0
+
+        # compute area of intersection
+        x_left = max(self.topLeft[0], rect.topLeft[0])
+        y_top = max(self.topLeft[1], rect.topLeft[1])
+        x_right = min(self.bottomRight[0], rect.bottomRight[0])
+        y_bottom = min(self.bottomRight[1], rect.bottomRight[1])
+
+        if x_right < x_left or y_bottom < y_top:
+            return 0.0
+
+        intersection_area = max(0, x_right - x_left + 1) * \
+            max(0, y_bottom - y_top + 1)
+
+        self_area = (self.bottomRight[0] - self.topLeft[0] + 1) * \
+            (self.bottomRight[1] - self.topLeft[1] + 1)
+        rect_area = (rect.bottomRight[0] - rect.topLeft[0] + 1) * \
+            (rect.bottomRight[1] - rect.topLeft[1] + 1)
+
+        iou = intersection_area / \
+            float(self_area + rect_area - intersection_area)
+
+        return iou
+
     def __repr__(self):
         return f'EquationBox(topLeft={self.topLeft}, bottomRight={self.bottomRight}'
 

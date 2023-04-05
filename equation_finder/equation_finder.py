@@ -23,11 +23,16 @@ from .conv_model import ConvModel
 
 sheet_count = 2000
 
-epochs = 30
+epochs = 20
 
 batch_size = 128
 
+test_size = 0.3
+
 MODEL_PATH = './equation_finder/equation_finder.h5'
+SHEET_DATA_PATH = './equation_finder/data'
+SHEET_IMAGE_DATA_PATH = f'{SHEET_DATA_PATH}/sheet_image_data.npy'
+SHEET_EQ_COORDS_PATH = f'{SHEET_DATA_PATH}/sheet_eq_coords.npy'
 
 
 def coord_diff(coord, inferred_coords):
@@ -51,66 +56,80 @@ def coord_accuracy(coord, coord_diff):
 class EquationFinder:
     def __init__(self):
         self.model = ResnetModel().create_model()
+        self.sheet_image_data = []
+        self.sheet_eq_coords = []
 
     def train_model(self):
         # Step 1: Fetch equation sheets
         print('Initializing equation sheet image data...')
 
-        sheet_images_path = './data/equation-sheet-images'
-        sheets = EquationSheetGenerator(
-            sheet_size=(227, 227),
-            cache_dir=sheet_images_path
-        ).generate_sheets(sheet_count)
+        if self.data_cached():
+            print('Cached equation sheet data found.')
+            self.sheet_image_data = np.load(SHEET_IMAGE_DATA_PATH)
+            self.sheet_eq_coords = np.load(SHEET_EQ_COORDS_PATH)
+        else:
+            sheet_images_path = './data/equation-sheet-images'
+            sheets = EquationSheetGenerator(
+                sheet_size=(227, 227),
+                cache_dir=sheet_images_path
+            ).generate_sheets(sheet_count)
 
-        # Step 2: Prepare train and test data
+            # Step 2: Prepare train and test data
 
-        sheet_image_data = []
-        sheet_eq_coords = []
+            for sheet in sheets:
+                sheet_image, eq_box = sheet
+                sheet_image = sheet_image.convert('RGB')
+                self.sheet_image_data.append(image.img_to_array(sheet_image))
+                self.sheet_eq_coords.append(eq_box.to_array())
 
-        for sheet in sheets:
-            sheet_image, eq_box = sheet
-            sheet_image = sheet_image.convert('RGB')
-            sheet_image_data.append(image.img_to_array(sheet_image))
-            sheet_eq_coords.append(eq_box.to_array())
+            del sheets
 
-        sheet_image_data = np.array(sheet_image_data).astype('float32')
-        sheet_eq_coords = np.array(sheet_eq_coords).astype('float32')
+            self.sheet_image_data = np.array(
+                self.sheet_image_data).astype('float32')
+            self.sheet_eq_coords = np.array(
+                self.sheet_eq_coords).astype('float32')
+
+            if not os.path.isdir(SHEET_DATA_PATH):
+                os.makedirs(SHEET_DATA_PATH)
+
+            np.save(SHEET_IMAGE_DATA_PATH, self.sheet_image_data)
+            np.save(SHEET_EQ_COORDS_PATH, self.sheet_eq_coords)
+
         train_image_data, test_image_data, train_eq_coords, test_eq_coords = train_test_split(
-            sheet_image_data, sheet_eq_coords, test_size=0.2
+            self.sheet_image_data, self.sheet_eq_coords, test_size=test_size
         )
-
-        # We don't need raw sheet tuple data anymore, unload
-
-        del sheets
-        del sheet_image_data
-        del sheet_eq_coords
 
         # Step 3: Train model
 
-        callback = tf.keras.callbacks.EarlyStopping(
-            monitor='loss', patience=10)
+        # callback = tf.keras.callbacks.EarlyStopping(
+        #     monitor='loss', patience=6)
 
-        history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
-                                 validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])
+        # history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
+        #                          validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])
 
-        plt.subplot(2, 2, 1)
-        plt.plot(history.history['accuracy'], label='accuracy')
-        plt.plot(history.history['val_accuracy'], label='val_accuracy')
-        plt.xlabel('Epoch')
-        plt.ylabel('Accuracy')
-        plt.legend(loc='lower right')
+        # plt.subplot(2, 2, 1)
+        # plt.plot(history.history['accuracy'], label='accuracy')
+        # plt.plot(history.history['val_accuracy'], label='val_accuracy')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Accuracy')
+        # plt.legend(loc='lower right')
 
-        plt.subplot(2, 2, 2)
-        plt.plot(history.history['loss'], label='loss')
-        plt.plot(history.history['val_loss'], label='val_loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend(loc='upper right')
+        # plt.subplot(2, 2, 2)
+        # plt.plot(history.history['loss'], label='loss')
+        # plt.plot(history.history['val_loss'], label='val_loss')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Loss')
+        # plt.legend(loc='upper right')
 
-        test_loss, test_acc = self.model.evaluate(
-            test_image_data, test_eq_coords, verbose=2)
+        # test_loss, test_acc = self.model.evaluate(
+        #     test_image_data, test_eq_coords, verbose=2)
 
-        print(test_acc)
+        # print(test_acc)
+
+    def data_cached(self):
+        return os.path.isdir(SHEET_DATA_PATH) and \
+            os.path.isfile(SHEET_IMAGE_DATA_PATH) and \
+            os.path.isfile(SHEET_EQ_COORDS_PATH)
 
     def load_model(self):
         if os.path.exists(MODEL_PATH):
@@ -127,6 +146,8 @@ class EquationFinder:
 
     def infer_from_model(self, image_data):
         imdata = np.expand_dims(image_data, axis=0)
+        imdata -= self.sheet_image_data.mean(
+            axis=(0, -2, -1), keepdims=1)
         predictions = self.model.predict(imdata)[0]
         return EquationBox((int(predictions[0]), int(predictions[1])),
                            (int(predictions[2]), int(predictions[3])))

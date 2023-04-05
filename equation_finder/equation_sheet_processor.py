@@ -7,9 +7,11 @@ from .equation_box import EquationBox
 from .equation_finder import EquationFinder
 
 
-def is_zero(eq_box):
-    return abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) <= 20 and \
-        abs(eq_box.bottomRight[1] - eq_box.topLeft[1]) <= 20
+def is_valid(eq_box):
+    return abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) >= 40 and \
+        abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) <= 210 and \
+        abs(eq_box.bottomRight[1] - eq_box.topLeft[1]) >= 30 and \
+        abs(eq_box.bottomRight[1] - eq_box.topLeft[1]) <= 100
 
 
 class EquationSheetProcessor:
@@ -30,9 +32,7 @@ class EquationSheetProcessor:
             inferred_box = self.equation_finder.infer_from_model(
                 sheet_image_data)
 
-            print(inferred_box)
-
-            if is_zero(inferred_box) or inferred_box == previous_inferred_box:
+            if not is_valid(inferred_box) or inferred_box == previous_inferred_box:
                 break
             else:
                 equations.append(inferred_box)

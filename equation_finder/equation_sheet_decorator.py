@@ -159,8 +159,8 @@ class EquationSheetDecorator:
         original_image_width, original_image_height = equation_image.size
 
         iterations = 0
-        while iterations < 1000000:
-            scale_factor = random.uniform(0.18, 0.23)
+        while iterations < 100000:
+            scale_factor = random.uniform(0.25, 0.35)
             equation_image = equation_image.resize(
                 (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
@@ -191,8 +191,8 @@ class EquationSheetDecorator:
                     equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
                 break
 
-        eq_box = EquationBox((eq_position[0] - 3, eq_position[1] - 3),
-                             (eq_position[0] + image_width + 3, eq_position[1] + image_height + 3))
+        eq_box = EquationBox((eq_position[0], eq_position[1]),
+                             (eq_position[0] + image_width, eq_position[1] + image_height))
 
         return eq_box
 

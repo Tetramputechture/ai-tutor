@@ -73,13 +73,14 @@ class EquationImageGenerator:
         return images
 
     def generate_equation_image(self, dpi=800):
+        rand_numbers = [rand_frac_number() for _ in range(6)]
         eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
-            a_num=rand_frac_number(),
-            a_denom=rand_frac_number(),
-            b_num=rand_frac_number(),
-            b_denom=rand_frac_number(),
-            c_num=rand_frac_number(),
-            c_denom=rand_frac_number()
+            a_num=rand_numbers[0],
+            a_denom=rand_numbers[1],
+            b_num=rand_numbers[2],
+            b_denom=rand_numbers[3],
+            c_num=rand_numbers[4],
+            c_denom=rand_numbers[5]
         )
         fig = plt.figure()
         rotation_degrees = random.randint(-15, 15)
@@ -99,7 +100,8 @@ class EquationImageGenerator:
         plt.close(fig)
         buffer_.seek(0)
         im = Image.open(buffer_)
-        return white_to_transparency(im)
+        tokens = f'START{rand_numbers[0]}/{rand_numbers[1]}+{rand_numbers[2]}/{rand_numbers[3]}={rand_numbers[4]}/{rand_numbers[5]}END'
+        return (white_to_transparency(im), tokens)
 
     def images_cached(self, cache_dir):
         return os.path.isdir(cache_dir) and len(

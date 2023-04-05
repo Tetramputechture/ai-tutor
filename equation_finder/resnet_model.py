@@ -11,18 +11,14 @@ class ResnetModel:
         )
         model = models.Sequential([
             resnet_base,
-            # layers.GlobalAveragePooling2D(),
             layers.Flatten(),
-            # layers.Dense(128, activation='relu'),
-            # layers.Dense(64, activation='relu'),
-            # layers.Dense(32, activation='relu'),
             layers.Dense(4, activation='relu')
         ])
 
         for layer in resnet_base.layers:
             layer.trainable = False
 
-        for layer in resnet_base.layers[-20:]:
+        for layer in resnet_base.layers[-24:]:
             layer.trainable = True
 
         # for layer in resnet_base.layers:

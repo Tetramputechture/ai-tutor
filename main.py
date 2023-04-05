@@ -17,18 +17,25 @@ def main():
     #         equation_sheet_image, eq_boxes))
 
     esp = EquationSheetProcessor(equation_sheet_image)
-    (img, predictions) = esp.find_equations()
+    # (img, predictions) = esp.find_equations()
+    # print(predictions)
 
-    fig, ax = plt.subplots(2, 1)
-    ax[0].imshow(img)
-    ax[1].imshow(equation_sheet_image)
+    # fig, ax = plt.subplots(2, 1)
+    # ax[0].imshow(img)
+    # ax[1].imshow(equation_sheet_image)
 
-    for box in predictions:
-        width, height = box.size()
-        ax[1].add_patch(Rectangle(box.topLeft, width, height,
-                                  fill=False, edgecolor="r"))
+    # for box in predictions:
+    #     width, height = box.size()
+    #     ax[1].add_patch(Rectangle(box.topLeft, width, height,
+    #                               fill=False, edgecolor="r"))
 
-    plt.show()
+    # width, height = eq_box.size()
+    # ax[1].add_patch(Rectangle(eq_box.topLeft, width, height,
+    #                           fill=False, edgecolor="b"))
+
+    # if len(predictions) > 0:
+    #     print('Inferred vs ground truth IOU: ', eq_box.iou(predictions[0]))
+    # plt.show()
     # eq = EquationFinder()
     # eq.load_model()
     # eq.show_validation()
