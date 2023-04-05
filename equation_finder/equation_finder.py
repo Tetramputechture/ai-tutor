@@ -101,30 +101,30 @@ class EquationFinder:
 
         # Step 3: Train model
 
-        # callback = tf.keras.callbacks.EarlyStopping(
-        #     monitor='loss', patience=6)
+        callback = tf.keras.callbacks.EarlyStopping(
+            monitor='loss', patience=6)
 
-        # history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
-        #                          validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])
+        history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
+                                 validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])
 
-        # plt.subplot(2, 2, 1)
-        # plt.plot(history.history['accuracy'], label='accuracy')
-        # plt.plot(history.history['val_accuracy'], label='val_accuracy')
-        # plt.xlabel('Epoch')
-        # plt.ylabel('Accuracy')
-        # plt.legend(loc='lower right')
+        plt.subplot(2, 2, 1)
+        plt.plot(history.history['accuracy'], label='accuracy')
+        plt.plot(history.history['val_accuracy'], label='val_accuracy')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend(loc='lower right')
 
-        # plt.subplot(2, 2, 2)
-        # plt.plot(history.history['loss'], label='loss')
-        # plt.plot(history.history['val_loss'], label='val_loss')
-        # plt.xlabel('Epoch')
-        # plt.ylabel('Loss')
-        # plt.legend(loc='upper right')
+        plt.subplot(2, 2, 2)
+        plt.plot(history.history['loss'], label='loss')
+        plt.plot(history.history['val_loss'], label='val_loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend(loc='upper right')
 
-        # test_loss, test_acc = self.model.evaluate(
-        #     test_image_data, test_eq_coords, verbose=2)
+        test_loss, test_acc = self.model.evaluate(
+            test_image_data, test_eq_coords, verbose=2)
 
-        # print(test_acc)
+        print(test_acc)
 
     def data_cached(self):
         return os.path.isdir(SHEET_DATA_PATH) and \
