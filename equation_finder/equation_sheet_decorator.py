@@ -155,7 +155,7 @@ class EquationSheetDecorator:
     def add_equation(sheet_image, eq_boxes=[]):
         sheet_width, sheet_height = sheet_image.size
 
-        equation_image = EquationImageGenerator().generate_equation_image()
+        equation_image, _ = EquationImageGenerator().generate_equation_image()
         original_image_width, original_image_height = equation_image.size
 
         iterations = 0
