@@ -5,6 +5,8 @@ import string
 
 TOKENS = list(string.digits + '+=/') + ['START'] + ['END']
 
+MAX_EQ_LENGTH = 23 + len('START') + len('END')
+
 
 class Model:
     def create_model(self, input_shape=(100, 100, 3)):

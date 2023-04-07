@@ -33,10 +33,7 @@ def rand_text_color():
         'indigo',
         'brown',
         'darkred',
-        'orange',
-        'violet',
-        'plum',
-        'darkgreen',
+        'maroon',
         'blue',
         'red',
         'navy',
@@ -50,29 +47,7 @@ def white_to_transparency(img):
 
 
 class EquationImageGenerator:
-    def generate_equation_images(self, image_count, dpi=550, cache_dir=''):
-        if len(cache_dir) > 0 and self.images_cached(cache_dir):
-            print('Cached equation images found.')
-            return self.images_from_cache(cache_dir)
-
-        print('Generating equation images...')
-        images = []
-        should_cache = len(cache_dir) > 0
-        if should_cache and not os.path.isdir(cache_dir):
-            os.makedirs(cache_dir)
-
-        for idx in range(image_count):
-            im = self.generate_equation_image(dpi)
-            if should_cache:
-                filename = f'{cache_dir}/eq-{idx}.png'
-                im.save(filename)
-
-        if should_cache:
-            print('Equation images cached.')
-
-        return images
-
-    def generate_equation_image(self, dpi=800):
+    def generate_equation_image(self, dpi=800) -> (Image, str):
         rand_numbers = [rand_frac_number() for _ in range(6)]
         eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
             a_num=rand_numbers[0],

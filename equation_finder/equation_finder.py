@@ -19,15 +19,14 @@ from .equation_sheet_generator import EquationSheetGenerator
 
 
 from .resnet_model import ResnetModel
-from .conv_model import ConvModel
 
-sheet_count = 2000
+sheet_count = 5000
 
 epochs = 20
 
 batch_size = 128
 
-test_size = 0.3
+test_size = 0.1
 
 MODEL_PATH = './equation_finder/equation_finder.h5'
 SHEET_DATA_PATH = './equation_finder/data'
@@ -70,7 +69,7 @@ class EquationFinder:
         else:
             sheet_images_path = './data/equation-sheet-images'
             sheets = EquationSheetGenerator(
-                sheet_size=(227, 227),
+                sheet_size=(224, 224),
                 cache_dir=sheet_images_path
             ).generate_sheets(sheet_count)
 
@@ -102,7 +101,7 @@ class EquationFinder:
         # Step 3: Train model
 
         callback = tf.keras.callbacks.EarlyStopping(
-            monitor='loss', patience=6)
+            monitor='loss', patience=5)
 
         history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
                                  validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])
@@ -144,10 +143,8 @@ class EquationFinder:
     def save_model(self):
         self.model.save(MODEL_PATH)
 
-    def infer_from_model(self, image_data):
+    def infer_from_model(self, image_data) -> EquationBox:
         imdata = np.expand_dims(image_data, axis=0)
-        imdata -= self.sheet_image_data.mean(
-            axis=(0, -2, -1), keepdims=1)
         predictions = self.model.predict(imdata)[0]
         return EquationBox((int(predictions[0]), int(predictions[1])),
                            (int(predictions[2]), int(predictions[3])))

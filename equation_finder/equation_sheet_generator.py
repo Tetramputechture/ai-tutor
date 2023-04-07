@@ -48,7 +48,7 @@ def random_font():
 
 
 class EquationSheetGenerator:
-    def __init__(self, sheet_size=(227, 227), cache_dir=''):
+    def __init__(self, sheet_size=(224, 224), cache_dir=''):
         self.sheet_size = sheet_size
         self.cache_dir = cache_dir
 
@@ -57,7 +57,7 @@ class EquationSheetGenerator:
             print('Cached equation sheets found.')
             return self.sheets_from_cache(sheet_count)
 
-        eq_sheet_count = int(sheet_count * 0.3)
+        eq_sheet_count = int(sheet_count * 0.9)
         dirty_eq_sheet_count = int(eq_sheet_count * 0.5)
         clean_single_eq_sheet_count = int(
             (eq_sheet_count - dirty_eq_sheet_count) * 1)
@@ -65,8 +65,8 @@ class EquationSheetGenerator:
             (eq_sheet_count - dirty_eq_sheet_count) * 0)
         blank_sheet_count = sheet_count - clean_single_eq_sheet_count - \
             clean_multiple_eq_sheet_count - dirty_eq_sheet_count
-        blank_dirty_sheet_count = int(blank_sheet_count / 2)
-        blank_clean_sheet_count = blank_dirty_sheet_count
+        blank_dirty_sheet_count = int(blank_sheet_count * 0.8)
+        blank_clean_sheet_count = blank_sheet_count - blank_dirty_sheet_count
 
         sheets = []
         should_cache = len(self.cache_dir) > 0
@@ -126,7 +126,7 @@ class EquationSheetGenerator:
     # sheet with white background and 1 equation image; no misc background images
     def clean_sheet_with_equation(self, noise=True):
         sheet_image = self.new_sheet_image(color=random_sheet_color())
-        if noise:
+        if noise and random.choice([True, False]):
             sheet_image = EquationSheetDecorator.add_noise(sheet_image)
         eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
@@ -134,7 +134,8 @@ class EquationSheetGenerator:
 
     def clean_sheet_with_equations(self):
         sheet_image, eq_box = self.clean_sheet_with_equation()
-        sheet_image = EquationSheetDecorator.add_noise(sheet_image)
+        if random.choice([True, False]):
+            sheet_image = EquationSheetDecorator.add_noise(sheet_image)
         eq_boxes = [eq_box]
         eq_boxes.append(EquationSheetDecorator.add_equation(
             sheet_image, eq_boxes))
@@ -145,7 +146,8 @@ class EquationSheetGenerator:
     # includes misc background images
     def dirty_sheet_with_equation(self):
         sheet_image = self.new_sheet_image(color=random_sheet_color())
-        sheet_image = EquationSheetDecorator.add_noise(sheet_image)
+        if random.choice([True, False]):
+            sheet_image = EquationSheetDecorator.add_noise(sheet_image)
 
         # 50% chance to add random lines
         if random.random() < 0.3:
@@ -161,10 +163,10 @@ class EquationSheetGenerator:
                 sheet_image, [eq_box])
             color = random.choice(['white', random_color()])
             EquationSheetDecorator.add_rectangle(sheet_image, [
-                rect_box.topLeft[0] + random.randint(30, 40),
-                rect_box.topLeft[1] + random.randint(30, 40),
-                rect_box.bottomRight[0] - random.randint(5, 10),
-                rect_box.bottomRight[1] - random.randint(5, 10)
+                rect_box.topLeft[0] + random.randint(1, 4),
+                rect_box.topLeft[1] + random.randint(1, 4),
+                rect_box.bottomRight[0] - random.randint(1, 4),
+                rect_box.bottomRight[1] - random.randint(1, 4),
             ], color)
 
         # 70% chance to add random text
@@ -181,7 +183,7 @@ class EquationSheetGenerator:
 
         # sharpness
         sheet_image = EquationSheetDecorator.adjust_sharpness(
-            sheet_image, random.uniform(0.2, 2))
+            sheet_image, random.uniform(0.5, 2))
 
         # brightness
         sheet_image = EquationSheetDecorator.adjust_brightness(
@@ -225,7 +227,7 @@ class EquationSheetGenerator:
                 eq_box.topLeft[1],
                 eq_box.bottomRight[0],
                 eq_box.bottomRight[1]
-            ], 'white')
+            ], random_color())
         return (sheet_image, EquationBox((0, 0), (0, 0)))
 
     def blank_sheet(self):
@@ -240,10 +242,10 @@ class EquationSheetGenerator:
             if random.random() < 0.5:
                 color = random_color()
             EquationSheetDecorator.add_rectangle(sheet_image, [
-                eq_box.topLeft[0] + random.randint(6, 12),
-                eq_box.topLeft[1] + random.randint(6, 12),
-                eq_box.bottomRight[0] - random.randint(6, 12),
-                eq_box.bottomRight[1] - random.randint(6, 12)
+                eq_box.topLeft[0] + random.randint(0, 2),
+                eq_box.topLeft[1] + random.randint(0, 2),
+                eq_box.bottomRight[0] - random.randint(0, 2),
+                eq_box.bottomRight[1] - random.randint(0, 2),
             ], color)
 
         if random.random() < 0.8:
@@ -264,7 +266,7 @@ class EquationSheetGenerator:
 
         # adjust
         sheet_image = EquationSheetDecorator.adjust_sharpness(
-            sheet_image, random.uniform(0.2, 2))
+            sheet_image, random.uniform(0.5, 2))
 
         # brightness
         sheet_image = EquationSheetDecorator.adjust_brightness(

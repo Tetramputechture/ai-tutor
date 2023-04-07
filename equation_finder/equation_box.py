@@ -61,10 +61,10 @@ class EquationBox:
             (topLeft[1] + self.bottomRight[1]) / 2
         )
 
-    def size(self):
+    def size(self) -> (int, int):
         return (self.bottomRight[0] - self.topLeft[0], self.bottomRight[1] - self.topLeft[1])
 
-    def collision(self, rect):
+    def collision(self, rect) -> bool:
         width, height = self.size()
         rect_width, rect_height = rect.size()
         return self.topLeft[0] + width >= rect.topLeft[0] and \
@@ -72,7 +72,7 @@ class EquationBox:
             self.topLeft[1] + height >= rect.topLeft[1] and \
             self.topLeft[1] <= rect.topLeft[1] + rect_height
 
-    def iou(self, rect):
+    def iou(self, rect) -> float:
         # iou is 0 if no collision
         if not self.collision(rect):
             return 0.0
