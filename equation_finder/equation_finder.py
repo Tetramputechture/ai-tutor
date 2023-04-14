@@ -20,7 +20,7 @@ from .equation_sheet_generator import EquationSheetGenerator
 
 from .resnet_model import ResnetModel
 
-sheet_count = 5000
+sheet_count = 15000
 
 epochs = 20
 
@@ -94,36 +94,36 @@ class EquationFinder:
             np.save(SHEET_IMAGE_DATA_PATH, self.sheet_image_data)
             np.save(SHEET_EQ_COORDS_PATH, self.sheet_eq_coords)
 
-        train_image_data, test_image_data, train_eq_coords, test_eq_coords = train_test_split(
-            self.sheet_image_data, self.sheet_eq_coords, test_size=test_size
-        )
+        # train_image_data, test_image_data, train_eq_coords, test_eq_coords = train_test_split(
+        #     self.sheet_image_data, self.sheet_eq_coords, test_size=test_size
+        # )
 
-        # Step 3: Train model
+        # # Step 3: Train model
 
-        callback = tf.keras.callbacks.EarlyStopping(
-            monitor='loss', patience=5)
+        # callback = tf.keras.callbacks.EarlyStopping(
+        #     monitor='loss', patience=5)
 
-        history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
-                                 validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])
+        # history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
+        #                          validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])
 
-        plt.subplot(2, 2, 1)
-        plt.plot(history.history['accuracy'], label='accuracy')
-        plt.plot(history.history['val_accuracy'], label='val_accuracy')
-        plt.xlabel('Epoch')
-        plt.ylabel('Accuracy')
-        plt.legend(loc='lower right')
+        # plt.subplot(2, 2, 1)
+        # plt.plot(history.history['accuracy'], label='accuracy')
+        # plt.plot(history.history['val_accuracy'], label='val_accuracy')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Accuracy')
+        # plt.legend(loc='lower right')
 
-        plt.subplot(2, 2, 2)
-        plt.plot(history.history['loss'], label='loss')
-        plt.plot(history.history['val_loss'], label='val_loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend(loc='upper right')
+        # plt.subplot(2, 2, 2)
+        # plt.plot(history.history['loss'], label='loss')
+        # plt.plot(history.history['val_loss'], label='val_loss')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Loss')
+        # plt.legend(loc='upper right')
 
-        test_loss, test_acc = self.model.evaluate(
-            test_image_data, test_eq_coords, verbose=2)
+        # test_loss, test_acc = self.model.evaluate(
+        #     test_image_data, test_eq_coords, verbose=2)
 
-        print(test_acc)
+        # print(test_acc)
 
     def data_cached(self):
         return os.path.isdir(SHEET_DATA_PATH) and \

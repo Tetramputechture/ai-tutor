@@ -5,6 +5,8 @@ import numpy as np
 import sys
 import os
 import shutil
+import csv
+import uuid
 
 from io import BytesIO
 from PIL import Image
@@ -40,6 +42,11 @@ def rand_text_color():
     ])
 
 
+CACHE_DIR = './equation_parser/data'
+TOKENS_FILENAME = 'tokens'
+TOKENS_HEADERS = ['eq_id', 'tokens']
+
+
 def white_to_transparency(img):
     x = np.asarray(img.convert('RGBA')).copy()
     x[:, :, 3] = (255 * (x[:, :, :3] != 255).any(axis=2)).astype(np.uint8)
@@ -47,11 +54,11 @@ def white_to_transparency(img):
 
 
 def to_padded_tokens(rand_numbers):
-    tokens.extend(rand_numbers)
+    return f'{rand_numbers[0]}/{rand_numbers[1]}+{rand_numbers[2]}/{rand_numbers[3]}={rand_numbers[4]}/{rand_numbers[5]}'
 
 
 class EquationImageGenerator:
-    def generate_equation_image(self, dpi=800) -> (Image, str):
+    def generate_equation_image(self, dpi=600, cache=True) -> (Image, str):
         rand_numbers = [rand_frac_number() for _ in range(6)]
         eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
             a_num=rand_numbers[0],
@@ -79,20 +86,44 @@ class EquationImageGenerator:
         plt.close(fig)
         buffer_.seek(0)
         im = Image.open(buffer_)
-        tokens = to_padded_tokens(rand_numbers)
-        return (white_to_transparency(im), tokens)
+        eq_image = white_to_transparency(im)
+        eq_tokens = to_padded_tokens(rand_numbers)
+        if cache:
+            self.cache_image(eq_image, eq_tokens)
+        return (eq_image, eq_tokens)
 
-    def images_cached(self, cache_dir):
-        return os.path.isdir(cache_dir) and len(
-            os.listdir(cache_dir)) != 0
+    def cache_image(self, eq_image, eq_tokens):
+        if not self.images_cached():
+            os.makedirs(CACHE_DIR)
 
-    def images_from_cache(self, cache_dir):
-        images = []
+        eq_id = uuid.uuid4()
+        with open(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv', 'a') as tokens_file:
+            writer = csv.writer(tokens_file)
+            writer.writerow([eq_id, eq_tokens])
 
-        for filename in os.listdir(cache_dir):
-            image_file = os.path.join(cache_dir, filename)
-            if os.path.isfile(image_file):
-                equation_image = PIL.Image.open(image_file)
-                images.append(equation_image)
+        eq_image.save(f'{CACHE_DIR}/{eq_id}.bmp')
 
-        return images
+    def images_cached(self):
+        return os.path.isdir(CACHE_DIR) and len(
+            os.listdir(CACHE_DIR)) != 0
+
+    def equations_from_cache(self):
+        if not os.path.isfile(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv'):
+            return []
+
+        equations = []
+
+        with open(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv') as tokens_file:
+            reader = csv.DictReader(tokens_file)
+            for row in reader:
+                eq_id = row[TOKENS_HEADERS[0]]
+                tokens = row[TOKENS_HEADERS[1]]
+
+                if os.path.isfile(f'{CACHE_DIR}/{eq_id}.bmp'):
+                    eq_image = PIL.Image.open(f'{CACHE_DIR}/{eq_id}.bmp')
+                else:
+                    eq_image = None
+
+                equations.append((eq_image, tokens))
+
+        return equations

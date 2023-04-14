@@ -7,8 +7,10 @@ from equation_finder.equation_sheet_generator import EquationSheetGenerator
 from equation_finder.equation_sheet_decorator import EquationSheetDecorator
 from equation_finder.equation_sheet_processor import EquationSheetProcessor
 
+from equation_parser.equation_parser_simple import EquationParserSimple
 
-def main():
+
+def run_eq_finder():
     esp = EquationSheetProcessor()
     for _ in range(5):
         equation_sheet_image, eq_box = EquationSheetGenerator().clean_sheet_with_equation()
@@ -18,18 +20,18 @@ def main():
 
         (img, predictions) = esp.find_equations(equation_sheet_image)
 
-        fig, ax = plt.subplots(2, 1)
-        ax[0].imshow(img)
-        ax[1].imshow(equation_sheet_image)
+        fig, ax = plt.subplots()
+        ax.imshow(img)
+        ax.imshow(equation_sheet_image)
 
         for box in predictions:
             width, height = box.size()
-            ax[1].add_patch(Rectangle(box.topLeft, width, height,
-                                      fill=False, edgecolor="r"))
+            ax.add_patch(Rectangle(box.topLeft, width, height,
+                                   fill=False, edgecolor="r"))
 
         width, height = eq_box.size()
-        ax[1].add_patch(Rectangle(eq_box.topLeft, width, height,
-                                  fill=False, edgecolor="b"))
+        ax.add_patch(Rectangle(eq_box.topLeft, width, height,
+                               fill=False, edgecolor="b"))
 
         if len(predictions) > 0:
             print('Inferred vs ground truth IOU: ', predictions[0].iou(eq_box))
@@ -42,10 +44,18 @@ def main():
         #     width, height = box.size()
         #     ax.add_patch(Rectangle(box.topLeft, width, height,
         #                            fill=False, edgecolor="r"))
-        plt.show()
+    plt.show()
     # eq = EquationFinder()
     # eq.load_model()
     # eq.show_validation()
+
+
+def run_eq_parser():
+    EquationParserSimple().train_model()
+
+
+def main():
+    run_eq_parser()
 
 
 if __name__ == '__main__':

@@ -30,6 +30,8 @@ batch_size = 64
 
 test_size = 0.2
 
+EQUATION_DATA_PATH = './equation_parser/data'
+
 
 def find_nearest(array, value):
     array = np.asarray(array)
@@ -43,19 +45,18 @@ def onehot_value_from_token(token):
 def tokens_from_onehot(onehot_tokens):
     result_tokens = []
     for onehot_token in onehot_tokens:
-        index = find_nearest(onehot_token, 1)
+        print(onehot_token)
+        index = list(onehot_token).index(1)
         result_tokens.append(TOKENS[index])
     result_tokens = filter(lambda t: t != 'PAD', result_tokens)
     return ''.join(result_tokens)
 
 
-class EquationParser:
+class EquationParserSimple:
     def train_model(self):
         self.eq_image_data = []
         self.eq_tokens = []
         self.next_tokens = []
-        self.base_resnet_model = BaseResnetModel()
-        self.caption_model = CaptionModel()
         self.caption_model_simple = CaptionModelSimple()
         self.x = []
         self.y = []
@@ -71,95 +72,84 @@ class EquationParser:
 
         generator = EquationImageGenerator()
         onehot_pad_value = TOKENS_ONEHOT[TOKENS.index('PAD')]
-        for i in range(EQUATION_COUNT):
-            eq_image, eq_tokens = generator.generate_equation_image()
-            eq_image = eq_image.resize(
-                (100, 100), resample=PIL.Image.BILINEAR)
-            eq_image = eq_image.convert('RGB')
-            eq_image_data = image.img_to_array(eq_image)
-            # image_to_predict = np.expand_dims(eq_image_data, axis=0)
 
-            self.eq_image_data.append(eq_image_data)
+        if generator.images_cached():
+            equations = generator.equations_from_cache()
+            for equation in generator.equations_from_cache():
+                (eq_image, eq_tokens) = equation
+                eq_image = eq_image.resize(
+                    (100, 100), resample=PIL.Image.BILINEAR)
+                eq_image = eq_image.convert('RGB')
+                eq_image_data = image.img_to_array(eq_image)
+                self.eq_image_data.append(eq_image_data)
 
-            full_tokens = [
-                onehot_pad_value for _ in range(MAX_EQ_TOKEN_LENGTH)]
-            # full_tokens[0] = TOKENS_ONEHOT[TOKENS.index('START')]
+                full_tokens = [
+                    onehot_pad_value for _ in range(MAX_EQ_TOKEN_LENGTH)]
 
-            for idx, token in enumerate(list(eq_tokens)):
-                onehot_token_value = TOKENS_ONEHOT[TOKENS.index(token)]
-                full_tokens[idx] = onehot_token_value
-                # concatenated_x_data = np.concatenate(
-                #    [np.array(full_tokens).flatten(), np.array(features[0])])
-                # self.x.append(concatenated_x_data)
+                for idx, token in enumerate(list(eq_tokens)):
+                    onehot_token_value = TOKENS_ONEHOT[TOKENS.index(token)]
+                    full_tokens[idx] = onehot_token_value
 
-            self.eq_tokens.append(np.array(full_tokens).flatten())
+                self.eq_tokens.append(np.array(full_tokens).flatten())
+        else:
+            for i in range(EQUATION_COUNT):
+                eq_image, eq_tokens = generator.generate_equation_image()
+                eq_image = eq_image.resize(
+                    (100, 100), resample=PIL.Image.BILINEAR)
+                eq_image = eq_image.convert('RGB')
+                eq_image_data = image.img_to_array(eq_image)
 
-            #     if idx < len(list(eq_tokens)) - 1:
-            #         next_eq_token = list(eq_tokens)[idx + 1]
-            #         next_eq_token_onehot_value = TOKENS_ONEHOT[TOKENS.index(
-            #             next_eq_token)]
-            #         self.y.append(next_eq_token_onehot_value)
+                self.eq_image_data.append(eq_image_data)
 
-            # self.y.append(TOKENS_ONEHOT[TOKENS.index('END')])
-            # full_tokens[-1] = TOKENS_ONEHOT[TOKENS.index('END')]
-            # self.eq_tokens.append(full_tokens)
+                full_tokens = [
+                    onehot_pad_value for _ in range(MAX_EQ_TOKEN_LENGTH)]
+
+                for idx, token in enumerate(list(eq_tokens)):
+                    onehot_token_value = TOKENS_ONEHOT[TOKENS.index(token)]
+                    full_tokens[idx] = onehot_token_value
+
+                self.eq_tokens.append(np.array(full_tokens).flatten())
 
         self.eq_image_data = np.array(
             self.eq_image_data).astype('float32')
         self.eq_tokens = np.array(
             self.eq_tokens).astype('float32')
-        # # self.x = np.array(self.x).astype('float32')
-        # # self.y = np.array(self.y).astype('float32')
-
-        # # print('Flattened tokens shape', self.x.shape)
-        # # print('Next tokens shape', self.y.shape)
-        # # #     if not os.path.isdir(SHEET_DATA_PATH):
-        # # #         os.makedirs(SHEET_DATA_PATH)
-
-        # # #     np.save(SHEET_IMAGE_DATA_PATH, self.sheet_image_data)
-        # # #     np.save(SHEET_EQ_COORDS_PATH, self.sheet_eq_coords)
-
-        # # x = [self.eq_image_data, self.eq_tokens]
-        # # y = self.next_tokens
-
-        # # train_x, test_x, train_y, test_y = train_test_split(
-        # #     self.x, self.y, test_size=test_size
-        # # )
-
-        # print('Shapes')
-        # print(self.eq_image_data.shape)
-        # print(self.eq_tokens.shape)
 
         train_x, test_x, train_y, test_y = train_test_split(
             self.eq_image_data, self.eq_tokens, test_size=0.2
         )
 
+        print(self.eq_image_data.shape)
+        print(self.eq_tokens.shape)
+
         # # Step 3: Train model
 
         self.caption_model_simple.load_model()
-        history = self.caption_model_simple.model.fit(train_x, train_y, epochs=epochs,
-                                                      validation_data=(test_x, test_y), batch_size=batch_size)
+        if not self.caption_model_simple.model_cached():
+            history = self.caption_model_simple.model.fit(train_x, train_y, epochs=epochs,
+                                                          validation_data=(test_x, test_y), batch_size=batch_size)
 
-        self.caption_model_simple.save_model()
-        plt.subplot(2, 4, 1)
-        plt.plot(history.history['accuracy'], label='accuracy')
-        plt.plot(history.history['val_accuracy'], label='val_accuracy')
-        plt.xlabel('Epoch')
-        plt.ylabel('Accuracy')
-        plt.legend(loc='lower right')
+            self.caption_model_simple.save_model()
+            plt.subplot(2, 4, 1)
+            plt.plot(history.history['accuracy'], label='accuracy')
+            plt.plot(history.history['val_accuracy'], label='val_accuracy')
+            plt.xlabel('Epoch')
+            plt.ylabel('Accuracy')
+            plt.legend(loc='lower right')
 
-        plt.subplot(2, 4, 2)
-        plt.plot(history.history['loss'], label='loss')
-        plt.plot(history.history['val_loss'], label='val_loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend(loc='upper right')
+            plt.subplot(2, 4, 2)
+            plt.plot(history.history['loss'], label='loss')
+            plt.plot(history.history['val_loss'], label='val_loss')
+            plt.xlabel('Epoch')
+            plt.ylabel('Loss')
+            plt.legend(loc='upper right')
+
+            plt.show()
 
         eq_image, eq_tokens = generator.generate_equation_image()
         eq_image = eq_image.resize((100, 100), resample=PIL.Image.BILINEAR)
         eq_image_data = image.img_to_array(eq_image.convert('RGB'))
         predicted = self.infer_from_model(eq_image_data)
-        plt.subplot(2, 4, 3)
         plt.imshow(eq_image)
         plt.text(10, 10, f'Ground truth: {eq_tokens}')
         plt.text(10, 80, f'Predicted: {predicted}')
@@ -171,9 +161,7 @@ class EquationParser:
         # print(test_acc)
 
     def data_cached(self):
-        return os.path.isdir(SHEET_DATA_PATH) and \
-            os.path.isfile(SHEET_IMAGE_DATA_PATH) and \
-            os.path.isfile(SHEET_EQ_COORDS_PATH)
+        return os.path.isdir(EQUATION_DATA_PATH)
 
     def load_model(self):
         if os.path.exists(MODEL_PATH):
