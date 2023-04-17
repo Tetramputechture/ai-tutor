@@ -1,4 +1,3 @@
-from .tokens import TOKENS, TOKENS_ONEHOT, MAX_EQ_TOKEN_LENGTH_PLUS_PAD
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 import random
@@ -18,15 +17,14 @@ import string
 
 from .equation_image_generator import EquationImageGenerator
 from .caption_model import CaptionModel
-from .caption_model_simple import CaptionModelSimple
 from .base_resnet_model import BaseResnetModel
-from .tokens import MAX_EQ_TOKEN_LENGTH, MAX_EQ_TOKEN_LENGTH_PLUS_PAD, TOKENS
+from .tokens import MAX_EQ_TOKEN_LENGTH, TOKENS, TOKENS_ONEHOT
 
-EQUATION_COUNT = 500
+EQUATION_COUNT = 1000
 
 epochs = 10
 
-batch_size = 64
+batch_size = 128
 
 test_size = 0.2
 
@@ -51,14 +49,12 @@ def tokens_from_onehot(onehot_tokens):
 
 class EquationParser:
     def train_model(self):
-        self.eq_image_data = []
-        self.eq_tokens = []
         self.next_tokens = []
         self.base_resnet_model = BaseResnetModel()
         self.caption_model = CaptionModel()
-        self.caption_model_simple = CaptionModelSimple()
         self.x = []
         self.y = []
+        self.onehot_pad_value = TOKENS_ONEHOT[TOKENS.index('PAD')]
 
         # Step 1: Fetch equation images
         print('Initializing equation image data...')
@@ -69,78 +65,39 @@ class EquationParser:
         #     self.eq_tokens = np.load(EQUATION_IMAGE_TOKENS_PATH)
         # else:
 
+        self.base_resnet_model.load_model()
         generator = EquationImageGenerator()
-        onehot_pad_value = TOKENS_ONEHOT[TOKENS.index('PAD')]
-        for i in range(EQUATION_COUNT):
-            eq_image, eq_tokens = generator.generate_equation_image()
-            eq_image = eq_image.resize(
-                (100, 100), resample=PIL.Image.BILINEAR)
-            eq_image = eq_image.convert('RGB')
-            eq_image_data = image.img_to_array(eq_image)
-            # image_to_predict = np.expand_dims(eq_image_data, axis=0)
+        if generator.images_cached():
+            equations = generator.equations_from_cache()
+            for equation in generator.equations_from_cache()[:EQUATION_COUNT]:
+                self.append_equation_data_to_dataset(equation)
+        else:
+            for i in range(EQUATION_COUNT):
+                self.append_equation_data_to_dataset(
+                    generator.generate_equation_image())
 
-            self.eq_image_data.append(eq_image_data)
+        # self.x = np.array(self.x).flatten()
+        self.x = np.array(self.x)
+        self.y = np.array(self.y).astype('float32')
 
-            full_tokens = [
-                onehot_pad_value for _ in range(MAX_EQ_TOKEN_LENGTH)]
-            # full_tokens[0] = TOKENS_ONEHOT[TOKENS.index('START')]
-
-            for idx, token in enumerate(list(eq_tokens)):
-                onehot_token_value = TOKENS_ONEHOT[TOKENS.index(token)]
-                full_tokens[idx] = onehot_token_value
-                # concatenated_x_data = np.concatenate(
-                #    [np.array(full_tokens).flatten(), np.array(features[0])])
-                # self.x.append(concatenated_x_data)
-
-            self.eq_tokens.append(np.array(full_tokens).flatten())
-
-            #     if idx < len(list(eq_tokens)) - 1:
-            #         next_eq_token = list(eq_tokens)[idx + 1]
-            #         next_eq_token_onehot_value = TOKENS_ONEHOT[TOKENS.index(
-            #             next_eq_token)]
-            #         self.y.append(next_eq_token_onehot_value)
-
-            # self.y.append(TOKENS_ONEHOT[TOKENS.index('END')])
-            # full_tokens[-1] = TOKENS_ONEHOT[TOKENS.index('END')]
-            # self.eq_tokens.append(full_tokens)
-
-        self.eq_image_data = np.array(
-            self.eq_image_data).astype('float32')
-        self.eq_tokens = np.array(
-            self.eq_tokens).astype('float32')
-        # # self.x = np.array(self.x).astype('float32')
-        # # self.y = np.array(self.y).astype('float32')
-
-        # # print('Flattened tokens shape', self.x.shape)
-        # # print('Next tokens shape', self.y.shape)
-        # # #     if not os.path.isdir(SHEET_DATA_PATH):
-        # # #         os.makedirs(SHEET_DATA_PATH)
-
-        # # #     np.save(SHEET_IMAGE_DATA_PATH, self.sheet_image_data)
-        # # #     np.save(SHEET_EQ_COORDS_PATH, self.sheet_eq_coords)
-
-        # # x = [self.eq_image_data, self.eq_tokens]
-        # # y = self.next_tokens
-
-        # # train_x, test_x, train_y, test_y = train_test_split(
-        # #     self.x, self.y, test_size=test_size
-        # # )
-
-        # print('Shapes')
-        # print(self.eq_image_data.shape)
-        # print(self.eq_tokens.shape)
+        print('Shapes:')
+        # total samples = equation_count * vocab_size
+        # x: [total samples, max_eq_token_length]
+        # y: [total samples,]
+        print(self.x.shape)
+        print(self.y.shape)
 
         train_x, test_x, train_y, test_y = train_test_split(
-            self.eq_image_data, self.eq_tokens, test_size=0.2
+            self.x, self.y, test_size=test_size
         )
 
         # # Step 3: Train model
 
-        self.caption_model_simple.load_model()
-        history = self.caption_model_simple.model.fit(train_x, train_y, epochs=epochs,
-                                                      validation_data=(test_x, test_y), batch_size=batch_size)
+        self.caption_model.load_model()
+        history = self.caption_model.model.fit(train_x, train_y, epochs=epochs,
+                                               validation_data=(test_x, test_y), batch_size=batch_size)
 
-        self.caption_model_simple.save_model()
+        self.caption_model.save_model()
         plt.subplot(2, 4, 1)
         plt.plot(history.history['accuracy'], label='accuracy')
         plt.plot(history.history['val_accuracy'], label='val_accuracy')
@@ -155,20 +112,50 @@ class EquationParser:
         plt.ylabel('Loss')
         plt.legend(loc='upper right')
 
-        eq_image, eq_tokens = generator.generate_equation_image()
-        eq_image = eq_image.resize((100, 100), resample=PIL.Image.BILINEAR)
-        eq_image_data = image.img_to_array(eq_image.convert('RGB'))
-        predicted = self.infer_from_model(eq_image_data)
-        plt.subplot(2, 4, 3)
-        plt.imshow(eq_image)
-        plt.text(10, 10, f'Ground truth: {eq_tokens}')
-        plt.text(10, 80, f'Predicted: {predicted}')
+        # eq_image, eq_tokens = generator.generate_equation_image()
+        # eq_image = eq_image.resize((100, 100), resample=PIL.Image.BILINEAR)
+        # eq_image_data = image.img_to_array(eq_image.convert('RGB'))
+        # predicted = self.infer_from_model(eq_image_data)
+        # plt.subplot(2, 4, 3)
+        # plt.imshow(eq_image)
+        # plt.text(10, 10, f'Ground truth: {eq_tokens}')
+        # plt.text(10, 80, f'Predicted: {predicted}')
         plt.show()
 
         # test_loss, test_acc = self.caption_model.evaluate(
         #     test_image_data, test_eq_coords, verbose=2)
 
         # print(test_acc)
+
+    def append_equation_data_to_dataset(self, equation):
+        (eq_image, eq_tokens) = equation
+        eq_image = eq_image.resize(
+            (100, 100), resample=PIL.Image.BILINEAR)
+        eq_image = eq_image.convert('RGB')
+        eq_image_data = image.img_to_array(eq_image)
+        image_to_predict = np.expand_dims(eq_image_data, axis=0)
+
+        features = self.base_resnet_model.model.predict(
+            image_to_predict)
+
+        full_tokens = [
+            self.onehot_pad_value for _ in range(MAX_EQ_TOKEN_LENGTH)]
+        full_tokens[0] = TOKENS_ONEHOT[TOKENS.index('START')]
+
+        for idx, token in enumerate(list(eq_tokens)):
+            onehot_token_value = TOKENS_ONEHOT[TOKENS.index(token)]
+            full_tokens[idx + 1] = onehot_token_value
+            concatenated_x_data = np.concatenate(
+                (np.array(features[0]).astype('float32'), np.array(full_tokens).flatten().astype('float32')))
+            self.x.append(concatenated_x_data)
+
+            if idx < len(list(eq_tokens)) - 1:
+                next_eq_token = list(eq_tokens)[idx + 1]
+                next_eq_token_onehot_value = TOKENS_ONEHOT[TOKENS.index(
+                    next_eq_token)]
+                self.y.append(next_eq_token_onehot_value)
+
+        self.y.append(TOKENS_ONEHOT[TOKENS.index('END')])
 
     def data_cached(self):
         return os.path.isdir(SHEET_DATA_PATH) and \
@@ -190,5 +177,5 @@ class EquationParser:
 
     def infer_from_model(self, image_data):
         imdata = np.expand_dims(image_data, axis=0)
-        predictions = self.caption_model_simple.model.predict(imdata)[0]
+        predictions = self.caption_model.model.predict(imdata)[0]
         return tokens_from_onehot(np.split(predictions, MAX_EQ_TOKEN_LENGTH))

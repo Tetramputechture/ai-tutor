@@ -1,4 +1,3 @@
-from .tokens import TOKENS, TOKENS_ONEHOT, MAX_EQ_TOKEN_LENGTH_PLUS_PAD
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 import random
@@ -20,7 +19,7 @@ from .equation_image_generator import EquationImageGenerator
 from .caption_model import CaptionModel
 from .caption_model_simple import CaptionModelSimple
 from .base_resnet_model import BaseResnetModel
-from .tokens import MAX_EQ_TOKEN_LENGTH, MAX_EQ_TOKEN_LENGTH_PLUS_PAD, TOKENS
+from .tokens import MAX_EQ_TOKEN_LENGTH, TOKENS
 
 EQUATION_COUNT = 500
 
@@ -28,7 +27,7 @@ epochs = 10
 
 batch_size = 64
 
-test_size = 0.2
+test_size = 0.1
 
 EQUATION_DATA_PATH = './equation_parser/data'
 
@@ -116,8 +115,11 @@ class EquationParserSimple:
             self.eq_tokens).astype('float32')
 
         train_x, test_x, train_y, test_y = train_test_split(
-            self.eq_image_data, self.eq_tokens, test_size=0.2
+            self.eq_image_data, self.eq_tokens, test_size=test_size
         )
+
+        print(self.eq_tokens[0])
+        print(self.eq_tokens[1])
 
         print(self.eq_image_data.shape)
         print(self.eq_tokens.shape)
@@ -126,6 +128,7 @@ class EquationParserSimple:
 
         self.caption_model_simple.load_model()
         if not self.caption_model_simple.model_cached():
+            print('Training model...')
             history = self.caption_model_simple.model.fit(train_x, train_y, epochs=epochs,
                                                           validation_data=(test_x, test_y), batch_size=batch_size)
 

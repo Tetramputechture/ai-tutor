@@ -4,7 +4,7 @@ import os
 from tensorflow.keras import datasets, layers, models, optimizers, applications
 import string
 
-from .tokens import MAX_EQ_TOKEN_LENGTH_PLUS_PAD, TOKENS, MAX_EQ_TOKEN_LENGTH
+from .tokens import TOKENS, MAX_EQ_TOKEN_LENGTH
 
 MODEL_PATH = './equation_parser/equation_parser_simple.h5'
 
@@ -21,13 +21,21 @@ class CaptionModelSimple:
         self.model = models.Sequential([
             resnet_base,
             layers.Flatten(),
-            layers.Dense(256, activation='relu'),
-            layers.Dropout(0.5),
-            layers.Dense(64, activation='relu'),
-            layers.Dropout(0.5),
+            # layers.Dense(1024, activation='relu'),
+            # layers.Dropout(0.7),
+            # layers.Dense(512, activation='relu'),
+            # layers.Dropout(0.5),
+            # layers.Dense(256, activation='relu'),
+            # layers.Dropout(0.2),
             layers.Dense(MAX_EQ_TOKEN_LENGTH *
                          vocab_size, activation='softmax')
         ])
+
+        for layer in resnet_base.layers:
+            layer.trainable = False
+
+        for layer in resnet_base.layers[-24:]:
+            layer.trainable = True
 
         self.model.compile(optimizer='adam',
                            loss='mse',

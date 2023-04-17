@@ -4,20 +4,19 @@ import os
 from tensorflow.keras import datasets, layers, models, optimizers, applications
 import string
 
-from .tokens import MAX_EQ_TOKEN_LENGTH_PLUS_PAD, TOKENS
+from .tokens import MAX_EQ_TOKEN_LENGTH, TOKENS, VOCAB_SIZE
 
 MODEL_PATH = './equation_parser/equation_parser.h5'
 
 
 class CaptionModel:
     def create_model(self):
-        vocab_size = len(TOKENS)
-
         self.model = models.Sequential([
             layers.Input(
-                shape=(MAX_EQ_TOKEN_LENGTH_PLUS_PAD * vocab_size + 256, 1)),
+                shape=(MAX_EQ_TOKEN_LENGTH * VOCAB_SIZE + 256, 1)),
+            # layers.Embedding(VOCAB_SIZE, 256, mask_zero=True),
             layers.LSTM(256),
-            layers.Dense(vocab_size, activation='softmax')
+            layers.Dense(VOCAB_SIZE, activation='softmax')
         ])
 
         self.model.compile(optimizer='adam',

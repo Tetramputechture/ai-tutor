@@ -7,6 +7,7 @@ from equation_finder.equation_sheet_generator import EquationSheetGenerator
 from equation_finder.equation_sheet_decorator import EquationSheetDecorator
 from equation_finder.equation_sheet_processor import EquationSheetProcessor
 
+from equation_parser.equation_parser import EquationParser
 from equation_parser.equation_parser_simple import EquationParserSimple
 
 
@@ -51,7 +52,7 @@ def run_eq_finder():
 
 
 def run_eq_parser():
-    EquationParserSimple().train_model()
+    EquationParser().train_model()
 
 
 def main():
