@@ -22,11 +22,13 @@ from .tokens import MAX_EQ_TOKEN_LENGTH, TOKENS, TOKENS_ONEHOT
 
 EQUATION_COUNT = 1000
 
-epochs = 10
+CONTEXT_WINDOW_LENGTH = 5
 
-batch_size = 128
+epochs = 50
 
-test_size = 0.2
+batch_size = 64
+
+test_size = 0.1
 
 
 def find_nearest(array, value):
@@ -82,8 +84,8 @@ class EquationParser:
 
         print('Shapes:')
         # total samples = equation_count * vocab_size
-        # x: [total samples, max_eq_token_length]
-        # y: [total samples,]
+        # x: [total samples, ctx_window_length,]
+        # y: [total samples, vocab_size]
         print(self.x.shape)
         print(self.y.shape)
 
@@ -137,17 +139,35 @@ class EquationParser:
 
         features = self.base_resnet_model.model.predict(
             image_to_predict)
+        features_arr = np.array(features[0]).astype('float32')
 
         full_tokens = [
             self.onehot_pad_value for _ in range(MAX_EQ_TOKEN_LENGTH)]
         full_tokens[0] = TOKENS_ONEHOT[TOKENS.index('START')]
+        x_window = []
+        for ft in full_tokens:
+            x_value = np.concatenate(
+                (features_arr, np.array(full_tokens).flatten().astype('float32')))
+            x_window.append(x_value)
+
+        self.x.append(x_window)
+
+        first_eq_token = list(eq_tokens)[0]
+        first_eq_token_onehot_value = TOKENS_ONEHOT[TOKENS.index(
+            first_eq_token)]
+        self.y.append(first_eq_token_onehot_value)
 
         for idx, token in enumerate(list(eq_tokens)):
             onehot_token_value = TOKENS_ONEHOT[TOKENS.index(token)]
             full_tokens[idx + 1] = onehot_token_value
-            concatenated_x_data = np.concatenate(
-                (np.array(features[0]).astype('float32'), np.array(full_tokens).flatten().astype('float32')))
-            self.x.append(concatenated_x_data)
+
+            x_window = []
+            for ft in full_tokens:
+                x_value = np.concatenate(
+                    (features_arr, np.array(full_tokens).flatten().astype('float32')))
+                x_window.append(x_value)
+
+            self.x.append(x_window)
 
             if idx < len(list(eq_tokens)) - 1:
                 next_eq_token = list(eq_tokens)[idx + 1]

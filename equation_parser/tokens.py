@@ -11,3 +11,5 @@ for idx, t in enumerate(TOKENS):
     TOKENS_ONEHOT.append(zeroes)
 
 MAX_EQ_TOKEN_LENGTH = 25  # 18 digits + 3 fractions + plus, equals + START + END
+
+CONTEXT_WINDOW_LENGTH = 5
