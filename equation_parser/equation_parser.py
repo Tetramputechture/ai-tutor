@@ -7,6 +7,7 @@ import numpy as np
 from tensorflow.keras import datasets, layers, models, optimizers, applications
 from tensorflow.keras.preprocessing import image
 from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 import PIL
 import os
@@ -20,13 +21,17 @@ from .caption_model import CaptionModel
 from .base_resnet_model import BaseResnetModel
 from .tokens import MAX_EQ_TOKEN_LENGTH, TOKENS, TOKENS_ONEHOT, MIN_EQ_TOKEN_LENGTH
 
-EQUATION_COUNT = 100
+TRAIN = False
 
+if "train" in str(sys.argv[1]).lower():
+    TRAIN = True
+
+EQUATION_COUNT = 100
 STRIDE = 1
 
-epochs = 10
+epochs = 15
 
-batch_size = 64
+batch_size = 32
 
 test_size = 0.1
 
@@ -43,8 +48,7 @@ def onehot_value_from_token(token):
 def tokens_from_onehot(onehot_tokens):
     result_tokens = []
     for onehot_token in onehot_tokens:
-        index = find_nearest(onehot_token, 1)
-        result_tokens.append(TOKENS[index])
+        result_tokens.append(TOKENS[np.argmax(onehot_token)])
     result_tokens = filter(lambda t: t != 'PAD', result_tokens)
     return ''.join(result_tokens)
 
@@ -55,11 +59,15 @@ class EquationParser:
         self.base_resnet_model = BaseResnetModel()
         self.generator = EquationImageGenerator()
         self.caption_model = CaptionModel()
+        self.all_eq_tokens = []
+        self.all_eq_features = []
+        self.preprocess_x_tokens = []
         self.preprocess_x = []
         self.preprocess_y = []
         self.x = []
         self.y = []
         self.onehot_pad_value = TOKENS_ONEHOT[TOKENS.index('PAD')]
+        self.vectorizer = TfidfVectorizer()
 
         # Step 1: Fetch equation images
         print('Initializing equation image data...')
@@ -72,7 +80,8 @@ class EquationParser:
 
         self.base_resnet_model.load_model()
 
-        if not self.caption_model.model_cached():
+        if TRAIN and not self.caption_model.model_cached():
+            equations = []
             if self.generator.images_cached():
                 equations = self.generator.equations_from_cache()
                 for equation in self.generator.equations_from_cache()[:EQUATION_COUNT]:
@@ -81,6 +90,49 @@ class EquationParser:
                 for i in range(EQUATION_COUNT):
                     self.append_equation_data_to_dataset(
                         self.generator.generate_equation_image())
+
+            self.vectorizer.fit_transform(
+                self.preprocess_x_tokens)
+            vectorized_start_token = np.asarray(self.vectorizer.transform(
+                ['START']).todense())[0]
+            onehot_end_value = TOKENS_ONEHOT[TOKENS.index('END')]
+
+            for idx, equation in enumerate(self.generator.equations_from_cache()[:EQUATION_COUNT]):
+                eq_features_arr = self.all_eq_features[idx]
+                eq_tokens = equation[1]
+
+                self.preprocess_x.append(np.concatenate(
+                    (eq_features_arr, vectorized_start_token)))
+                self.preprocess_y.append(
+                    TOKENS_ONEHOT[TOKENS.index(eq_tokens[0])])
+
+                for idx, eq_token in enumerate(eq_tokens):
+                    vectorized_token = np.asarray(self.vectorizer.transform(
+                        [eq_token]).todense())[0]
+                    self.preprocess_x.append(np.concatenate(
+                        (eq_features_arr, vectorized_token)))
+                    if idx < len(eq_tokens) - 1:
+                        onehot_next_value = TOKENS_ONEHOT[TOKENS.index(
+                            eq_tokens[idx + 1])]
+                        self.preprocess_y.append(onehot_next_value)
+
+                self.preprocess_y.append(onehot_end_value)
+
+            for i in range(0, len(self.preprocess_x) - MIN_EQ_TOKEN_LENGTH, STRIDE):
+                x_values = self.preprocess_x[i:i+MIN_EQ_TOKEN_LENGTH]
+                # if self.preprocess_x_tokens[i] == 'START':
+                #     end_idx = self.preprocess_x_tokens[i:].index('END')
+                #     current_equation = self.preprocess_x_tokens[i:end_idx]
+                # print('Current equation:', current_equation)
+                # print('Current x_values:', ''.join(
+                #     self.preprocess_x_tokens[i:i+MIN_EQ_TOKEN_LENGTH]))
+                # print('Next preprocess_x_tokens:', ''.join(
+                #     self.preprocess_x_tokens[i+MIN_EQ_TOKEN_LENGTH+1:i+MIN_EQ_TOKEN_LENGTH+6]))
+                # print('Next y tokens', ''.join(list(map(lambda y: TOKENS[np.argmax(
+                #     y)], self.preprocess_y[i+MIN_EQ_TOKEN_LENGTH:i+MIN_EQ_TOKEN_LENGTH+4]))))
+                # exit()
+                self.x.append(x_values)
+                self.y.append(self.preprocess_y[i+MIN_EQ_TOKEN_LENGTH])
 
             # self.x = np.array(self.x).flatten()
             self.x = np.array(self.x)
@@ -145,26 +197,44 @@ class EquationParser:
         features = self.base_resnet_model.model.predict(
             image_to_predict)
         features_arr = np.array(features[0]).astype('float32')
+        self.all_eq_features.append(features_arr)
 
+        # preprocess_x = []
+        # preprocess_y = []
+
+        onehot_token_value = TOKENS_ONEHOT[TOKENS.index('START')]
+        concatenated_x_value = np.concatenate(
+            (features_arr, onehot_token_value)
+        )
+        # self.preprocess_x.append(concatenated_x_value)
+        self.preprocess_x_tokens.append('START')
+        # self.preprocess_y.append(TOKENS_ONEHOT[TOKENS.index(eq_tokens[0])])
+
+        eq_tokens_to_append = []
         for idx, token in enumerate(list(eq_tokens)):
             onehot_token_value = TOKENS_ONEHOT[TOKENS.index(token)]
             concatenated_x_value = np.concatenate(
                 (features_arr, onehot_token_value)
             )
-            self.preprocess_x.append(concatenated_x_value)
-
+            # self.preprocess_x.append(concatenated_x_value)
+            self.preprocess_x_tokens.append(token)
+            eq_tokens_to_append.append(token)
             if idx < len(list(eq_tokens)) - 1:
                 next_eq_token = list(eq_tokens)[idx + 1]
                 next_eq_token_onehot_value = TOKENS_ONEHOT[TOKENS.index(
                     next_eq_token)]
-                self.preprocess_y.append(next_eq_token_onehot_value)
+                # self.preprocess_y.append(next_eq_token_onehot_value)
 
-        self.preprocess_y.append(TOKENS_ONEHOT[TOKENS.index('END')])
-
-        for i in range(0, len(self.preprocess_x) - MIN_EQ_TOKEN_LENGTH, STRIDE):
-            x_values = self.preprocess_x[i:i+MIN_EQ_TOKEN_LENGTH]
-            self.x.append(x_values)
-            self.y.append(self.preprocess_y[i+MIN_EQ_TOKEN_LENGTH])
+        # self.preprocess_y.append(TOKENS_ONEHOT[TOKENS.index('END')])
+        # self.all_eq_tokens.append(eq_tokens_to_append)
+        # print('Original equation:', eq_tokens)
+        # for i in range(0, len(preprocess_x) - MIN_EQ_TOKEN_LENGTH, STRIDE):
+        #     x_values = preprocess_x[i:i+MIN_EQ_TOKEN_LENGTH]
+        #     # print('Current x_values:', eq_tokens[i:i+MIN_EQ_TOKEN_LENGTH])
+        #     # print('Next token', TOKENS[np.argmax(
+        #     #     preprocess_y[i+MIN_EQ_TOKEN_LENGTH])])
+        #     self.x.append(x_values)
+        #     self.y.append(preprocess_y[i+MIN_EQ_TOKEN_LENGTH])
 
     def data_cached(self):
         return os.path.isdir(SHEET_DATA_PATH) and \
@@ -196,10 +266,13 @@ class EquationParser:
         rand_features_arr = np.array(rand_features[0]).astype('float32')
 
         preprocess_x = []
-        for eq_token in rand_eq_tokens[len(rand_eq_tokens) - MIN_EQ_TOKEN_LENGTH:]:
+        for eq_token in rand_eq_tokens[:MIN_EQ_TOKEN_LENGTH]:
             onehot_token_value = onehot_value_from_token(eq_token)
             preprocess_x.append(np.concatenate((
                 rand_features_arr, onehot_token_value)))
+
+        preprocess_x.append(np.concatenate((
+            rand_features_arr, TOKENS_ONEHOT[TOKENS.index('END')])))
 
         imdata = np.expand_dims(image_data, axis=0)
         features = self.base_resnet_model.model.predict(
@@ -207,7 +280,7 @@ class EquationParser:
         features_arr = np.array(features[0]).astype('float32')
 
         preprocess_x.append(np.concatenate((
-            features_arr, TOKENS_ONEHOT[TOKENS.index('END')])))
+            features_arr, TOKENS_ONEHOT[TOKENS.index('START')])))
 
         predictions = []
 
@@ -216,6 +289,9 @@ class EquationParser:
             prediction = self.caption_model.model.predict(
                 np.expand_dims(np.array(x_values), axis=0))
             predicted_token = TOKENS[np.argmax(prediction)]
+            if predicted_token == 'END':
+                break
+
             onehot_pred_token = onehot_value_from_token(predicted_token)
             predictions.append(predicted_token)
             preprocess_x.append(np.concatenate(
@@ -223,6 +299,6 @@ class EquationParser:
             ))
 
         print(np.array(predictions).shape)
-        print(predictions)
+        print(''.join(predictions))
 
         return ''.join(predictions)

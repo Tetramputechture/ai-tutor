@@ -13,7 +13,7 @@ class CaptionModel:
     def create_model(self):
         self.model = models.Sequential([
             layers.Input(
-                shape=(MIN_EQ_TOKEN_LENGTH, VOCAB_SIZE + 256)),
+                shape=(MIN_EQ_TOKEN_LENGTH, 1 + 1024)),
             layers.LSTM(256),
             layers.Dense(VOCAB_SIZE, activation='softmax')
         ])
