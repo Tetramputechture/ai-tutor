@@ -6,7 +6,10 @@ import sys
 import os
 import shutil
 import csv
+import pickle
+
 import uuid
+from tensorflow.keras.preprocessing import image
 
 from io import BytesIO
 from PIL import Image
@@ -46,6 +49,8 @@ CACHE_DIR = './equation_parser/data'
 TOKENS_FILENAME = 'tokens'
 TOKENS_HEADERS = ['eq_id', 'tokens']
 
+FEATURES_FILENAME_PREFIX = 'features'
+
 
 def white_to_transparency(img):
     x = np.asarray(img.convert('RGBA')).copy()
@@ -58,6 +63,9 @@ def to_padded_tokens(rand_numbers):
 
 
 class EquationImageGenerator:
+    def __init__(self, feature_extractor_model):
+        self.feature_extractor_model = feature_extractor_model
+
     def generate_equation_image(self, dpi=600, cache=True) -> (Image, str):
         rand_numbers = [rand_frac_number() for _ in range(6)]
         eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
@@ -88,20 +96,46 @@ class EquationImageGenerator:
         im = Image.open(buffer_)
         eq_image = white_to_transparency(im)
         eq_tokens = to_padded_tokens(rand_numbers)
-        if cache:
-            self.cache_image(eq_image, eq_tokens)
-        return (eq_image, eq_tokens)
-
-    def cache_image(self, eq_image, eq_tokens):
         if not self.images_cached():
             os.makedirs(CACHE_DIR)
+            with open(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv', 'a') as tokens_file:
+                writer = csv.writer(tokens_file)
+                writer.writerow(TOKENS_HEADERS)
 
+        cached_eq_id = self.cache_image(eq_image, eq_tokens)
+        features = self.cache_image_features(eq_image, cached_eq_id)
+        return (eq_image, eq_tokens, features, cached_eq_id)
+
+    def cache_image(self, eq_image, eq_tokens):
         eq_id = uuid.uuid4()
         with open(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv', 'a') as tokens_file:
             writer = csv.writer(tokens_file)
             writer.writerow([eq_id, eq_tokens])
 
         eq_image.save(f'{CACHE_DIR}/{eq_id}.bmp')
+
+        return eq_id
+
+    def cache_image_features(self, eq_image, uuid):
+        features_filename = f'{CACHE_DIR}/{FEATURES_FILENAME_PREFIX}-{uuid}.p'
+        if os.path.isfile(features_filename):
+            return
+
+        eq_image = eq_image.resize(
+            (100, 100), resample=PIL.Image.BILINEAR)
+        eq_image = eq_image.convert('RGB')
+        eq_image_data = image.img_to_array(eq_image)
+        image_to_predict = np.expand_dims(eq_image_data, axis=0)
+
+        features = self.feature_extractor_model.predict(image_to_predict)
+        features = np.array(features[0]).astype('float32')
+        pickle.dump(features, open(features_filename, 'wb'))
+
+        return features
+
+    def features_from_equation_id(self, eq_id):
+        feature_filename = f'{CACHE_DIR}/{FEATURES_FILENAME_PREFIX}-{eq_id}.p'
+        return pickle.load(open(feature_filename, 'rb'))
 
     def images_cached(self):
         return os.path.isdir(CACHE_DIR) and len(
@@ -124,6 +158,8 @@ class EquationImageGenerator:
                 else:
                     eq_image = None
 
-                equations.append((eq_image, tokens))
+                features = self.features_from_equation_id(eq_id)
+
+                equations.append((eq_image, tokens, features, eq_id))
 
         return equations
