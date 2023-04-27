@@ -19,7 +19,7 @@ import string
 from .equation_image_generator import EquationImageGenerator
 from .caption_model import CaptionModel
 from .base_resnet_model import BaseResnetModel
-from .tokens import MAX_EQ_TOKEN_LENGTH, TOKENS, TOKENS_ONEHOT, MIN_EQ_TOKEN_LENGTH
+from .tokens import MAX_EQ_TOKEN_LENGTH, TOKENS, TOKENS_ONEHOT, MIN_EQ_TOKEN_LENGTH, pad_tokens, PAD_TOKEN, START_TOKEN, END_TOKEN
 
 TRAIN = False
 
@@ -61,7 +61,7 @@ class EquationParser:
         self.x = []
         self.y = []
         self.onehot_pad_value = TOKENS_ONEHOT[TOKENS.index('PAD')]
-        self.vectorizer = TfidfVectorizer()
+        self.vectorizer = TfidfVectorizer(analyzer='char')
 
         # Step 1: Fetch equation images
         print('Initializing equation image data...')
@@ -75,6 +75,7 @@ class EquationParser:
         self.base_resnet_model.load_model()
 
         self.generator = EquationImageGenerator(self.base_resnet_model.model)
+        self.caption_model.create_model()
 
         if TRAIN and not self.caption_model.model_cached():
             equations = []
@@ -85,17 +86,44 @@ class EquationParser:
                     equations.append(self.generator.generate_equation_image())
 
         train_images = []
-        train_equations = []
+        train_equation_tokens = []
         train_features = []
+        tokenized_equations = []
 
         for eq in equations:
-            print(eq)
-            train_images.append(eq[0])
-            train_equations.append(eq[1])
+            tokens_arr = []
+            eq_id = eq[3]
+            train_equation_tokens.append(START_TOKEN)
+            tokens_arr.append(START_TOKEN)
             train_features.append(eq[2])
 
-        #     self.vectorizer.fit_transform(
-        #         self.preprocess_x_tokens)
+            for token in eq[1]:
+                train_equation_tokens.append(token)
+                tokens_arr.append(token)
+                train_features.append(eq[2])
+
+            train_equation_tokens.append(END_TOKEN)
+            tokens_arr.append(END_TOKEN)
+            train_features.append(eq[2])
+
+            tokenized_equations.append(''.join(tokens_arr))
+
+        self.vectorizer.fit_transform(tokenized_equations)
+        self.encoded_pad_token = self.vectorizer.transform([PAD_TOKEN]).todense()[
+            0]
+
+        # [a, b], c = next(self.data_generator(
+        #     train_equation_tokens, train_features, self.vectorizer, MAX_EQ_TOKEN_LENGTH))
+        # print(a.shape)
+        # print(b.shape)
+        # print(c.shape)
+
+        for i in range(10):
+            generator = self.data_generator(
+                train_equation_tokens, train_features, self.vectorizer, MAX_EQ_TOKEN_LENGTH)
+            self.caption_model.model.fit_generator(
+                generator, epochs=1, steps_per_epoch=len(tokenized_equations), verbose=1)
+
         #     vectorized_start_token = np.asarray(self.vectorizer.transform(
         #         ['START']).todense())[0]
         #     onehot_end_value = TOKENS_ONEHOT[TOKENS.index('END')]
@@ -189,37 +217,30 @@ class EquationParser:
 
         # print(test_acc)
 
-    def data_generator(equations, features, vectorizer, max_length):
+    def data_generator(self, equation_tokens, features, vectorizer, max_length):
         while True:
-            for key, tokens in equations.items():
-                # image features
-                feature = features[key][0]
-                input_image, input_sequence, output_word = create_sequences(
-                    vectorizer, max_length, tokens, feature)
-                yield [[input_image, input_sequence], output_word]
+            input_features, input_sequence, output_token = self.create_sequences(
+                vectorizer, max_length, equation_tokens, features)
+            yield [[input_features, input_sequence], output_token]
 
-    def create_sequences(vectorizer, max_length, tokens, feature):
+    def create_sequences(self, vectorizer, max_length, equation_tokens, features):
         X1, X2, y = list(), list(), list()
-        # walk through each descriptin for the image
-        for eq_token in tokens:
-            # encode the sequence
-            seq = vectorizer.vectorizer.transform([eq_token]).to_dense()[0]
-            # seq = tokenizer.texts_to_sequence([desc])[0]
+        encoded_tokens = [vectorizer.transform([token]).todense()[
+            0] for token in equation_tokens]
+        for i in range(1, len(encoded_tokens)):
+            # split into input and output pair
+            in_seq = encoded_tokens[:i]
 
-            # split one sequence into multiple X,y pairs
-            for i in range(1, len(seq)):
-                # split into input and output pair
-                in_seq, out_seq = seq[:i], seq[i]
-                # pad input sequence
-                in_seq = pad_sequences([in_seq], maxlen=max_length)[0]
+            # pad input sequence
+            in_seq = pad_tokens(in_seq, max_length, self.encoded_pad_token)
 
-                TOKENS_ONEHOT[TOKENS.index(out_seq)]
-                out_seq = to_categorical([out_seq], num_classes=2)[0]
+            # need to get next token onehot from vectorized value
+            next_token = TOKENS_ONEHOT[TOKENS.index(equation_tokens[i])]
 
-                # store
-                X1.append(feature)
-                X2.append(in_seq)
-                y.append(out_seq)
+            # store
+            X1.append(features[i-1])
+            X2.append(in_seq)
+            y.append(next_token)
 
         return np.array(X1), np.array(X2), np.array(y)
 

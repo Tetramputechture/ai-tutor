@@ -1,7 +1,11 @@
 import string
 import numpy as np
 
-TOKENS = list(string.digits + '+=/') + ['PAD', 'START', 'END']
+START_TOKEN = 'START'
+END_TOKEN = 'END'
+PAD_TOKEN = 'PAD'
+
+TOKENS = list(string.digits + '+=/') + [PAD_TOKEN, START_TOKEN, END_TOKEN]
 VOCAB_SIZE = len(TOKENS)
 
 TOKENS_ONEHOT = []
@@ -14,3 +18,15 @@ MAX_EQ_TOKEN_LENGTH = 25  # 18 digits + 3 fractions + plus, equals + START + END
 MIN_EQ_TOKEN_LENGTH = 13  # 1/1 + 1/1 = 1/1 + START + END
 
 CONTEXT_WINDOW_LENGTH = 5
+
+
+def pad_tokens(tokens, max_length, encoded_pad_token):
+    result = []
+    tokens_len = len(tokens)
+    for i in range(max_length):
+        if i < tokens_len:
+            result.append(tokens[i])
+        else:
+            result.append(encoded_pad_token)
+
+    return np.array(result)

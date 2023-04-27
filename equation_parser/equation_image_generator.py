@@ -16,6 +16,8 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
+from .tokens import START_TOKEN, END_TOKEN
+
 
 def rand_frac_number():
     return random.randint(1, 999)
@@ -58,7 +60,7 @@ def white_to_transparency(img):
     return Image.fromarray(x)
 
 
-def to_padded_tokens(rand_numbers):
+def to_clean_tokens(rand_numbers):
     return f'{rand_numbers[0]}/{rand_numbers[1]}+{rand_numbers[2]}/{rand_numbers[3]}={rand_numbers[4]}/{rand_numbers[5]}'
 
 
@@ -95,7 +97,7 @@ class EquationImageGenerator:
         buffer_.seek(0)
         im = Image.open(buffer_)
         eq_image = white_to_transparency(im)
-        eq_tokens = to_padded_tokens(rand_numbers)
+        eq_tokens = to_clean_tokens(rand_numbers)
         if not self.images_cached():
             os.makedirs(CACHE_DIR)
             with open(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv', 'a') as tokens_file:
