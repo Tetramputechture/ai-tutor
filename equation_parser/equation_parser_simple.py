@@ -15,11 +15,11 @@ import sys
 
 import string
 
-from .equation_image_generator import EquationImageGenerator
+from .equation_generator import EquationGenerator
 from .caption_model import CaptionModel
 from .caption_model_simple import CaptionModelSimple
 from .base_resnet_model import BaseResnetModel
-from .tokens import MAX_EQ_TOKEN_LENGTH, TOKENS
+from .tokens import MAX_EQUATION_TEXT_LENGTH, TOKENS
 
 EQUATION_COUNT = 500
 
@@ -69,7 +69,7 @@ class EquationParserSimple:
         #     self.eq_tokens = np.load(EQUATION_IMAGE_TOKENS_PATH)
         # else:
 
-        generator = EquationImageGenerator()
+        generator = EquationGenerator()
         onehot_pad_value = TOKENS_ONEHOT[TOKENS.index('PAD')]
 
         if generator.images_cached():
@@ -83,7 +83,7 @@ class EquationParserSimple:
                 self.eq_image_data.append(eq_image_data)
 
                 full_tokens = [
-                    onehot_pad_value for _ in range(MAX_EQ_TOKEN_LENGTH)]
+                    onehot_pad_value for _ in range(MAX_EQUATION_TEXT_LENGTH)]
 
                 for idx, token in enumerate(list(eq_tokens)):
                     onehot_token_value = TOKENS_ONEHOT[TOKENS.index(token)]
@@ -101,7 +101,7 @@ class EquationParserSimple:
                 self.eq_image_data.append(eq_image_data)
 
                 full_tokens = [
-                    onehot_pad_value for _ in range(MAX_EQ_TOKEN_LENGTH)]
+                    onehot_pad_value for _ in range(MAX_EQUATION_TEXT_LENGTH)]
 
                 for idx, token in enumerate(list(eq_tokens)):
                     onehot_token_value = TOKENS_ONEHOT[TOKENS.index(token)]
@@ -182,4 +182,4 @@ class EquationParserSimple:
     def infer_from_model(self, image_data):
         imdata = np.expand_dims(image_data, axis=0)
         predictions = self.caption_model_simple.model.predict(imdata)[0]
-        return tokens_from_onehot(np.split(predictions, MAX_EQ_TOKEN_LENGTH))
+        return tokens_from_onehot(np.split(predictions, MAX_EQUATION_TEXT_LENGTH))

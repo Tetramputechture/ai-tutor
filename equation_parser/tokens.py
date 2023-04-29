@@ -14,8 +14,7 @@ for idx, t in enumerate(TOKENS):
     zeroes[idx] = 1
     TOKENS_ONEHOT.append(zeroes)
 
-MAX_EQ_TOKEN_LENGTH = 25  # 18 digits + 3 fractions + plus, equals + START + END
-MIN_EQ_TOKEN_LENGTH = 13  # 1/1 + 1/1 = 1/1 + START + END
+MAX_EQUATION_TEXT_LENGTH = 13  # 6 numbers + 3 fractions + plus, equals + START + END
 
 CONTEXT_WINDOW_LENGTH = 5
 

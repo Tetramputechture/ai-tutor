@@ -61,10 +61,10 @@ def white_to_transparency(img):
 
 
 def to_clean_tokens(rand_numbers):
-    return f'{rand_numbers[0]}/{rand_numbers[1]}+{rand_numbers[2]}/{rand_numbers[3]}={rand_numbers[4]}/{rand_numbers[5]}'
+    return f'{rand_numbers[0]} / {rand_numbers[1]} + {rand_numbers[2]} / {rand_numbers[3]} = {rand_numbers[4]} / {rand_numbers[5]}'
 
 
-class EquationImageGenerator:
+class EquationGenerator:
     def __init__(self, feature_extractor_model):
         self.feature_extractor_model = feature_extractor_model
 
@@ -100,7 +100,7 @@ class EquationImageGenerator:
         eq_tokens = to_clean_tokens(rand_numbers)
         if not self.images_cached():
             os.makedirs(CACHE_DIR)
-            with open(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv', 'a') as tokens_file:
+            with open(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv', 'a', newline='', encoding='utf-8') as tokens_file:
                 writer = csv.writer(tokens_file)
                 writer.writerow(TOKENS_HEADERS)
 
@@ -110,7 +110,7 @@ class EquationImageGenerator:
 
     def cache_image(self, eq_image, eq_tokens):
         eq_id = uuid.uuid4()
-        with open(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv', 'a') as tokens_file:
+        with open(f'{CACHE_DIR}/{TOKENS_FILENAME}.csv', 'a', newline='', encoding='utf-8') as tokens_file:
             writer = csv.writer(tokens_file)
             writer.writerow([eq_id, eq_tokens])
 

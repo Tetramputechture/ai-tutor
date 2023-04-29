@@ -14,7 +14,6 @@ import json
 import sys
 
 from .equation_box import EquationBox
-from .equation_image_generator import EquationImageGenerator
 from .equation_sheet_generator import EquationSheetGenerator
 
 

@@ -4,7 +4,7 @@ import os
 from tensorflow.keras import datasets, layers, models, optimizers, applications
 import string
 
-from .tokens import TOKENS, MAX_EQ_TOKEN_LENGTH
+from .tokens import TOKENS, MAX_EQUATION_TEXT_LENGTH
 
 MODEL_PATH = './equation_parser/equation_parser_simple.h5'
 
@@ -27,7 +27,7 @@ class CaptionModelSimple:
             # layers.Dropout(0.5),
             # layers.Dense(256, activation='relu'),
             # layers.Dropout(0.2),
-            layers.Dense(MAX_EQ_TOKEN_LENGTH *
+            layers.Dense(MAX_EQUATION_TEXT_LENGTH *
                          vocab_size, activation='softmax')
         ])
 

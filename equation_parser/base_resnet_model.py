@@ -9,13 +9,14 @@ class BaseResnetModel:
     def create_model(self, input_shape=(100, 100, 3)):
         resnet_base = applications.resnet.ResNet50(
             include_top=False,
-            input_shape=input_shape
+            input_shape=input_shape,
+            pooling='avg'
         )
 
         self.model = models.Sequential([
             resnet_base,
-            layers.Flatten(),
-            layers.Dense(256, activation='relu')
+            # layers.Flatten(),
+            # layers.Dense(1000, activation='relu')
         ])
 
         self.model.compile(optimizer='adam',
