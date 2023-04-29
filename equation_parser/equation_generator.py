@@ -65,9 +65,6 @@ def to_clean_tokens(rand_numbers):
 
 
 class EquationGenerator:
-    def __init__(self, feature_extractor_model):
-        self.feature_extractor_model = feature_extractor_model
-
     def generate_equation_image(self, dpi=600, cache=True) -> (Image, str):
         rand_numbers = [rand_frac_number() for _ in range(6)]
         eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
@@ -105,8 +102,7 @@ class EquationGenerator:
                 writer.writerow(TOKENS_HEADERS)
 
         cached_eq_id = self.cache_image(eq_image, eq_tokens)
-        features = self.cache_image_features(eq_image, cached_eq_id)
-        return (eq_image, eq_tokens, features, cached_eq_id)
+        return (cached_eq_id, eq_tokens)
 
     def cache_image(self, eq_image, eq_tokens):
         eq_id = uuid.uuid4()
@@ -116,28 +112,7 @@ class EquationGenerator:
 
         eq_image.save(f'{CACHE_DIR}/{eq_id}.bmp')
 
-        return eq_id
-
-    def cache_image_features(self, eq_image, uuid):
-        features_filename = f'{CACHE_DIR}/{FEATURES_FILENAME_PREFIX}-{uuid}.p'
-        if os.path.isfile(features_filename):
-            return
-
-        eq_image = eq_image.resize(
-            (100, 100), resample=PIL.Image.BILINEAR)
-        eq_image = eq_image.convert('RGB')
-        eq_image_data = image.img_to_array(eq_image)
-        image_to_predict = np.expand_dims(eq_image_data, axis=0)
-
-        features = self.feature_extractor_model.predict(image_to_predict)
-        features = np.array(features[0]).astype('float32')
-        pickle.dump(features, open(features_filename, 'wb'))
-
-        return features
-
-    def features_from_equation_id(self, eq_id):
-        feature_filename = f'{CACHE_DIR}/{FEATURES_FILENAME_PREFIX}-{eq_id}.p'
-        return pickle.load(open(feature_filename, 'rb'))
+        return str(eq_id)
 
     def images_cached(self):
         return os.path.isdir(CACHE_DIR) and len(
@@ -154,14 +129,6 @@ class EquationGenerator:
             for row in reader:
                 eq_id = row[TOKENS_HEADERS[0]]
                 tokens = row[TOKENS_HEADERS[1]]
-
-                if os.path.isfile(f'{CACHE_DIR}/{eq_id}.bmp'):
-                    eq_image = PIL.Image.open(f'{CACHE_DIR}/{eq_id}.bmp')
-                else:
-                    eq_image = None
-
-                features = self.features_from_equation_id(eq_id)
-
-                equations.append((eq_image, tokens, features, eq_id))
+                equations.append((eq_id, tokens))
 
         return equations

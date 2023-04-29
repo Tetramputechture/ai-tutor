@@ -22,17 +22,22 @@ TRAIN = False
 if "train" in str(sys.argv[1]).lower():
     TRAIN = True
 
-EQUATION_COUNT = 1000
+EQUATION_COUNT = 2000
 EPOCHS = 10
 
 
 class EquationParser:
     def train_model(self):
-        equation_texts, equation_features = EquationPreprocessor(
-            EQUATION_COUNT).load_equations()
+        equation_preprocessor = EquationPreprocessor(
+            EQUATION_COUNT)
+        equation_preprocessor.load_equations()
+        equation_texts = equation_preprocessor.equation_texts
+        equation_features = equation_preprocessor.equation_features
+
         tokenizer = EquationTokenizer(equation_texts).load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 1
         steps = len(equation_texts)
+
         data_generator = DataGenerator(vocab_size)
         model = CaptionModel(vocab_size)
 
@@ -40,15 +45,19 @@ class EquationParser:
         print('Photos: train=', len(equation_features))
         print('Vocabulary Size:', vocab_size)
 
-        # [a, b], c = next(data_generator.data_generator(
-        #     equation_texts, equation_features, tokenizer))
-        # print(a.shape, b.shape, c.shape)
+        [a, b], c = next(data_generator.data_generator(
+            equation_texts, equation_features, tokenizer))
+        print(a.shape, b.shape, c.shape)
+
         model.load_model()
-        generator = data_generator.data_generator(
+        train_generator = data_generator.data_generator(
             equation_texts, equation_features, tokenizer)
+        validation_generator = data_generator.data_generator(
+            equation_texts, equation_features, tokenizer)
+
         history = model.model.fit(
-            generator, epochs=EPOCHS, steps_per_epoch=steps)
-        model.save_model(1)
+            train_generator, validation_data=validation_generator, epochs=EPOCHS, steps_per_epoch=steps, validation_steps=steps)
+        model.save_model()
 
         plt.subplot(2, 2, 1)
         plt.plot(history.history['accuracy'], label='accuracy')

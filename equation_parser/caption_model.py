@@ -15,7 +15,7 @@ class CaptionModel:
         self.vocab_size = vocab_size
 
     def create_model(self):
-        # extracted features from resnet (end of resnet os a 1000 node fc)
+        # extracted features from xception
         inputs1 = layers.Input(shape=(2048,))
         # fe1 = layers.Dropout(0.5)(inputs1)
         fe2 = layers.Dense(256, activation='relu')(inputs1)
