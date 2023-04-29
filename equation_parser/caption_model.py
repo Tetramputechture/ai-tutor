@@ -12,19 +12,18 @@ MODEL_PATH = './equation_parser/equation_parser.h5'
 class CaptionModel:
     def create_model(self):
         # extracted features from resnet
-        inputs1 = layers.Input(shape=(1024,))
+        inputs1 = layers.Input(shape=(256,))
         fe1 = layers.Dropout(0.5)(inputs1)
-        fe2 = layers.Dense(256, activation='relu')(fe1)
+        fe2 = layers.Dense(16, activation='relu')(fe1)
 
         # LSTM
-        inputs2 = layers.Input(shape=(MAX_EQ_TOKEN_LENGTH,))
-        se1 = layers.Embedding(VOCAB_SIZE, 256, mask_zero=True)(inputs2)
-        se2 = layers.Dropout(0.5)(se1)
-        se3 = layers.LSTM(256)(se2)
+        inputs2 = layers.Input(shape=(MAX_EQ_TOKEN_LENGTH, 1))
+        # se1 = layers.Embedding(VOCAB_SIZE, 256, mask_zero=True)(inputs2)
+        se3 = layers.LSTM(16)(inputs2)
 
         # merge
         decoder1 = layers.add([fe2, se3])
-        decoder2 = layers.Dense(256, activation='relu')(decoder1)
+        decoder2 = layers.Dense(32, activation='relu')(decoder1)
         outputs = layers.Dense(VOCAB_SIZE, activation='softmax')(decoder2)
 
         self.model = models.Model(inputs=[inputs1, inputs2], outputs=outputs)

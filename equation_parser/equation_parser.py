@@ -29,7 +29,7 @@ if "train" in str(sys.argv[1]).lower():
 EQUATION_COUNT = 10
 STRIDE = 1
 
-epochs = 15
+EPOCHS = 50
 
 batch_size = 32
 
@@ -66,12 +66,6 @@ class EquationParser:
         # Step 1: Fetch equation images
         print('Initializing equation image data...')
 
-        # if self.data_cached():
-        #     print('Cached equation sheet data found.')
-        #     self.eq_image_data = np.load(EQUATION_IMAGE_DATA_PATH)
-        #     self.eq_tokens = np.load(EQUATION_IMAGE_TOKENS_PATH)
-        # else:
-
         self.base_resnet_model.load_model()
 
         self.generator = EquationImageGenerator(self.base_resnet_model.model)
@@ -80,7 +74,8 @@ class EquationParser:
         if TRAIN and not self.caption_model.model_cached():
             equations = []
             if self.generator.images_cached():
-                equations = self.generator.equations_from_cache()
+                equations = self.generator.equations_from_cache()[
+                    :EQUATION_COUNT]
             else:
                 for i in range(EQUATION_COUNT):
                     equations.append(self.generator.generate_equation_image())
@@ -88,7 +83,7 @@ class EquationParser:
         train_images = []
         train_equation_tokens = []
         train_features = []
-        tokenized_equations = []
+        self.tokenized_equations = []
 
         for eq in equations:
             tokens_arr = []
@@ -108,120 +103,32 @@ class EquationParser:
 
             tokenized_equations.append(''.join(tokens_arr))
 
+        print('Fitting vectorizer...')
         self.vectorizer.fit_transform(tokenized_equations)
         self.encoded_pad_token = self.vectorizer.transform([PAD_TOKEN]).todense()[
             0]
 
-        # [a, b], c = next(self.data_generator(
-        #     train_equation_tokens, train_features, self.vectorizer, MAX_EQ_TOKEN_LENGTH))
-        # print(a.shape)
-        # print(b.shape)
-        # print(c.shape)
+        [a, b], c = next(self.data_generator(
+            train_equation_tokens, train_features, self.vectorizer, MAX_EQ_TOKEN_LENGTH))
+        print(a.shape)
+        print(b.shape)
+        print(c.shape)
 
+        print('Fitting caption model...')
         for i in range(10):
             generator = self.data_generator(
                 train_equation_tokens, train_features, self.vectorizer, MAX_EQ_TOKEN_LENGTH)
             self.caption_model.model.fit_generator(
-                generator, epochs=1, steps_per_epoch=len(tokenized_equations), verbose=1)
-
-        #     vectorized_start_token = np.asarray(self.vectorizer.transform(
-        #         ['START']).todense())[0]
-        #     onehot_end_value = TOKENS_ONEHOT[TOKENS.index('END')]
-
-        #     for idx, equation in enumerate(self.generator.equations_from_cache()[:EQUATION_COUNT]):
-        #         eq_features_arr = self.all_eq_features[idx]
-        #         eq_tokens = equation[1]
-
-        #         self.preprocess_x.append(np.concatenate(
-        #             (eq_features_arr, vectorized_start_token)))
-        #         self.preprocess_y.append(
-        #             TOKENS_ONEHOT[TOKENS.index(eq_tokens[0])])
-
-        #         for idx, eq_token in enumerate(eq_tokens):
-        #             vectorized_token = np.asarray(self.vectorizer.transform(
-        #                 [eq_token]).todense())[0]
-        #             self.preprocess_x.append(np.concatenate(
-        #                 (eq_features_arr, vectorized_token)))
-        #             if idx < len(eq_tokens) - 1:
-        #                 onehot_next_value = TOKENS_ONEHOT[TOKENS.index(
-        #                     eq_tokens[idx + 1])]
-        #                 self.preprocess_y.append(onehot_next_value)
-
-        #         self.preprocess_y.append(onehot_end_value)
-
-        #     for i in range(0, len(self.preprocess_x) - MIN_EQ_TOKEN_LENGTH, STRIDE):
-        #         x_values = self.preprocess_x[i:i+MIN_EQ_TOKEN_LENGTH]
-        #         # if self.preprocess_x_tokens[i] == 'START':
-        #         #     end_idx = self.preprocess_x_tokens[i:].index('END')
-        #         #     current_equation = self.preprocess_x_tokens[i:end_idx]
-        #         # print('Current equation:', current_equation)
-        #         # print('Current x_values:', ''.join(
-        #         #     self.preprocess_x_tokens[i:i+MIN_EQ_TOKEN_LENGTH]))
-        #         # print('Next preprocess_x_tokens:', ''.join(
-        #         #     self.preprocess_x_tokens[i+MIN_EQ_TOKEN_LENGTH+1:i+MIN_EQ_TOKEN_LENGTH+6]))
-        #         # print('Next y tokens', ''.join(list(map(lambda y: TOKENS[np.argmax(
-        #         #     y)], self.preprocess_y[i+MIN_EQ_TOKEN_LENGTH:i+MIN_EQ_TOKEN_LENGTH+4]))))
-        #         # exit()
-        #         self.x.append(x_values)
-        #         self.y.append(self.preprocess_y[i+MIN_EQ_TOKEN_LENGTH])
-
-        #     # self.x = np.array(self.x).flatten()
-        #     self.x = np.array(self.x)
-        #     self.y = np.array(self.y).astype('float32')
-
-        #     print('Shapes:')
-        #     # total samples = equation_count * vocab_size
-        #     # x: [total samples, ctx_window_length,]
-        #     # y: [total samples, vocab_size]
-        #     print(self.x.shape)
-        #     print(self.y.shape)
-
-        #     train_x, test_x, train_y, test_y = train_test_split(
-        #         self.x, self.y, test_size=test_size
-        #     )
-
-        #     # # Step 3: Train model
-        #     self.caption_model.load_model()
-        #     history = self.caption_model.model.fit(train_x, train_y, epochs=epochs,
-        #                                            validation_data=(test_x, test_y), batch_size=batch_size)
-
-        #     self.caption_model.save_model()
-        #     plt.subplot(2, 4, 1)
-        #     plt.plot(history.history['accuracy'], label='accuracy')
-        #     plt.plot(history.history['val_accuracy'], label='val_accuracy')
-        #     plt.xlabel('Epoch')
-        #     plt.ylabel('Accuracy')
-        #     plt.legend(loc='lower right')
-
-        #     plt.subplot(2, 4, 2)
-        #     plt.plot(history.history['loss'], label='loss')
-        #     plt.plot(history.history['val_loss'], label='val_loss')
-        #     plt.xlabel('Epoch')
-        #     plt.ylabel('Loss')
-        #     plt.legend(loc='upper right')
-        #     plt.show()
-
-        # self.caption_model.load_model()
-
-        # eq_image, eq_tokens = self.generator.generate_equation_image()
-        # eq_image = eq_image.resize((100, 100), resample=PIL.Image.BILINEAR)
-        # eq_image_data = image.img_to_array(eq_image.convert('RGB'))
-        # predicted = self.infer_from_model(eq_image_data)
-        # plt.imshow(eq_image)
-        # plt.text(10, 10, f'Ground truth: {eq_tokens}')
-        # plt.text(10, 80, f'Predicted: {predicted}')
-        # plt.show()
-
-        # test_loss, test_acc = self.caption_model.evaluate(
-        #     test_image_data, test_eq_coords, verbose=2)
-
-        # print(test_acc)
+                generator, epochs=EPOCHS, steps_per_epoch=len(tokenized_equations), verbose=1)
 
     def data_generator(self, equation_tokens, features, vectorizer, max_length):
         while True:
-            input_features, input_sequence, output_token = self.create_sequences(
+            for eq in 
+            x1_train, x2_train, output_token = self.create_sequences(
                 vectorizer, max_length, equation_tokens, features)
-            yield [[input_features, input_sequence], output_token]
+            x2_train = x2_train.reshape(
+                x2_train.shape[0], x2_train.shape[1], x2_train.shape[3])
+            yield [[x1_train, x2_train], output_token]
 
     def create_sequences(self, vectorizer, max_length, equation_tokens, features):
         X1, X2, y = list(), list(), list()
@@ -360,3 +267,96 @@ class EquationParser:
         print(''.join(predictions))
 
         return ''.join(predictions)
+
+        #     vectorized_start_token = np.asarray(self.vectorizer.transform(
+        #         ['START']).todense())[0]
+        #     onehot_end_value = TOKENS_ONEHOT[TOKENS.index('END')]
+
+        #     for idx, equation in enumerate(self.generator.equations_from_cache()[:EQUATION_COUNT]):
+        #         eq_features_arr = self.all_eq_features[idx]
+        #         eq_tokens = equation[1]
+
+        #         self.preprocess_x.append(np.concatenate(
+        #             (eq_features_arr, vectorized_start_token)))
+        #         self.preprocess_y.append(
+        #             TOKENS_ONEHOT[TOKENS.index(eq_tokens[0])])
+
+        #         for idx, eq_token in enumerate(eq_tokens):
+        #             vectorized_token = np.asarray(self.vectorizer.transform(
+        #                 [eq_token]).todense())[0]
+        #             self.preprocess_x.append(np.concatenate(
+        #                 (eq_features_arr, vectorized_token)))
+        #             if idx < len(eq_tokens) - 1:
+        #                 onehot_next_value = TOKENS_ONEHOT[TOKENS.index(
+        #                     eq_tokens[idx + 1])]
+        #                 self.preprocess_y.append(onehot_next_value)
+
+        #         self.preprocess_y.append(onehot_end_value)
+
+        #     for i in range(0, len(self.preprocess_x) - MIN_EQ_TOKEN_LENGTH, STRIDE):
+        #         x_values = self.preprocess_x[i:i+MIN_EQ_TOKEN_LENGTH]
+        #         # if self.preprocess_x_tokens[i] == 'START':
+        #         #     end_idx = self.preprocess_x_tokens[i:].index('END')
+        #         #     current_equation = self.preprocess_x_tokens[i:end_idx]
+        #         # print('Current equation:', current_equation)
+        #         # print('Current x_values:', ''.join(
+        #         #     self.preprocess_x_tokens[i:i+MIN_EQ_TOKEN_LENGTH]))
+        #         # print('Next preprocess_x_tokens:', ''.join(
+        #         #     self.preprocess_x_tokens[i+MIN_EQ_TOKEN_LENGTH+1:i+MIN_EQ_TOKEN_LENGTH+6]))
+        #         # print('Next y tokens', ''.join(list(map(lambda y: TOKENS[np.argmax(
+        #         #     y)], self.preprocess_y[i+MIN_EQ_TOKEN_LENGTH:i+MIN_EQ_TOKEN_LENGTH+4]))))
+        #         # exit()
+        #         self.x.append(x_values)
+        #         self.y.append(self.preprocess_y[i+MIN_EQ_TOKEN_LENGTH])
+
+        #     # self.x = np.array(self.x).flatten()
+        #     self.x = np.array(self.x)
+        #     self.y = np.array(self.y).astype('float32')
+
+        #     print('Shapes:')
+        #     # total samples = equation_count * vocab_size
+        #     # x: [total samples, ctx_window_length,]
+        #     # y: [total samples, vocab_size]
+        #     print(self.x.shape)
+        #     print(self.y.shape)
+
+        #     train_x, test_x, train_y, test_y = train_test_split(
+        #         self.x, self.y, test_size=test_size
+        #     )
+
+        #     # # Step 3: Train model
+        #     self.caption_model.load_model()
+        #     history = self.caption_model.model.fit(train_x, train_y, epochs=epochs,
+        #                                            validation_data=(test_x, test_y), batch_size=batch_size)
+
+        #     self.caption_model.save_model()
+        #     plt.subplot(2, 4, 1)
+        #     plt.plot(history.history['accuracy'], label='accuracy')
+        #     plt.plot(history.history['val_accuracy'], label='val_accuracy')
+        #     plt.xlabel('Epoch')
+        #     plt.ylabel('Accuracy')
+        #     plt.legend(loc='lower right')
+
+        #     plt.subplot(2, 4, 2)
+        #     plt.plot(history.history['loss'], label='loss')
+        #     plt.plot(history.history['val_loss'], label='val_loss')
+        #     plt.xlabel('Epoch')
+        #     plt.ylabel('Loss')
+        #     plt.legend(loc='upper right')
+        #     plt.show()
+
+        # self.caption_model.load_model()
+
+        # eq_image, eq_tokens = self.generator.generate_equation_image()
+        # eq_image = eq_image.resize((100, 100), resample=PIL.Image.BILINEAR)
+        # eq_image_data = image.img_to_array(eq_image.convert('RGB'))
+        # predicted = self.infer_from_model(eq_image_data)
+        # plt.imshow(eq_image)
+        # plt.text(10, 10, f'Ground truth: {eq_tokens}')
+        # plt.text(10, 80, f'Predicted: {predicted}')
+        # plt.show()
+
+        # test_loss, test_acc = self.caption_model.evaluate(
+        #     test_image_data, test_eq_coords, verbose=2)
+
+        # print(test_acc)

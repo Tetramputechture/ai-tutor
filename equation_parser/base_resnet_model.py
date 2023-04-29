@@ -15,9 +15,7 @@ class BaseResnetModel:
         self.model = models.Sequential([
             resnet_base,
             layers.Flatten(),
-            # layers.Dense(1024, activation='relu'),
-            # layers.Dropout(0.5),
-            layers.Dense(1024, activation='relu')
+            layers.Dense(256, activation='relu')
         ])
 
         self.model.compile(optimizer='adam',
