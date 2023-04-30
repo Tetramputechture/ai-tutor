@@ -22,8 +22,8 @@ TRAIN = False
 if "train" in str(sys.argv[1]).lower():
     TRAIN = True
 
-EQUATION_COUNT = 2000
-EPOCHS = 10
+EQUATION_COUNT = 20
+EPOCHS = 1
 
 
 class EquationParser:

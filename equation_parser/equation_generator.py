@@ -12,7 +12,7 @@ import uuid
 from tensorflow.keras.preprocessing import image
 
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
@@ -64,36 +64,90 @@ def to_clean_tokens(rand_numbers):
     return f'{rand_numbers[0]} / {rand_numbers[1]} + {rand_numbers[2]} / {rand_numbers[3]} = {rand_numbers[4]} / {rand_numbers[5]}'
 
 
+def random_equation_tokens():
+    rand_numbers = [rand_frac_number() for _ in range(6)]
+    return r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
+        a_num=rand_numbers[0],
+        a_denom=rand_numbers[1],
+        b_num=rand_numbers[2],
+        b_denom=rand_numbers[3],
+        c_num=rand_numbers[4],
+        c_denom=rand_numbers[5]
+    )
+
+
+def rand_fraction_width():
+    return random.randint(1, 3)
+
+
+def rand_fraction_y_offset():
+    return random.randint(3, 7)
+
+
+def rand_fraction_x_offset():
+    return random.randint(3, 8)
+
+
+def rand_fraction_tilt_offset():
+    return random.randint(-5, 5)
+
+
+def rand_fraction_start_pos():
+    return (random.randint(5, 40), random.randint(5, 100))
+
+
+def rand_font_size():
+    return random.randint(25, 35)
+
+
+def rand_denom_y_offset():
+    return random.randint(3, 7)
+
+
+def rand_denom_x_offset():
+    return random.randint(-4, 4)
+
+
+def rand_font():
+    return f'./assets/fonts/{random.choice(os.listdir("./assets/fonts"))}'
+
+
+def draw_fraction(draw, pos, font_size, num, denom):
+    num_font = ImageFont.truetype(
+        rand_font(), size=font_size)
+    denom_font = ImageFont.truetype(rand_font(), size=font_size)
+
+    draw.text(pos, str(num), font=num_font)
+    num_width, num_height = draw.textsize(str(num), font=num_font)
+
+    line_height = pos[1] + num_height + rand_fraction_y_offset()
+    line_pos = [pos[0] - rand_fraction_x_offset(), line_height + rand_fraction_tilt_offset(),
+                pos[0] + num_width + rand_fraction_x_offset(), line_height + rand_fraction_tilt_offset()]
+    draw.line(line_pos, fill="white", width=rand_fraction_width())
+
+    denom_pos = (pos[0] + rand_denom_x_offset(), pos[1] +
+                 num_height + rand_denom_y_offset())
+    draw.text(denom_pos, str(denom), font=denom_font)
+
+    return (line_pos[2], line_pos[3])
+
+
+def draw_plus(draw, pos):
+    draw.line([pos[0] + 10, pos[1], pos[0] + 40, pos[1]])
+    draw.line([pos[0] + 25, pos[1] - 15, pos[0] + 25, pos[1] + 15])
+
+
 class EquationGenerator:
     def generate_equation_image(self, dpi=600, cache=True) -> (Image, str):
+        eq_tokens = random_equation_tokens()
+
+        eq_image = Image.new(mode="RGBA", size=(300, 200))
+        draw = ImageDraw.Draw(eq_image)
         rand_numbers = [rand_frac_number() for _ in range(6)]
-        eq_latex = r'\frac{{{a_num}}}{{{a_denom}}}+\frac{{{b_num}}}{{{b_denom}}}=\frac{{{c_num}}}{{{c_denom}}}'.format(
-            a_num=rand_numbers[0],
-            a_denom=rand_numbers[1],
-            b_num=rand_numbers[2],
-            b_denom=rand_numbers[3],
-            c_num=rand_numbers[4],
-            c_denom=rand_numbers[5]
-        )
-        fig = plt.figure()
-        rotation_degrees = random.randint(-15, 15)
-        text = fig.text(0, 0, u'${0}$'.format(
-            eq_latex), fontsize=6, math_fontfamily=rand_math_font(), color=rand_text_color(), rotation=rotation_degrees, rotation_mode="anchor")
-        fig.savefig(BytesIO(), dpi=dpi)
-        bbox = text.get_window_extent()
-        width, height = bbox.size / float(dpi)
-        fig.set_size_inches((width, height))
+        fraction_one_pos = draw_fraction(draw, rand_fraction_start_pos(), rand_font_size(),
+                                         rand_numbers[0], rand_numbers[1])
+        draw_plus(draw, fraction_one_pos)
 
-        dy = (bbox.ymin / float(dpi)) / height
-        dx = (bbox.xmin / float(dpi)) / width
-        text.set_position((-dx, -dy))
-
-        buffer_ = BytesIO()
-        fig.savefig(buffer_, dpi=dpi, transparent=True, format='png')
-        plt.close(fig)
-        buffer_.seek(0)
-        im = Image.open(buffer_)
-        eq_image = white_to_transparency(im)
         eq_tokens = to_clean_tokens(rand_numbers)
         if not self.images_cached():
             os.makedirs(CACHE_DIR)
@@ -101,7 +155,7 @@ class EquationGenerator:
                 writer = csv.writer(tokens_file)
                 writer.writerow(TOKENS_HEADERS)
 
-        cached_eq_id = self.cache_image(eq_image, eq_tokens)
+        cached_eq_id = self.cache_image(eq_image, 'eq_tokens')
         return (cached_eq_id, eq_tokens)
 
     def cache_image(self, eq_image, eq_tokens):

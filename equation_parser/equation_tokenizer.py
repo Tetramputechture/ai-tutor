@@ -2,7 +2,7 @@ import os
 import pickle
 from keras.preprocessing.text import Tokenizer
 
-TOKENIZER_PATH = './equation_parser/data/equation_tokenizer.p'
+TOKENIZER_PATH = './equation_parser/equation_tokenizer.p'
 
 
 class EquationTokenizer:

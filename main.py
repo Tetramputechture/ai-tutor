@@ -1,7 +1,7 @@
 from multiprocessing import freeze_support
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
-
+from PIL import Image
 from equation_finder.equation_finder import EquationFinder
 from equation_finder.equation_sheet_generator import EquationSheetGenerator
 from equation_finder.equation_sheet_decorator import EquationSheetDecorator
@@ -9,6 +9,7 @@ from equation_finder.equation_sheet_processor import EquationSheetProcessor
 
 from equation_parser.equation_parser import EquationParser
 from equation_parser.equation_parser_simple import EquationParserSimple
+from equation_parser.equation_generator import EquationGenerator
 
 
 def run_eq_finder():
@@ -52,7 +53,12 @@ def run_eq_finder():
 
 
 def run_eq_parser():
-    EquationParser().train_model()
+    # EquationParser().train_model()
+    for i in range(3):
+        plt.figure(i)
+        eq_id, tokens = EquationGenerator().generate_equation_image()
+        plt.imshow(Image.open(f'./equation_parser/data/{eq_id}.bmp'))
+    plt.show()
 
 
 def main():
