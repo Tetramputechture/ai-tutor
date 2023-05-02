@@ -12,7 +12,7 @@ import uuid
 from tensorflow.keras.preprocessing import image
 
 from io import BytesIO
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
@@ -30,20 +30,6 @@ def rand_math_font():
         'cm',
         'stix',
         'stixsans'
-    ])
-
-
-def rand_text_color():
-    return random.choice([
-        'black',
-        'midnightblue',
-        'indigo',
-        'brown',
-        'darkred',
-        'maroon',
-        'blue',
-        'red',
-        'navy',
     ])
 
 
@@ -77,11 +63,11 @@ def random_equation_tokens():
 
 
 def rand_fraction_width():
-    return random.randint(1, 3)
+    return random.randint(2, 4)
 
 
 def rand_fraction_y_offset():
-    return random.randint(3, 7)
+    return random.randint(4, 8)
 
 
 def rand_fraction_x_offset():
@@ -93,60 +79,120 @@ def rand_fraction_tilt_offset():
 
 
 def rand_fraction_start_pos():
-    return (random.randint(5, 40), random.randint(5, 100))
+    return (random.randint(5, 15), random.randint(5, 15))
 
 
 def rand_font_size():
-    return random.randint(25, 35)
+    return random.randint(35, 45)
 
 
 def rand_denom_y_offset():
-    return random.randint(3, 7)
+    return random.randint(6, 9)
 
 
 def rand_denom_x_offset():
-    return random.randint(-4, 4)
+    return random.randint(0, 5)
 
 
 def rand_font():
     return f'./assets/fonts/{random.choice(os.listdir("./assets/fonts"))}'
 
 
-def draw_fraction(draw, pos, font_size, num, denom):
-    num_font = ImageFont.truetype(
-        rand_font(), size=font_size)
-    denom_font = ImageFont.truetype(rand_font(), size=font_size)
+def rand_rotation_angle():
+    return random.randint(-45, 45)
 
-    draw.text(pos, str(num), font=num_font)
-    num_width, num_height = draw.textsize(str(num), font=num_font)
 
-    line_height = pos[1] + num_height + rand_fraction_y_offset()
-    line_pos = [pos[0] - rand_fraction_x_offset(), line_height + rand_fraction_tilt_offset(),
-                pos[0] + num_width + rand_fraction_x_offset(), line_height + rand_fraction_tilt_offset()]
-    draw.line(line_pos, fill="white", width=rand_fraction_width())
+def rand_plus_size():
+    return random.randint(65, 80)
+
+
+def rand_equals_size():
+    return random.randint(70, 80)
+
+
+def base_font():
+    return ImageFont.truetype('./assets/fonts/euler.otf', size=12)
+
+
+def rand_text_color():
+    return (random.randint(215, 255), random.randint(215, 255), random.randint(215, 255))
+
+
+def rand_background_color():
+    return (random.randint(0, 20), random.randint(0, 20), random.randint(0, 20))
+
+
+def draw_fraction(draw, pos, font, font_size, num, denom):
+    # draw.text((pos[0] - 20, pos[1] - 20),
+    # num_font_str.split('/')[-1], font=base_font())
+    # TODO: rotate each number individually?
+    draw.text(pos, str(num), font=font, fill=rand_text_color())
+    _, _, num_width, num_height = font.getbbox(str(num))
 
     denom_pos = (pos[0] + rand_denom_x_offset(), pos[1] +
                  num_height + rand_denom_y_offset())
-    draw.text(denom_pos, str(denom), font=denom_font)
+    draw.text(denom_pos, str(denom), font=font, fill=rand_text_color())
 
-    return (line_pos[2], line_pos[3])
+    _, _, denom_width, denom_height = font.getbbox(str(denom))
+
+    line_height = pos[1] + num_height + rand_fraction_y_offset()
+    line_width = max(num_width, denom_width)
+    line_pos = [pos[0] - rand_fraction_x_offset(), line_height,
+                pos[0] + line_width + rand_fraction_x_offset(), line_height + rand_fraction_tilt_offset()]
+    draw.line(line_pos, width=rand_fraction_width(), fill=rand_text_color())
+
+    return (pos[0] + line_width, pos[1] + num_height)
 
 
 def draw_plus(draw, pos):
-    draw.line([pos[0] + 10, pos[1], pos[0] + 40, pos[1]])
-    draw.line([pos[0] + 25, pos[1] - 15, pos[0] + 25, pos[1] + 15])
+    plus_font = rand_font()
+    print('Plus font: ', plus_font)
+    font = ImageFont.truetype(plus_font, size=rand_plus_size())
+    draw.text(pos, '+', align='top', font=font, fill=rand_text_color())
+    return draw.textsize('+', font=font)
+
+
+def draw_equals(draw, pos):
+    equals_font = rand_font()
+    print('Equals font: ', equals_font)
+    font = ImageFont.truetype(equals_font, size=rand_equals_size())
+    draw.text(pos, '=', font=font, fill=rand_text_color())
+    return draw.textsize('=', font=font)
+
+# Ok fonts
 
 
 class EquationGenerator:
     def generate_equation_image(self, dpi=600, cache=True) -> (Image, str):
         eq_tokens = random_equation_tokens()
+        background_color = rand_background_color()
 
-        eq_image = Image.new(mode="RGBA", size=(300, 200))
+        eq_image = Image.new(mode="RGB", size=(450, 150),
+                             color=background_color)
+        font_size = rand_font_size()
+        font = ImageFont.truetype(
+            rand_font(), size=font_size)
         draw = ImageDraw.Draw(eq_image)
         rand_numbers = [rand_frac_number() for _ in range(6)]
-        fraction_one_pos = draw_fraction(draw, rand_fraction_start_pos(), rand_font_size(),
-                                         rand_numbers[0], rand_numbers[1])
-        draw_plus(draw, fraction_one_pos)
+        font_size = rand_font_size()
+        fraction_one_start_pos = rand_fraction_start_pos()
+        fraction_one = draw_fraction(draw, fraction_one_start_pos, font, font_size,
+                                     rand_numbers[0], rand_numbers[1])
+        plus_size = draw_plus(draw, (fraction_one[0] + 15,
+                                     fraction_one[1] - 40))
+        fraction_two_pos = draw_fraction(draw, (fraction_one[0] + plus_size[0] + 30, fraction_one_start_pos[1]), font, font_size,
+                                         rand_numbers[2], rand_numbers[3])
+
+        equals_size = draw_equals(
+            draw, (fraction_two_pos[0] + 20, fraction_two_pos[1] - 40))
+        draw_fraction(draw, (fraction_two_pos[0] + equals_size[0] + 40, fraction_one_start_pos[1]), font, font_size,
+                      rand_numbers[4], rand_numbers[5])
+
+        eq_image = eq_image.rotate(
+            rand_rotation_angle(), expand=1, fillcolor=background_color)
+
+        if random.choice([True, False]):
+            eq_image = ImageOps.invert(eq_image)
 
         eq_tokens = to_clean_tokens(rand_numbers)
         if not self.images_cached():

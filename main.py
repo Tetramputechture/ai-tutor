@@ -54,7 +54,7 @@ def run_eq_finder():
 
 def run_eq_parser():
     # EquationParser().train_model()
-    for i in range(3):
+    for i in range(5):
         plt.figure(i)
         eq_id, tokens = EquationGenerator().generate_equation_image()
         plt.imshow(Image.open(f'./equation_parser/data/{eq_id}.bmp'))

@@ -11,7 +11,8 @@ IMAGES_PATH = './equation_parser/data/'
 
 class FeatureExtractor:
     def __init__(self):
-        self.model = applications.Xception(include_top=False, pooling='avg')
+        self.model = applications.Xception(
+            include_top=False, pooling='avg')
         self.features = {}
 
     def load_features(self):
@@ -29,8 +30,11 @@ class FeatureExtractor:
             if not filename.endswith('.bmp'):
                 continue
 
+            # open image and resize to 299x299
             image = PIL.Image.open(os.path.join(IMAGES_PATH, filename))
             image = image.resize((299, 299))
+
+            # xception preprocess per-pixel algorithm
             image = np.expand_dims(image, axis=0)
             image = image / 127.5
             image = image - 1.0
