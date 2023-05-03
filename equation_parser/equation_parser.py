@@ -22,7 +22,8 @@ TRAIN = False
 if "train" in str(sys.argv[1]).lower():
     TRAIN = True
 
-EQUATION_COUNT = 20
+EQUATION_COUNT = 10000
+
 EPOCHS = 1
 
 

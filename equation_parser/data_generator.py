@@ -1,4 +1,4 @@
-from .tokens import MAX_EQUATION_TEXT_LENGTH, VOCAB_SIZE
+from .tokens import MAX_EQUATION_TEXT_LENGTH
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
 import numpy as np
@@ -10,14 +10,19 @@ class DataGenerator:
 
     def data_generator(self, equation_texts, equation_features, tokenizer):
         while True:
+            # print(equation_texts.items())
             for eq_id, equation_text in equation_texts.items():
-                equation_feature = equation_features[eq_id]
+                # print('Equation text:', equation_text)
+                equation_feature = equation_features[eq_id][0]
+                # print('Equation features:', equation_feature)
                 img_features, input_text, output_token = self.create_sequences(
                     tokenizer, equation_text, equation_feature)
                 yield [[img_features, input_text], output_token]
 
     def create_sequences(self, tokenizer, equation_text, equation_feature):
         X1, X2, y = list(), list(), list()
+
+        print(equation_text)
 
         # encode the sequence
         sequence = tokenizer.texts_to_sequences([equation_text])[0]
@@ -30,6 +35,15 @@ class DataGenerator:
             # pad input sequence
             in_seq = pad_sequences(
                 [in_seq], maxlen=MAX_EQUATION_TEXT_LENGTH)[0]
+
+            print('X1 (equation feature):')
+            print(equation_feature)
+
+            print('X2 (input sequence):')
+            print(tokenizer.sequences_to_texts([in_seq]))
+
+            print('Y (token to predict):')
+            print(tokenizer.sequences_to_texts([[out_seq]]))
 
             # encode output sequence
             out_seq = to_categorical([out_seq], num_classes=self.vocab_size)[0]

@@ -6,7 +6,7 @@ TOKENIZER_PATH = './equation_parser/equation_tokenizer.p'
 
 
 class EquationTokenizer:
-    def __init__(self, equation_texts):
+    def __init__(self, equation_texts=None):
         self.equation_texts = equation_texts
 
     def equation_texts_list(self):
@@ -19,7 +19,7 @@ class EquationTokenizer:
             return pickle.load(open(TOKENIZER_PATH, 'rb'))
 
         print('Tokenizer not cached. Fitting new tokenizer...')
-        tokenizer = Tokenizer()
+        tokenizer = Tokenizer(char_level=True)
         tokenizer.fit_on_texts(self.equation_texts_list())
 
         print('Tokenizer fitted. Saving tokenizer to cache...')

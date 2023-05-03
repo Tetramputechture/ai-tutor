@@ -2,14 +2,22 @@ from multiprocessing import freeze_support
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 from PIL import Image
+import numpy as np
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
 from equation_finder.equation_finder import EquationFinder
 from equation_finder.equation_sheet_generator import EquationSheetGenerator
 from equation_finder.equation_sheet_decorator import EquationSheetDecorator
 from equation_finder.equation_sheet_processor import EquationSheetProcessor
 
 from equation_parser.equation_parser import EquationParser
-from equation_parser.equation_parser_simple import EquationParserSimple
+# from equation_parser.equation_parser_simple import EquationParserSimple
 from equation_parser.equation_generator import EquationGenerator
+from equation_parser.caption_model import CaptionModel
+from equation_parser.feature_extractor import FeatureExtractor
+from equation_parser.equation_tokenizer import EquationTokenizer
+
+from equation_parser.tokens import MAX_EQUATION_TEXT_LENGTH
 
 
 def run_eq_finder():
@@ -52,13 +60,54 @@ def run_eq_finder():
     # eq.show_validation()
 
 
+def word_for_id(integer, tokenizer):
+    for word, index in tokenizer.word_index.items():
+        if index == integer:
+            return word
+    return None
+
+
+def generate_desc(model, tokenizer, photo):
+    in_text = 's'
+    for i in range(MAX_EQUATION_TEXT_LENGTH):
+        sequence = tokenizer.texts_to_sequences([in_text])[0]
+        sequence = pad_sequences([sequence], maxlen=MAX_EQUATION_TEXT_LENGTH)
+        pred = model.predict([photo, sequence], verbose=0)
+        pred = np.argmax(pred)
+        word = word_for_id(pred, tokenizer)
+        if word is None:
+            break
+        in_text += word
+        if word == 'e':
+            break
+    return in_text
+
+
 def run_eq_parser():
-    # EquationParser().train_model()
-    for i in range(5):
-        plt.figure(i)
-        eq_id, tokens = EquationGenerator().generate_equation_image()
-        plt.imshow(Image.open(f'./equation_parser/data/{eq_id}.bmp'))
-    plt.show()
+    EquationParser().train_model()
+    # tokenizer = EquationTokenizer().load_tokenizer()
+    # vocab_size = len(tokenizer.word_index) + 1
+    # feature_extractor = FeatureExtractor()
+    # feature_extractor.load_features()
+    # caption_model = CaptionModel(vocab_size)
+    # caption_model.load_model()
+    # for i in range(5):
+    #     eq_id, tokens = EquationGenerator().generate_equation_image()
+    #     eq_image = Image.open(f'./equation_parser/data/{eq_id}.bmp')
+    #     eq_image_features = feature_extractor.features_from_image(eq_image)
+    #     # print(eq_image_features)
+    #     predicted_desc = generate_desc(
+    #         caption_model.model, tokenizer, eq_image_features)
+
+    #     plt.figure()
+    #     plt.imshow(eq_image)
+    #     print(predicted_desc)
+    # plt.show()
+    # for i in range(5):
+    #     plt.figure(i)
+    #     eq_id, tokens = EquationGenerator().generate_equation_image()
+    #     plt.imshow(Image.open(f'./equation_parser/data/{eq_id}.bmp'))
+    # plt.show()
 
 
 def main():

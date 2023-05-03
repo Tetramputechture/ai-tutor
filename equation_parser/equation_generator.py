@@ -47,7 +47,7 @@ def white_to_transparency(img):
 
 
 def to_clean_tokens(rand_numbers):
-    return f'{rand_numbers[0]} / {rand_numbers[1]} + {rand_numbers[2]} / {rand_numbers[3]} = {rand_numbers[4]} / {rand_numbers[5]}'
+    return f'{rand_numbers[0]}/{rand_numbers[1]}+{rand_numbers[2]}/{rand_numbers[3]}={rand_numbers[4]}/{rand_numbers[5]}'
 
 
 def random_equation_tokens():
@@ -83,7 +83,7 @@ def rand_fraction_start_pos():
 
 
 def rand_font_size():
-    return random.randint(35, 45)
+    return random.randint(40, 45)
 
 
 def rand_denom_y_offset():
@@ -99,7 +99,7 @@ def rand_font():
 
 
 def rand_rotation_angle():
-    return random.randint(-45, 45)
+    return random.randint(-15, 15)
 
 
 def rand_plus_size():
@@ -146,7 +146,6 @@ def draw_fraction(draw, pos, font, font_size, num, denom):
 
 def draw_plus(draw, pos):
     plus_font = rand_font()
-    print('Plus font: ', plus_font)
     font = ImageFont.truetype(plus_font, size=rand_plus_size())
     draw.text(pos, '+', align='top', font=font, fill=rand_text_color())
     return draw.textsize('+', font=font)
@@ -154,7 +153,6 @@ def draw_plus(draw, pos):
 
 def draw_equals(draw, pos):
     equals_font = rand_font()
-    print('Equals font: ', equals_font)
     font = ImageFont.truetype(equals_font, size=rand_equals_size())
     draw.text(pos, '=', font=font, fill=rand_text_color())
     return draw.textsize('=', font=font)
@@ -201,7 +199,7 @@ class EquationGenerator:
                 writer = csv.writer(tokens_file)
                 writer.writerow(TOKENS_HEADERS)
 
-        cached_eq_id = self.cache_image(eq_image, 'eq_tokens')
+        cached_eq_id = self.cache_image(eq_image, eq_tokens)
         return (cached_eq_id, eq_tokens)
 
     def cache_image(self, eq_image, eq_tokens):

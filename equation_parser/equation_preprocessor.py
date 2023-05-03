@@ -5,7 +5,7 @@ from .feature_extractor import FeatureExtractor
 
 
 def padded_equation_text(equation_text):
-    return f'{START_TOKEN} {equation_text} {END_TOKEN}'
+    return f'{START_TOKEN}{equation_text}{END_TOKEN}'
 
 
 class EquationPreprocessor:
@@ -27,6 +27,8 @@ class EquationPreprocessor:
             print('Equation texts not cached. Generating images and texts...')
             for i in range(self.equation_count):
                 equations.append(equation_generator.generate_equation_image())
+
+        print(f'Loaded {len(equations)} equations.')
 
         for eq in equations:
             self.equation_texts[eq[0]] = padded_equation_text(eq[1])

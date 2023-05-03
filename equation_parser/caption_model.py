@@ -21,10 +21,10 @@ class CaptionModel:
         fe2 = layers.Dense(256, activation='relu')(inputs1)
 
         # LSTM
-        inputs2 = layers.Input(shape=(MAX_EQUATION_TEXT_LENGTH,))
-        se1 = layers.Embedding(self.vocab_size, 256, mask_zero=True)(inputs2)
+        inputs2 = layers.Input(shape=(MAX_EQUATION_TEXT_LENGTH, 1))
+        # se1 = layers.Embedding(self.vocab_size, 256, mask_zero=True)(inputs2)
         # se2 = layers.Dropout(0.5)(se1)
-        se3 = layers.LSTM(256)(se1)
+        se3 = layers.LSTM(256)(inputs2)
 
         # merge
         decoder1 = layers.add([fe2, se3])
