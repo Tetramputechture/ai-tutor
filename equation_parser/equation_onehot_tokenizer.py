@@ -1,8 +1,17 @@
+from .tokens import TOKENS
 import os
 import pickle
 from keras.preprocessing.text import Tokenizer
 
 ONEHOT_TOKENIZER_PATH = './equation_parser/equation_onehot_tokenizer.p'
+
+
+VOCAB_SIZE = len(TOKENS)
+TOKENS_ONEHOT = []
+for idx, t in enumerate(TOKENS):
+    zeroes = np.zeros(len(TOKENS))
+    zeroes[idx] = 1
+    TOKENS_ONEHOT.append(zeroes)
 
 
 class EquationTokenizer:

@@ -4,7 +4,6 @@ from keras.preprocessing.text import Tokenizer
 
 TOKENIZER_PATH = './equation_parser/equation_tokenizer.p'
 
-
 class EquationTokenizer:
     def __init__(self, equation_texts=None):
         self.equation_texts = equation_texts
