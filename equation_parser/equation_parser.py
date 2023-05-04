@@ -17,11 +17,6 @@ from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
 from .data_generator import DataGenerator
 
-TRAIN = False
-
-if "train" in str(sys.argv[1]).lower():
-    TRAIN = True
-
 EQUATION_COUNT = 10000
 
 EPOCHS = 1

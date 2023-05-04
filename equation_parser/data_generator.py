@@ -22,7 +22,7 @@ class DataGenerator:
     def create_sequences(self, tokenizer, equation_text, equation_feature):
         X1, X2, y = list(), list(), list()
 
-        print(equation_text)
+        # print(equation_text)
 
         # encode the sequence
         sequence = tokenizer.texts_to_sequences([equation_text])[0]
@@ -36,14 +36,14 @@ class DataGenerator:
             in_seq = pad_sequences(
                 [in_seq], maxlen=MAX_EQUATION_TEXT_LENGTH)[0]
 
-            print('X1 (equation feature):')
-            print(equation_feature)
+            # print('X1 (equation feature):')
+            # print(equation_feature)
 
-            print('X2 (input sequence):')
-            print(tokenizer.sequences_to_texts([in_seq]))
+            # print('X2 (input sequence):')
+            # print(tokenizer.sequences_to_texts([in_seq]))
 
-            print('Y (token to predict):')
-            print(tokenizer.sequences_to_texts([[out_seq]]))
+            # print('Y (token to predict):')
+            # print(tokenizer.sequences_to_texts([[out_seq]]))
 
             # encode output sequence
             out_seq = to_categorical([out_seq], num_classes=self.vocab_size)[0]

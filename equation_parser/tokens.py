@@ -1,8 +1,8 @@
 import string
 import numpy as np
 
-START_TOKEN = 'S'
-END_TOKEN = 'E'
+START_TOKEN = 'e'
+END_TOKEN = 'e'
 
 # 18 numbers + 3 fractions + plus, equals + S + E
 MAX_EQUATION_TEXT_LENGTH = 25

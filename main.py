@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 from PIL import Image
 import numpy as np
+import sys
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 from equation_finder.equation_finder import EquationFinder
@@ -18,6 +19,11 @@ from equation_parser.feature_extractor import FeatureExtractor
 from equation_parser.equation_tokenizer import EquationTokenizer
 
 from equation_parser.tokens import MAX_EQUATION_TEXT_LENGTH
+
+TRAIN = False
+
+if "train" in str(sys.argv[1]).lower():
+    TRAIN = True
 
 
 def run_eq_finder():
@@ -84,29 +90,31 @@ def generate_desc(model, tokenizer, photo):
 
 
 def run_eq_parser():
-    EquationParser().train_model()
-    # tokenizer = EquationTokenizer().load_tokenizer()
-    # vocab_size = len(tokenizer.word_index) + 1
-    # feature_extractor = FeatureExtractor()
-    # feature_extractor.load_features()
-    # caption_model = CaptionModel(vocab_size)
-    # caption_model.load_model()
-    # for i in range(5):
-    #     eq_id, tokens = EquationGenerator().generate_equation_image()
-    #     eq_image = Image.open(f'./equation_parser/data/{eq_id}.bmp')
-    #     eq_image_features = feature_extractor.features_from_image(eq_image)
-    #     # print(eq_image_features)
-    #     predicted_desc = generate_desc(
-    #         caption_model.model, tokenizer, eq_image_features)
+    if TRAIN:
+        EquationParser().train_model()
+    else:
+        tokenizer = EquationTokenizer().load_tokenizer()
+        vocab_size = len(tokenizer.word_index) + 1
+        feature_extractor = FeatureExtractor()
+        feature_extractor.load_features()
+        caption_model = CaptionModel(vocab_size)
+        caption_model.load_model()
+        for i in range(5):
+            eq_id, tokens = EquationGenerator().generate_equation_image()
+            eq_image = Image.open(f'./equation_parser/data/images/{eq_id}.bmp')
+            eq_image_features = feature_extractor.features_from_image(eq_image)
+            # print(eq_image_features)
+            predicted_desc = generate_desc(
+                caption_model.model, tokenizer, eq_image_features)
 
-    #     plt.figure()
-    #     plt.imshow(eq_image)
-    #     print(predicted_desc)
-    # plt.show()
+            plt.figure()
+            plt.imshow(eq_image)
+            plt.text(0, 0, predicted_desc)
+        plt.show()
     # for i in range(5):
     #     plt.figure(i)
     #     eq_id, tokens = EquationGenerator().generate_equation_image()
-    #     plt.imshow(Image.open(f'./equation_parser/data/{eq_id}.bmp'))
+    #     plt.imshow(Image.open(f'./equation_parser/data/images/{eq_id}.bmp'))
     # plt.show()
 
 

@@ -6,7 +6,7 @@ from tensorflow.keras.utils import plot_model
 
 from .tokens import MAX_EQUATION_TEXT_LENGTH
 
-MODEL_PATH = './equation_parser/equation_parser.h5'
+MODEL_PATH = './equation_parser/caption_model.h5'
 MODEL_IMG_PATH = './equation_parser/equation_parser.png'
 
 
@@ -16,14 +16,16 @@ class CaptionModel:
 
     def create_model(self):
         # extracted features from xception
-        inputs1 = layers.Input(shape=(2048,))
-        # fe1 = layers.Dropout(0.5)(inputs1)
+        inputs1 = layers.Input(shape=(1000,))
+        # fe1 = layers.Dropout(0.2)(inputs1)
         fe2 = layers.Dense(256, activation='relu')(inputs1)
 
         # LSTM
         inputs2 = layers.Input(shape=(MAX_EQUATION_TEXT_LENGTH, 1))
         # se1 = layers.Embedding(self.vocab_size, 256, mask_zero=True)(inputs2)
-        # se2 = layers.Dropout(0.5)(se1)
+        # se2 = layers.Dropout(0.2)(inputs2)
+        # se1 = layers.LSTM(512, return_sequences=True)(inputs2)
+        # se2 = layers.LSTM(512, return_sequences=True)(se1)
         se3 = layers.LSTM(256)(inputs2)
 
         # merge

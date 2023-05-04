@@ -33,17 +33,14 @@ def rand_math_font():
     ])
 
 
-CACHE_DIR = './equation_parser/data'
+CACHE_DIR = './equation_parser/data/images'
 TOKENS_FILENAME = 'tokens'
 TOKENS_HEADERS = ['eq_id', 'tokens']
 
 FEATURES_FILENAME_PREFIX = 'features'
 
 
-def white_to_transparency(img):
-    x = np.asarray(img.convert('RGBA')).copy()
-    x[:, :, 3] = (255 * (x[:, :, :3] != 255).any(axis=2)).astype(np.uint8)
-    return Image.fromarray(x)
+EQUATION_IMAGE_SIZE = (150, 50)
 
 
 def to_clean_tokens(rand_numbers):
@@ -63,11 +60,11 @@ def random_equation_tokens():
 
 
 def rand_fraction_width():
-    return random.randint(2, 4)
+    return random.randint(1, 3)
 
 
 def rand_fraction_y_offset():
-    return random.randint(4, 8)
+    return random.randint(2, 4)
 
 
 def rand_fraction_x_offset():
@@ -75,15 +72,11 @@ def rand_fraction_x_offset():
 
 
 def rand_fraction_tilt_offset():
-    return random.randint(-5, 5)
+    return random.randint(-2, 2)
 
 
 def rand_fraction_start_pos():
-    return (random.randint(5, 15), random.randint(5, 15))
-
-
-def rand_font_size():
-    return random.randint(40, 45)
+    return (random.randint(2, 7), random.randint(2, 7))
 
 
 def rand_denom_y_offset():
@@ -95,19 +88,32 @@ def rand_denom_x_offset():
 
 
 def rand_font():
-    return f'./assets/fonts/{random.choice(os.listdir("./assets/fonts"))}'
+    return f'./assets/fonts-temp/{random.choice(os.listdir("./assets/fonts-temp"))}'
+
+
+def rand_font_size():
+    return random.randint(14, 14)
 
 
 def rand_rotation_angle():
     return random.randint(-15, 15)
+    # return 0
 
 
 def rand_plus_size():
-    return random.randint(65, 80)
+    return random.randint(18, 18)
 
 
 def rand_equals_size():
-    return random.randint(70, 80)
+    return random.randint(18, 18)
+
+
+def rand_operator_x_offset():
+    return random.randint(12, 12)
+
+
+def rand_operator_y_offset():
+    return random.randint(10, 10)
 
 
 def base_font():
@@ -157,15 +163,13 @@ def draw_equals(draw, pos):
     draw.text(pos, '=', font=font, fill=rand_text_color())
     return draw.textsize('=', font=font)
 
-# Ok fonts
-
 
 class EquationGenerator:
-    def generate_equation_image(self, dpi=600, cache=True) -> (Image, str):
+    def generate_equation_image(self, cache=True) -> (Image, str):
         eq_tokens = random_equation_tokens()
         background_color = rand_background_color()
 
-        eq_image = Image.new(mode="RGB", size=(450, 150),
+        eq_image = Image.new(mode="RGB", size=EQUATION_IMAGE_SIZE,
                              color=background_color)
         font_size = rand_font_size()
         font = ImageFont.truetype(
@@ -174,17 +178,26 @@ class EquationGenerator:
         rand_numbers = [rand_frac_number() for _ in range(6)]
         font_size = rand_font_size()
         fraction_one_start_pos = rand_fraction_start_pos()
-        fraction_one = draw_fraction(draw, fraction_one_start_pos, font, font_size,
-                                     rand_numbers[0], rand_numbers[1])
-        plus_size = draw_plus(draw, (fraction_one[0] + 15,
-                                     fraction_one[1] - 40))
-        fraction_two_pos = draw_fraction(draw, (fraction_one[0] + plus_size[0] + 30, fraction_one_start_pos[1]), font, font_size,
-                                         rand_numbers[2], rand_numbers[3])
+        fraction_one = draw_fraction(
+            draw, fraction_one_start_pos, font, font_size,
+            rand_numbers[0], rand_numbers[1])
+        plus_size = draw_plus(
+            draw, (fraction_one[0] + rand_operator_x_offset(),
+                   fraction_one[1] - rand_operator_y_offset()))
+        fraction_two_pos = draw_fraction(
+            draw, (fraction_one[0] + plus_size[0] + 17,
+                   fraction_one_start_pos[1]), font, font_size,
+            rand_numbers[2], rand_numbers[3])
 
         equals_size = draw_equals(
-            draw, (fraction_two_pos[0] + 20, fraction_two_pos[1] - 40))
-        draw_fraction(draw, (fraction_two_pos[0] + equals_size[0] + 40, fraction_one_start_pos[1]), font, font_size,
-                      rand_numbers[4], rand_numbers[5])
+            draw,
+            (fraction_two_pos[0] + rand_operator_x_offset(),
+             fraction_two_pos[1] - rand_operator_y_offset()))
+        draw_fraction(
+            draw,
+            (fraction_two_pos[0] + equals_size[0] + 20,
+             fraction_one_start_pos[1]), font, font_size,
+            rand_numbers[4], rand_numbers[5])
 
         eq_image = eq_image.rotate(
             rand_rotation_angle(), expand=1, fillcolor=background_color)
