@@ -10,12 +10,13 @@ class BaseResnetModel:
         resnet_base = applications.resnet.ResNet50(
             include_top=False,
             input_shape=input_shape,
-            pooling='avg'
+            pooling='avg',
         )
 
         self.model = models.Sequential([
             resnet_base,
             layers.Flatten(),
+            layers.Dropout(0.5),
             layers.Dense(1000, activation='relu')
         ])
 
@@ -25,7 +26,7 @@ class BaseResnetModel:
 
     def load_model(self):
         if os.path.exists(MODEL_PATH):
-            print('Restnet model cached. Loading model...')
+            print('Resnet model cached. Loading model...')
             self.model = models.load_model(MODEL_PATH, compile=False)
             self.model.compile(optimizer='adam',
                                loss='mse',

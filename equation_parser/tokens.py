@@ -7,6 +7,13 @@ PAD_TOKEN = 'p'
 
 TOKENS = list(string.digits + '+=/') + [PAD_TOKEN, START_TOKEN, END_TOKEN]
 
+VOCAB_SIZE = len(TOKENS)
+TOKENS_ONEHOT = []
+for idx, t in enumerate(TOKENS):
+    zeroes = np.zeros(len(TOKENS))
+    zeroes[idx] = 1
+    TOKENS_ONEHOT.append(zeroes)
+
 # 18 numbers + 3 fractions + plus, equals + S + E
 MAX_EQUATION_TEXT_LENGTH = 25
 

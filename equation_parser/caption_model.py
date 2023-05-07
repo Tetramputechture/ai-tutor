@@ -15,26 +15,26 @@ class CaptionModel:
         self.vocab_size = vocab_size
 
     def create_model(self):
-        # extracted features from xception
+        # extracted features
         inputs1 = layers.Input(shape=(1000,))
-        # fe1 = layers.Dropout(0.2)(inputs1)
-        fe2 = layers.Dense(256, activation='relu')(inputs1)
+        # fe1 = layers.Dropout(0.5)(inputs1)
+        fe2 = layers.Dense(512, activation='relu')(inputs1)
 
         # LSTM
-        inputs2 = layers.Input(shape=(MAX_EQUATION_TEXT_LENGTH, 1))
+        inputs2 = layers.Input(shape=(MAX_EQUATION_TEXT_LENGTH,))
         # se1 = layers.Embedding(self.vocab_size, 256, mask_zero=True)(inputs2)
-        # se2 = layers.Dropout(0.2)(inputs2)
+        # se2 = layers.Dropout(0.5)(inputs2)
         # se1 = layers.LSTM(512, return_sequences=True)(inputs2)
         # se2 = layers.LSTM(512, return_sequences=True)(se1)
-        se3 = layers.LSTM(256)(inputs2)
+        se3 = layers.LSTM(512)(inputs2)
 
         # merge
         decoder1 = layers.add([fe2, se3])
-        decoder2 = layers.Dense(256, activation='relu')(decoder1)
+        decoder2 = layers.Dense(512, activation='relu')(decoder1)
         outputs = layers.Dense(self.vocab_size, activation='softmax')(decoder2)
 
         self.model = models.Model(inputs=[inputs1, inputs2], outputs=outputs)
-        self.model.compile(optimizer='adam',
+        self.model.compile(optimizer='nadam',
                            loss='categorical_crossentropy',
                            metrics=['accuracy'])
 

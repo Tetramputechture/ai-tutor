@@ -92,7 +92,7 @@ def rand_font():
 
 
 def rand_font_size():
-    return random.randint(14, 14)
+    return random.randint(15, 17)
 
 
 def rand_rotation_angle():
@@ -101,11 +101,11 @@ def rand_rotation_angle():
 
 
 def rand_plus_size():
-    return random.randint(18, 18)
+    return random.randint(16, 19)
 
 
 def rand_equals_size():
-    return random.randint(18, 18)
+    return random.randint(17, 19)
 
 
 def rand_operator_x_offset():
