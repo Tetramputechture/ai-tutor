@@ -18,11 +18,13 @@ from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
 from .data_generator import DataGenerator
 
-EQUATION_COUNT = 10
+EQUATION_COUNT = 1000
 
 EPOCHS = 1
 
 TEST_SIZE = 0.1
+
+BATCH_SIZE = 64
 
 
 class EquationParser:
@@ -63,7 +65,13 @@ class EquationParser:
         # history = model.model.fit(
         #     train_generator, validation_data=validation_generator, epochs=EPOCHS, steps_per_epoch=steps, validation_steps=steps)
         history = model.model.fit(
-            x=[train_x1, train_x2], y=train_y, validation_data=([test_x1, test_x2], test_y), epochs=10)
+            x=[train_x1, train_x2],
+            y=train_y,
+            validation_data=([test_x1, test_x2], test_y),
+            epochs=30,
+            # steps_per_epoch=len(equation_texts),
+            batch_size=BATCH_SIZE
+        )
         model.save_model()
 
         plt.subplot(2, 2, 1)
