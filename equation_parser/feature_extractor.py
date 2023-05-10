@@ -43,12 +43,11 @@ class FeatureExtractor:
         self.save_features()
 
     def features_from_image(self, image):
-        img_to_predict = image.resize((100, 100))
+        img_to_predict = image.resize((150, 150))
 
         img_to_predict = np.expand_dims(img_to_predict, axis=0)
-        # xception preprocess per-pixel algorithm
-        # img_to_predict = img_to_predict / 127.5
-        # img_to_predict = img_to_predict - 1.0
+        img_to_predict = img_to_predict / 127.5
+        img_to_predict = img_to_predict - 1.0
 
         return self.model.predict(img_to_predict)
 

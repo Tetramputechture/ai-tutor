@@ -18,11 +18,11 @@ from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
 from .data_generator import DataGenerator
 
-EQUATION_COUNT = 1000
+EQUATION_COUNT = 3000
 
-EPOCHS = 1
+EPOCHS = 100
 
-TEST_SIZE = 0.1
+TEST_SIZE = 0.2
 
 BATCH_SIZE = 64
 
@@ -42,6 +42,7 @@ class EquationParser:
         data_generator = DataGenerator(
             vocab_size, equation_texts, equation_features, tokenizer)
         X1, X2, y = data_generator.full_dataset()
+        data_generator.save_data()
         model = CaptionModel(vocab_size)
 
         train_x1, test_x1, train_x2, test_x2, train_y, test_y = train_test_split(
@@ -68,7 +69,7 @@ class EquationParser:
             x=[train_x1, train_x2],
             y=train_y,
             validation_data=([test_x1, test_x2], test_y),
-            epochs=30,
+            epochs=EPOCHS,
             # steps_per_epoch=len(equation_texts),
             batch_size=BATCH_SIZE
         )

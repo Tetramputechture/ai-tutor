@@ -6,11 +6,11 @@ MODEL_PATH = './equation_parser/resnet_base.h5'
 
 
 class BaseResnetModel:
-    def create_model(self, input_shape=(100, 100, 3)):
+    def create_model(self, input_shape=(150, 150, 3)):
         resnet_base = applications.resnet.ResNet50(
             include_top=False,
             input_shape=input_shape,
-            pooling='avg',
+            pooling='max',
         )
 
         self.model = models.Sequential([

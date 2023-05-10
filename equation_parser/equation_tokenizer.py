@@ -20,7 +20,8 @@ class EquationTokenizer:
             return pickle.load(open(TOKENIZER_PATH, 'rb'))
 
         print('Tokenizer not cached. Fitting new tokenizer...')
-        tokenizer = Tokenizer(char_level=True, split='', filters='')
+        tokenizer = Tokenizer(char_level=True, lower=False,
+                              split='', filters='')
         tokenizer.fit_on_texts(self.equation_texts_list())
 
         print('Tokenizer fitted. Saving tokenizer to cache...')

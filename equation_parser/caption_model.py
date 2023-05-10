@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import os
-from tensorflow.keras import datasets, layers, models, optimizers, applications, optimizers
+from tensorflow.keras import datasets, layers, models, applications, optimizers
 from tensorflow.keras.utils import plot_model
 
 from .tokens import MAX_EQUATION_TEXT_LENGTH
@@ -19,22 +19,24 @@ class CaptionModel:
     def create_model(self):
         # extracted features
         inputs1 = layers.Input(shape=(2048,))
-        fe1 = layers.Dense(256, activation='relu')(inputs1)
+        fe1 = layers.Dense(1024, activation='relu')(inputs1)
         fe2 = layers.Dropout(0.5)(fe1)
-        fe3 = layers.Dense(16, activation='relu')(fe2)
+        fe3 = layers.Dense(256, activation='relu')(fe2)
 
         # LSTM
-        inputs2 = layers.Input(shape=(MAX_EQUATION_TEXT_LENGTH))
-        se1 = layers.Embedding(self.vocab_size, 128,
-                               input_length=MAX_EQUATION_TEXT_LENGTH)(inputs2)
-        # se2 = layers.LSTM(64, return_sequences=True)(se1)
-        se3 = layers.LSTM(16)(se1)
+        inputs2 = layers.Input(shape=(MAX_EQUATION_TEXT_LENGTH,))
+        se1 = layers.Embedding(self.vocab_size, 32,
+                               input_length=MAX_EQUATION_TEXT_LENGTH, mask_zero=True)(inputs2)
+        # se2 = layers.LSTM(512, return_sequences=True)(se1)
+        se3 = layers.LSTM(256)(se1)
+        se4 = layers.Dense(256, activation='relu')(se3)
         # se1 = layers.LSTM(512, return_sequences=True)(inputs2)
         # se2 = layers.LSTM(512, return_sequences=True)(se1)
 
         # merge
         decoder1 = layers.add([fe3, se3])
-        decoder2 = layers.Dense(16, activation='relu')(decoder1)
+        decoder2 = layers.Dense(256, activation='relu')(decoder1)
+        #  decoder3 = layers.Dropout(0.5)(decoder2)
         outputs = layers.Dense(self.vocab_size, activation='softmax')(decoder2)
 
         self.model = models.Model(inputs=[inputs1, inputs2], outputs=outputs)

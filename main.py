@@ -25,9 +25,15 @@ from equation_parser.tokens import MAX_EQUATION_TEXT_LENGTH
 from equation_parser.data_generator import DataGenerator
 
 TRAIN = False
+TEST = False
+VIZ = False
 
 if "train" in str(sys.argv[1]).lower():
     TRAIN = True
+elif "test" in str(sys.argv[1]).lower():
+    TEST = True
+else:
+    VIZ = True
 
 
 def run_eq_finder():
@@ -97,7 +103,7 @@ def generate_desc(model, photo):
 def run_eq_parser():
     if TRAIN:
         EquationParser().train_model()
-    else:
+    elif TEST:
         tokenizer = EquationTokenizer().load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 1
         feature_extractor = FeatureExtractor()
@@ -116,11 +122,13 @@ def run_eq_parser():
             plt.imshow(eq_image)
             plt.text(0, 0, predicted_desc)
         plt.show()
-    # for i in range(5):
-    #     plt.figure(i)
-    #     eq_id, tokens = EquationGenerator().generate_equation_image()
-    #     plt.imshow(Image.open(f'./equation_parser/data/images/{eq_id}.bmp'))
-    # plt.show()
+    elif VIZ:
+        for i in range(2):
+            plt.figure(i)
+            eq_id, tokens = EquationGenerator().generate_equation_image()
+            plt.imshow(Image.open(
+                f'./equation_parser/data/images/{eq_id}.bmp'))
+        plt.show()
 
 
 def visualize_data():
