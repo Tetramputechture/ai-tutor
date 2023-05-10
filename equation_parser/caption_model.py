@@ -22,7 +22,7 @@ class CaptionModel:
         self.base_conv_model.load_model()
 
         # extracted features
-        inputs1 = layers.Input(shape=(150, 150, 3))
+        inputs1 = layers.Input(shape=(300, 300, 3))
         fe1 = self.base_conv_model.model(inputs1)
         fe2 = layers.Dense(256, activation='relu')(fe1)
 
@@ -32,12 +32,12 @@ class CaptionModel:
                                input_length=MAX_EQUATION_TEXT_LENGTH, mask_zero=True)(inputs2)
         # se2 = layers.LSTM(512, return_sequences=True)(se1)
         se3 = layers.LSTM(256)(se1)
-        se4 = layers.Dense(256, activation='relu')(se3)
+        # se4 = layers.Dense(256, activation='relu')(se3)
         # se1 = layers.LSTM(512, return_sequences=True)(inputs2)
         # se2 = layers.LSTM(512, return_sequences=True)(se1)
 
         # merge
-        decoder1 = layers.add([fe2, se4])
+        decoder1 = layers.add([fe2, se3])
         decoder2 = layers.Dense(256, activation='relu')(decoder1)
         #  decoder3 = layers.Dropout(0.5)(decoder2)
         outputs = layers.Dense(self.vocab_size, activation='softmax')(decoder2)

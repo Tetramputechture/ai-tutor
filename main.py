@@ -114,7 +114,7 @@ def run_eq_parser():
         for i in range(5):
             eq_id, tokens = EquationGenerator().generate_equation_image()
             eq_image = Image.open(f'./equation_parser/data/images/{eq_id}.bmp')
-            eq_image = eq_image.resize((150, 150))
+            eq_image = eq_image.resize((300, 300))
             # eq_image_features = feature_extractor.features_from_image(eq_image)
             # print(eq_image_features)
             predicted_desc = generate_desc(
