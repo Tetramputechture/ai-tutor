@@ -18,7 +18,7 @@ from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
 from .data_generator import DataGenerator
 
-EQUATION_COUNT = 3000
+EQUATION_COUNT = 100
 
 EPOCHS = 100
 
@@ -33,17 +33,22 @@ class EquationParser:
             EQUATION_COUNT)
         equation_preprocessor.load_equations()
         equation_texts = equation_preprocessor.equation_texts
-        equation_features = equation_preprocessor.equation_features
+        # equation_features = equation_preprocessor.equation_features
 
         tokenizer = EquationTokenizer(equation_texts).load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 1
         steps = len(equation_texts)
 
         data_generator = DataGenerator(
-            vocab_size, equation_texts, equation_features, tokenizer)
+            vocab_size, equation_texts, tokenizer)
         X1, X2, y = data_generator.full_dataset()
         data_generator.save_data()
         model = CaptionModel(vocab_size)
+
+        print('Shapes:')
+        print(X1.shape)
+        print(X2.shape)
+        print(y.shape)
 
         train_x1, test_x1, train_x2, test_x2, train_y, test_y = train_test_split(
             X1, X2, y, test_size=TEST_SIZE

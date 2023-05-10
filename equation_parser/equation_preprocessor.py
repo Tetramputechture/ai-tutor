@@ -33,5 +33,5 @@ class EquationPreprocessor:
         for eq in equations:
             self.equation_texts[eq[0]] = padded_equation_text(eq[1])
 
-        self.feature_extractor.load_features()
-        self.equation_features = self.feature_extractor.features
+        # self.feature_extractor.load_features()
+        # self.equation_features = self.feature_extractor.features

@@ -1,23 +1,28 @@
 from .tokens import MAX_EQUATION_TEXT_LENGTH
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
+from PIL import Image
+
 import pandas as pd
 import numpy as np
 
 
 class DataGenerator:
-    def __init__(self, vocab_size, equation_texts, equation_features, tokenizer):
+    def __init__(self, vocab_size, equation_texts, tokenizer):
         self.vocab_size = vocab_size
         self.equation_texts = equation_texts
-        self.equation_features = equation_features
+        # self.equation_features = equation_features
         self.tokenizer = tokenizer
 
     def full_dataset(self):
         X1, X2, y = list(), list(), list()
 
         for eq_id, equation_text in self.equation_texts.items():
-            equation_feature = self.equation_features[eq_id][0]
+            # equation_feature = self.equation_features[eq_id][0]
             # print(equation_text)
+
+            eq_image = Image.open(f'./equation_parser/data/images/{eq_id}.bmp')
+            eq_image = np.array(eq_image.resize((150, 150)))
 
             # encode the sequence
             sequence = self.tokenizer.texts_to_sequences([equation_text])[0]
@@ -48,7 +53,7 @@ class DataGenerator:
                     [out_seq], num_classes=self.vocab_size)[0]
 
                 # store
-                X1.append(equation_feature)
+                X1.append(eq_image)
                 X2.append(in_seq)
                 y.append(out_seq)
 
@@ -63,7 +68,7 @@ class DataGenerator:
             # print('Equation text:', equation_tex)
             x2_str = self.tokenizer.sequences_to_texts([input_texts[idx]])
             y_str = self.word_for_id(np.argmax(output_tokens[idx]))
-            pandas_data['feature'].append(hash(tuple(feature)))
+            pandas_data['feature'].append(feature)
             pandas_data['x2_str'].append(x2_str)
             pandas_data['y_str'].append(y_str)
 

@@ -83,12 +83,13 @@ def word_for_id(integer, tokenizer):
     return None
 
 
-def generate_desc(model, photo):
+def generate_desc(model, tokenizer, photo):
     in_text = 's'
+    photo = np.expand_dims(photo, axis=0)
     for i in range(MAX_EQUATION_TEXT_LENGTH):
         sequence = tokenizer.texts_to_sequences([in_text])[0]
         sequence = pad_sequences(
-            [sequence], maxlen=MAX_EQUATION_TEXT_LENGTH, padding='post', value='p')
+            [sequence], maxlen=MAX_EQUATION_TEXT_LENGTH, padding='post')
         pred = model.predict([photo, sequence], verbose=0)
         pred = np.argmax(pred)
         word = word_for_id(pred, tokenizer)
@@ -106,17 +107,20 @@ def run_eq_parser():
     elif TEST:
         tokenizer = EquationTokenizer().load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 1
-        feature_extractor = FeatureExtractor()
-        feature_extractor.load_features()
+        # feature_extractor = FeatureExtractor()
+        # feature_extractor.load_features()
         caption_model = CaptionModel(vocab_size)
         caption_model.load_model()
         for i in range(5):
             eq_id, tokens = EquationGenerator().generate_equation_image()
             eq_image = Image.open(f'./equation_parser/data/images/{eq_id}.bmp')
-            eq_image_features = feature_extractor.features_from_image(eq_image)
+            eq_image = eq_image.resize((150, 150))
+            # eq_image_features = feature_extractor.features_from_image(eq_image)
             # print(eq_image_features)
             predicted_desc = generate_desc(
-                caption_model.model, eq_image_features)
+                caption_model.model, tokenizer, eq_image)
+            print(tokens)
+            print(predicted_desc)
 
             plt.figure()
             plt.imshow(eq_image)

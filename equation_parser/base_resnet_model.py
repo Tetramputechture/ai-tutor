@@ -36,3 +36,4 @@ class BaseResnetModel:
 
     def save_model(self):
         self.model.save(MODEL_PATH)
+
