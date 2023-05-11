@@ -51,7 +51,7 @@ class EquationParser:
         print(y.shape)
 
         train_x1, test_x1, train_x2, test_x2, train_y, test_y = train_test_split(
-            X1, X2, y, test_size=TEST_SIZE
+            X1, X2, y, test_size=TEST_SIZE, shuffle=False
         )
 
         # print('Equation texts: train=', len(equation_texts))
@@ -76,7 +76,8 @@ class EquationParser:
             validation_data=([test_x1, test_x2], test_y),
             epochs=EPOCHS,
             # steps_per_epoch=len(equation_texts),
-            batch_size=BATCH_SIZE
+            batch_size=BATCH_SIZE,
+            shuffle=False
         )
         model.save_model()
 
