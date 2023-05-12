@@ -9,17 +9,18 @@ MODEL_PATH = './equation_parser/conv_base.h5'
 class BaseConvModel:
     def create_model(self):
         self.model = models.Sequential([
-            layers.Conv2D(32, (7, 7), padding="same",
-                          activation="relu", input_shape=(300, 300, 3)),
+            layers.Conv2D(56, (7, 7), padding="same",
+                          activation="relu", input_shape=(100, 100, 3)),
             layers.BatchNormalization(),
             layers.MaxPooling2D(pool_size=(2, 2)),
 
-            layers.Conv2D(64, (5, 5), padding="same", activation="relu"),
+            layers.Conv2D(64, (5, 5), strides=(2,2), padding="same", activation="relu"),
             layers.BatchNormalization(),
             layers.MaxPooling2D(pool_size=(2, 2)),
 
-            layers.Conv2D(128, (3, 3), padding="same", activation="relu"),
+            layers.Conv2D(128, (3, 3), strides=(2,2), padding="same", activation="relu"),
             layers.BatchNormalization(),
+
             layers.Flatten()
         ])
 

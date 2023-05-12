@@ -21,24 +21,28 @@ class CaptionModel:
     def create_model(self):
         self.base_conv_model.load_model()
 
+        N = 32
+        HCF=234
+
         # extracted features
         inputs1 = layers.Input(shape=(300, 300, 3))
-        fe1 = self.base_conv_model.model(inputs1)
-        fe2 = layers.Dense(256, activation='relu')(fe1)
+        resize = layers.Resizing(100,100)(inputs1)
+        fe1 = self.base_conv_model.model(resize)
+        fe2 = layers.Dense(N, activation='relu')(fe1)
 
         # LSTM
-        inputs2 = layers.Input(shape=(MAX_EQUATION_TEXT_LENGTH,))
-        se1 = layers.Embedding(self.vocab_size, 256,
+        inputs2 = layers.Input(batch_input_shape=(HCF, MAX_EQUATION_TEXT_LENGTH,))
+        se1 = layers.Embedding(self.vocab_size, N,
                                input_length=MAX_EQUATION_TEXT_LENGTH, mask_zero=True)(inputs2)
         # se2 = layers.LSTM(512, return_sequences=True)(se1)
-        se3 = layers.LSTM(256)(se1)
-        # se4 = layers.Dense(256, activation='relu')(se3)
+        se3 = layers.LSTM(N, stateful=True)(se1)
+        se4 = layers.Dense(N, activation='relu')(se3)
         # se1 = layers.LSTM(512, return_sequences=True)(inputs2)
         # se2 = layers.LSTM(512, return_sequences=True)(se1)
 
         # merge
-        decoder1 = layers.add([fe2, se3])
-        decoder2 = layers.Dense(256, activation='relu')(decoder1)
+        decoder1 = layers.add([fe2, se4])
+        decoder2 = layers.Dense(int(N), activation='relu')(decoder1)
         #  decoder3 = layers.Dropout(0.5)(decoder2)
         outputs = layers.Dense(self.vocab_size, activation='softmax')(decoder2)
 

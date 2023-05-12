@@ -103,7 +103,8 @@ def generate_desc(model, tokenizer, photo):
 
 def run_eq_parser():
     if TRAIN:
-        EquationParser().train_model()
+        data = EquationParser().train_model()
+        return data
     elif TEST:
         tokenizer = EquationTokenizer().load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 1
@@ -161,9 +162,9 @@ def visualize_data():
 
 
 def main():
-    run_eq_parser()
-
+    data = run_eq_parser()
+    return data
 
 if __name__ == '__main__':
     freeze_support()
-    main()
+    data = main()
