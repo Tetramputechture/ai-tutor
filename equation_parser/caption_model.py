@@ -19,19 +19,20 @@ class CaptionModel:
         self.base_conv_model = BaseConvModel()
 
     def create_model(self):
-        self.base_conv_model.load_model()
+        self.base_resnet_model.load_model()
 
-        N = 32
-        HCF=234
+        N = 8
+        HCF = 8
 
         # extracted features
-        inputs1 = layers.Input(shape=(300, 300, 3))
-        resize = layers.Resizing(100,100)(inputs1)
-        fe1 = self.base_conv_model.model(resize)
+        inputs1 = layers.Input(shape=(100, 100, 3))
+        # resize = layers.Resizing(100, 100)(inputs1)
+        fe1 = self.base_resnet_model.model(inputs1)
         fe2 = layers.Dense(N, activation='relu')(fe1)
 
         # LSTM
-        inputs2 = layers.Input(batch_input_shape=(HCF, MAX_EQUATION_TEXT_LENGTH,))
+        inputs2 = layers.Input(batch_input_shape=(
+            HCF, MAX_EQUATION_TEXT_LENGTH,))
         se1 = layers.Embedding(self.vocab_size, N,
                                input_length=MAX_EQUATION_TEXT_LENGTH, mask_zero=True)(inputs2)
         # se2 = layers.LSTM(512, return_sequences=True)(se1)

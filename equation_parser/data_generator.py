@@ -22,12 +22,12 @@ class DataGenerator:
             # print(equation_text)
 
             eq_image = Image.open(f'./equation_parser/data/images/{eq_id}.bmp')
-            eq_image = np.array(eq_image.resize((300, 300)))
+            eq_image = np.array(eq_image.resize((100, 100)))
             # img_to_predict = img_to_predict / 127.5
             # img_to_predict = img_to_predict - 1.0
             # encode the sequence
             sequence = self.tokenizer.texts_to_sequences([equation_text])[0]
-            print(sequence)
+            # print(sequence)
 
             # print('Equation text: ', equation_text)
 

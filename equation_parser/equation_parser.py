@@ -18,19 +18,20 @@ from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
 from .data_generator import DataGenerator
 
-EQUATION_COUNT = 100
+EQUATION_COUNT = 20
 
-EPOCHS = 50
+EPOCHS = 10
 
-TRAIN_SIZE = 0.7
+TRAIN_SIZE = 0.9
 
-BATCH_SIZE = 234
+BATCH_SIZE = 8
 
 
 class EquationParser:
 
     def custom_train_test_split(self, x1, x2, y, train_size=0.8):
-        x1_train, x1_test, x2_train, x2_test, y_train, y_test = np.array([]),np.array([]),np.array([]),np.array([]),np.array([]),np.array([])
+        x1_train, x1_test, x2_train, x2_test, y_train, y_test = np.array(
+            []), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])
 
         # indices = np.arange(x1.shape[0])
         # np.random.shuffle(indices)
@@ -41,7 +42,9 @@ class EquationParser:
 
         split_ndx = int(len(y)*train_size)
 
-        x1_train, x1_test, x2_train, x2_test, y_train, y_test = x1[:split_ndx],x1[split_ndx:],x2[:split_ndx],x2[split_ndx:],y[:split_ndx],y[split_ndx:]
+        x1_train, x1_test, x2_train, x2_test, y_train, y_test = x1[:split_ndx], x1[
+            split_ndx:], x2[:split_ndx], x2[split_ndx:], y[:split_ndx], y[split_ndx:]
+
         def computeHCF(x, y):
             '''
             Computes highest common factor...
@@ -52,16 +55,16 @@ class EquationParser:
             else:
                 smaller = x
             for i in range(1, smaller+1):
-                if((x % i == 0) and (y % i == 0)):
+                if ((x % i == 0) and (y % i == 0)):
                     hcf = i
 
             print('\nHCF: ', hcf, '\n')
             return hcf
 
-        batch_size= computeHCF(x1_train.shape[0], x1_test.shape[0])
+        batch_size = computeHCF(x1_train.shape[0], x1_test.shape[0])
 
         return x1_train, x1_test, x2_train, x2_test, y_train, y_test
-    
+
     def train_model(self):
         equation_preprocessor = EquationPreprocessor(
             EQUATION_COUNT)
@@ -105,7 +108,7 @@ class EquationParser:
 
         # history = model.model.fit(
         #     train_generator, validation_data=validation_generator, epochs=EPOCHS, steps_per_epoch=steps, validation_steps=steps)
-        
+
         def fit():
             history = model.model.fit(
                 x=[train_x1, train_x2],
@@ -120,8 +123,7 @@ class EquationParser:
 
         for i in range(EPOCHS):
             history = fit()
-            model.model.reset_states()
-
+            # model.model.reset_states()
 
         model.save_model()
 

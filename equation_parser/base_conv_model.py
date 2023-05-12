@@ -14,11 +14,11 @@ class BaseConvModel:
             layers.BatchNormalization(),
             layers.MaxPooling2D(pool_size=(2, 2)),
 
-            layers.Conv2D(64, (5, 5), strides=(2,2), padding="same", activation="relu"),
+            layers.Conv2D(64, (5, 5), padding="same", activation="relu"),
             layers.BatchNormalization(),
             layers.MaxPooling2D(pool_size=(2, 2)),
 
-            layers.Conv2D(128, (3, 3), strides=(2,2), padding="same", activation="relu"),
+            layers.Conv2D(128, (3, 3), padding="same", activation="relu"),
             layers.BatchNormalization(),
 
             layers.Flatten()
