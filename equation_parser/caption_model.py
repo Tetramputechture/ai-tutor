@@ -50,7 +50,7 @@ class CaptionModel:
         LSTM_UNITS = 256
         N = int(MAX_EQUATION_TEXT_LENGTH * UNITS_PER_TIMESTEP)
 
-        model_input = layers.Input(shape=(100, 100, 3))
+        model_input = layers.Input(shape=(100, 100, 3), name='img_input')
         model = self.base_resnet_model.model(model_input)
         model = layers.Dense(N, activation='relu')(model)
         model = layers.Reshape(target_shape=(

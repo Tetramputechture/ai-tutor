@@ -16,7 +16,7 @@ from .caption_model import CaptionModel
 from .tokens import MAX_EQUATION_TEXT_LENGTH
 from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
-from .data_generator import DataGenerator
+from .ctc_data_generator import CtcDataGenerator
 
 EQUATION_COUNT = 20
 
@@ -28,43 +28,6 @@ BATCH_SIZE = 8
 
 
 class EquationParser:
-
-    def custom_train_test_split(self, x1, x2, y, train_size=0.8):
-        x1_train, x1_test, x2_train, x2_test, y_train, y_test = np.array(
-            []), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])
-
-        # indices = np.arange(x1.shape[0])
-        # np.random.shuffle(indices)
-
-        # x1 = x1[indices]
-        # x2 = x2[indices]
-        # y = y[indices]
-
-        split_ndx = int(len(y)*train_size)
-
-        x1_train, x1_test, x2_train, x2_test, y_train, y_test = x1[:split_ndx], x1[
-            split_ndx:], x2[:split_ndx], x2[split_ndx:], y[:split_ndx], y[split_ndx:]
-
-        def computeHCF(x, y):
-            '''
-            Computes highest common factor...
-            ref: https://datascience.stackexchange.com/questions/32831/batch-size-of-stateful-lstm-in-keras
-            '''
-            if x > y:
-                smaller = y
-            else:
-                smaller = x
-            for i in range(1, smaller+1):
-                if ((x % i == 0) and (y % i == 0)):
-                    hcf = i
-
-            print('\nHCF: ', hcf, '\n')
-            return hcf
-
-        batch_size = computeHCF(x1_train.shape[0], x1_test.shape[0])
-
-        return x1_train, x1_test, x2_train, x2_test, y_train, y_test
-
     def train_model(self):
         equation_preprocessor = EquationPreprocessor(
             EQUATION_COUNT)
@@ -76,9 +39,9 @@ class EquationParser:
         vocab_size = len(tokenizer.word_index) + 1
         steps = len(equation_texts)
 
-        data_generator = DataGenerator(
+        data_generator = CtcDataGenerator(
             vocab_size, equation_texts, tokenizer)
-        X1, X2, y = data_generator.full_dataset()
+        inputs, outputs = data_generator.full_dataset()
 
         data_generator.save_data()
         model = CaptionModel(vocab_size)
