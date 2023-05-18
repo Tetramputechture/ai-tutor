@@ -4,6 +4,7 @@ import math
 import tensorflow as tf
 import numpy as np
 from sklearn.model_selection import train_test_split
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 import PIL
 import os
@@ -18,43 +19,51 @@ from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
 from .ctc_data_generator import CtcDataGenerator
 
-EQUATION_COUNT = 20
+TRAIN_CACHE_DIR = './equation_parser/data/images_train'
+VAL_CACHE_DIR = './equation_parser/data/images_val'
 
-EPOCHS = 10
+TRAIN_EQUATION_COUNT = 5
+VAL_EQUATION_COUNT = 5
 
-TRAIN_SIZE = 0.9
-
-BATCH_SIZE = 8
+EPOCHS = 5
 
 
 class EquationParser:
     def train_model(self):
-        equation_preprocessor = EquationPreprocessor(
-            EQUATION_COUNT)
-        equation_preprocessor.load_equations()
-        equation_texts = equation_preprocessor.equation_texts
+        train_equation_preprocessor = EquationPreprocessor(
+            EQUATION_COUNT, TRAIN_CACHE_DIR)
+        train_equation_preprocessor.load_equations()
+        train_equation_texts = train_equation_preprocessor.equation_texts
+
+        val_equation_preprocessor = EquationPreprocessor(
+            EQUATION_COUNT, VAL_CACHE_DIR)
+        val_equation_preprocessor.load_equations()
+        val_equation_texts = train_equation_preprocessor.equation_texts
         # equation_features = equation_preprocessor.equation_features
 
         tokenizer = EquationTokenizer(equation_texts).load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 1
         steps = len(equation_texts)
 
-        data_generator = CtcDataGenerator(
+        print('Vocab size: ', vocab_size)
+
+        train_data_generator = CtcDataGenerator(
             vocab_size, equation_texts, tokenizer)
         inputs, outputs = data_generator.full_dataset()
 
-        data_generator.save_data()
-        model = CaptionModel(vocab_size)
+        early_stop = EarlyStopping(
+            monitor='val_loss', patience=2, restore_best_weights=True)
+        model_chk_pt = ModelCheckpoint(
+            './equation_parser/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
+            monitor='val_loss',
+            save_best_only=False,
+            save_weights_only=True,
+            verbose=0,
+            mode='auto',
+            period=2)
 
-        print('Shapes:')
-        print(X1.shape)
-        print(X2.shape)
-        print(y.shape)
-
-        train_x1, test_x1, train_x2, test_x2, train_y, test_y = self.custom_train_test_split(
-            X1, X2, y, train_size=TRAIN_SIZE
-        )
-
+        logdir = os.path.join(
+            "./equation_parser/logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
         # print('Equation texts: train=', len(equation_texts))
         # print('Photos: train=', len(equation_features))
         # print('Vocabulary Size:', vocab_size)
@@ -63,7 +72,6 @@ class EquationParser:
         #      equation_texts, equation_features, tokenizer))
         # print(a.shape, b.shape, c.shape)
 
-        model.load_model()
         # train_generator = data_generator.data_generator(
         #     equation_texts, equation_features, tokenizer)
         # validation_generator = data_generator.data_generator(

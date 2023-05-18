@@ -16,11 +16,18 @@ def fetch_and_preprocess_eq_image(eq_id):
 
 
 class CtcDataGenerator:
-    def __init__(self, vocab_size, equation_texts, tokenizer):
+    def __init__(self, vocab_size, equation_dir, tokenizer):
         self.vocab_size = vocab_size
+        self.equation_dir = equation_dir
         self.equation_texts = equation_texts
         self.batch_size = len(self.equation_texts.items())
         self.tokenizer = tokenizer
+
+    def load_data(self):
+        equation_preprocessor = EquationPreprocessor(
+            EQUATION_COUNT)
+        equation_preprocessor.load_equations()
+        self.equation_texts = equation_preprocessor.equation_texts
 
     def full_dataset(self):
         X1, y, input_length, label_length = list(), list(), list(), list()
