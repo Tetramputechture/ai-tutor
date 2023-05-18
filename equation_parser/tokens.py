@@ -14,8 +14,8 @@ for idx, t in enumerate(TOKENS):
     zeroes[idx] = 1
     TOKENS_ONEHOT.append(zeroes)
 
-# 18 numbers + 3 fractions + plus, equals + S + E
-MAX_EQUATION_TEXT_LENGTH = 25
+# 18 numbers + 3 fractions + plus, equals
+MAX_EQUATION_TEXT_LENGTH = 23
 
 
 # MAX_EQUATIN_TEXT_LENGTH = 13

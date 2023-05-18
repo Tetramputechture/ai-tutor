@@ -40,7 +40,7 @@ class CtcDataGenerator(keras.callbacks.Callback):
             X_data = np.ones([self.batch_size, 100, 100, 3])
             Y_data = np.ones([self.batch_size, MAX_EQUATION_TEXT_LENGTH]) * -1
 
-            input_length = np.ones((self.batch_size, 1)) * 40
+            input_length = np.ones((self.batch_size, 1)) * 32
             label_length = np.zeros((self.batch_size, 1))
 
             source_str = []

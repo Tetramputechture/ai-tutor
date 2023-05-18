@@ -16,13 +16,10 @@ from equation_parser.equation_parser import EquationParser
 # from equation_parser.equation_parser_simple import EquationParserSimple
 from equation_parser.equation_generator import EquationGenerator
 from equation_parser.caption_model import CaptionModel
-from equation_parser.feature_extractor import FeatureExtractor
 from equation_parser.equation_tokenizer import EquationTokenizer
 from equation_parser.equation_preprocessor import EquationPreprocessor
 
 from equation_parser.tokens import MAX_EQUATION_TEXT_LENGTH
-
-from equation_parser.data_generator import DataGenerator
 
 TRAIN = False
 TEST = False
@@ -164,6 +161,7 @@ def visualize_data():
 def main():
     data = run_eq_parser()
     return data
+
 
 if __name__ == '__main__':
     freeze_support()

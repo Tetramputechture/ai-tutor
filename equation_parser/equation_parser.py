@@ -14,7 +14,6 @@ import sys
 import string
 
 from .caption_model import CaptionModel
-from .tokens import MAX_EQUATION_TEXT_LENGTH
 from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
 from .ctc_data_generator import CtcDataGenerator
@@ -46,7 +45,6 @@ class EquationParser:
 
         tokenizer = EquationTokenizer(train_equation_texts).load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 1
-        steps = len(train_equation_texts)
 
         print('Vocab size: ', vocab_size)
 
@@ -58,6 +56,14 @@ class EquationParser:
             TRAIN_CACHE_DIR, train_equation_texts, tokenizer, BATCH_SIZE)
         val_data_generator = CtcDataGenerator(
             VAL_CACHE_DIR, val_equation_texts, tokenizer, BATCH_SIZE)
+
+        train_num_batches = int(TRAIN_EQUATION_COUNT / BATCH_SIZE)
+        val_num_batches = int(VAL_EQUATION_COUNT / BATCH_SIZE)
+
+        viz_cb_train = CtcVizCallback(
+            caption_model.test_func, train_data_generator.next_batch(), True, train_num_batches)
+        viz_cb_val = CtcVizCallback(
+            caption_model.test_func, val_data_generator.next_batch(), False, val_num_batches)
 
         early_stop = EarlyStopping(
             monitor='val_loss', patience=2, restore_best_weights=True)
@@ -72,14 +78,6 @@ class EquationParser:
 
         logdir = os.path.join(
             "./equation_parser/logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-
-        train_num_batches = int(TRAIN_EQUATION_COUNT / BATCH_SIZE)
-        val_num_batches = int(VAL_EQUATION_COUNT / BATCH_SIZE)
-
-        viz_cb_train = CtcVizCallback(
-            caption_model.test_func, train_data_generator.next_batch(), True, train_num_batches)
-        viz_cb_val = CtcVizCallback(
-            caption_model.test_func, val_data_generator.next_batch(), False, val_num_batches)
 
         model.fit(train_data_generator.next_batch(),
                   steps_per_epoch=train_num_batches,
