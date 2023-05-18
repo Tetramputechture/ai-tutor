@@ -11,36 +11,46 @@ import numpy as np
 # http://man.hubwiz.com/docset/TensorFlow.docset/Contents/Resources/Documents/api_docs/python/tf/keras/backend/ctc_batch_cost.html
 
 
-def fetch_and_preprocess_eq_image(eq_id):
-    eq_image = Image.open(f'./equation_parser/data/images/{eq_id}.bmp')
-    eq_image = np.array(eq_image.resize((100, 100)))
-    return eq_image
-
-
 class CtcDataGenerator(keras.callbacks.Callback):
-    def __init__(self, equation_dir, equation_count, tokenizer, batch_size):
-        self.equation_dir = equation_dir
-        self.equation_count = equation_count
+    def __init__(self, img_dir, equation_texts, tokenizer, batch_size):
+        self.img_dir = img_dir
+        self.equation_texts = [(k, v) for k, v in equation_texts.items()]
         self.tokenizer = tokenizer
         self.batch_size = batch_size
+        self.current_index = 0
+        self.equation_count = len(equation_texts)
         self.indexes = list(range(self.equation_count))
 
-    def load_data(self):
-        equation_preprocessor = EquationPreprocessor(
-            self.equation_count, self.equation_dir)
-        equation_preprocessor.load_equations()
-        self.equation_texts = equation_preprocessor.equation_texts
+    def fetch_and_preprocess_eq_image(self, eq_id):
+        eq_image = Image.open(f'{self.img_dir}/{eq_id}.bmp')
+        eq_image = np.array(eq_image.resize((100, 100)))
+        return eq_image
+
+    def next_data(self):
+        self.current_index += 1
+        # If current index becomes more than the number of images, make current index 0
+        # and shuffle the indices list for random picking of image and text data
+        if self.current_index >= self.equation_count:
+            self.current_index = 0
+            random.shuffle(self.indexes)
+        return self.equation_texts[self.indexes[self.current_index]]
 
     def next_batch(self):
         while True:
-            X1, y, input_length, label_length, source_str = list(), list(), list(), list(), list()
+            X_data = np.ones([self.batch_size, 100, 100, 3])
+            Y_data = np.ones([self.batch_size, MAX_EQUATION_TEXT_LENGTH]) * -1
 
             input_length = np.ones((self.batch_size, 1)) * 40
             label_length = np.zeros((self.batch_size, 1))
 
-            for eq_id, equation_text in self.equation_texts.items()[:self.batch_size]:
-                eq_image = fetch_and_preprocess_eq_image(eq_id)
-                X1.append(eq_image)
+            source_str = []
+
+            for i in range(self.batch_size):
+                eq_id, equation_text = self.next_data()
+
+                eq_image = self.fetch_and_preprocess_eq_image(eq_id)
+                X_data[i] = eq_image
+
                 # img_to_predict = img_to_predict / 127.5
                 # img_to_predict = img_to_predict - 1.0
                 # encode the sequence
@@ -48,13 +58,13 @@ class CtcDataGenerator(keras.callbacks.Callback):
                     0]
                 lbl_len = len(sequence)
 
-                y.append(sequence)
-                label_length.append(lbl_len)
+                Y_data[i, 0:lbl_len] = sequence
+                label_length[i] = lbl_len
                 source_str.append(equation_text)
 
             inputs = {
-                'img_input': X1,
-                'ground_truth_labels': y,
+                'img_input': X_data,
+                'ground_truth_labels': Y_data,
                 'input_length': input_length,
                 'label_length': label_length,
                 'source_str': source_str  # used for viz only

@@ -9,7 +9,6 @@ import pickle
 
 import uuid
 from tensorflow.keras.preprocessing import image
-from skimage.util import random_noise
 
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -20,7 +19,6 @@ from .eq_image_utils import equation_image
 
 TOKENS_FILENAME = 'tokens'
 TOKENS_HEADERS = ['eq_id', 'tokens']
-FONTS_FOLDER = './assets/fonts'
 
 
 def to_clean_tokens(rand_numbers):

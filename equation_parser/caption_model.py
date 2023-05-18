@@ -1,7 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import os
-from tensorflow.keras import datasets, layers, models, applications, optimizers, backend
+from tensorflow.keras import datasets, models, applications, optimizers, backend
+from tensorflow.keras.layers import Activation, Dense, Input, Reshape, Bidirectional, Lambda, LSTM
 from tensorflow.keras.utils import plot_model
 from keras import backend as K
 
@@ -52,18 +53,18 @@ class CaptionModel:
         LSTM_UNITS = 256
         N = int(MAX_EQUATION_TEXT_LENGTH * UNITS_PER_TIMESTEP)
 
-        model_input = layers.Input(shape=(100, 100, 3), name='img_input')
+        model_input = Input(shape=(100, 100, 3), name='img_input')
         model = self.base_resnet_model.model(model_input)
-        model = layers.Dense(N, activation='relu')(model)
-        model = layers.Reshape(target_shape=(
+        model = Dense(N, activation='relu')(model)
+        model = Reshape(target_shape=(
             (MAX_EQUATION_TEXT_LENGTH, UNITS_PER_TIMESTEP)))(model)
-        model = layers.Bidirectional(layers.LSTM(
+        model = Bidirectional(LSTM(
             LSTM_UNITS, return_sequences=True), merge_mode='sum')(model)
-        model = layers.Bidirectional(layers.LSTM(
+        model = Bidirectional(LSTM(
             LSTM_UNITS, return_sequences=True), merge_mode='concat')(model)
-        model = layers.Dense(self.vocab_size)(model)
-        model_output = layers.Activation(
-            'softmax', activation='softmax')(model)
+        model = Dense(self.vocab_size)(model)
+        model_output = Activation(
+            'softmax', name='softmax')(model)
 
         labels = Input(name='ground_truth_labels', shape=[
                        MAX_EQUATION_TEXT_LENGTH], dtype='float32')

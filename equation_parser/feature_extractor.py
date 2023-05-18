@@ -5,7 +5,6 @@ import numpy as np
 
 from tensorflow.keras import applications
 from .base_resnet_model import BaseResnetModel
-from .equation_generator import CACHE_DIR as EQUATION_IMAGE_CACHE_DIR
 
 FEATURES_PATH = './equation_parser/data/features.p'
 

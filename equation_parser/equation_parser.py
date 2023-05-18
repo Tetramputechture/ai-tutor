@@ -26,7 +26,7 @@ VAL_CACHE_DIR = './equation_parser/data/images_val'
 TRAIN_EQUATION_COUNT = 100
 VAL_EQUATION_COUNT = 100
 
-BATCH_SIZE = 64
+BATCH_SIZE = 16
 
 EPOCHS = 5
 
@@ -34,12 +34,12 @@ EPOCHS = 5
 class EquationParser:
     def train_model(self):
         train_equation_preprocessor = EquationPreprocessor(
-            EQUATION_COUNT, TRAIN_CACHE_DIR)
+            TRAIN_EQUATION_COUNT, TRAIN_CACHE_DIR)
         train_equation_preprocessor.load_equations()
         train_equation_texts = train_equation_preprocessor.equation_texts
 
         val_equation_preprocessor = EquationPreprocessor(
-            EQUATION_COUNT, VAL_CACHE_DIR)
+            VAL_EQUATION_COUNT, VAL_CACHE_DIR)
         val_equation_preprocessor.load_equations()
         val_equation_texts = train_equation_preprocessor.equation_texts
         # equation_features = equation_preprocessor.equation_features
@@ -55,11 +55,9 @@ class EquationParser:
         (model_input, model_output, model) = caption_model.create_model()
 
         train_data_generator = CtcDataGenerator(
-            vocab_size, train_equation_texts, tokenizer)
+            TRAIN_CACHE_DIR, train_equation_texts, tokenizer, BATCH_SIZE)
         val_data_generator = CtcDataGenerator(
-            vocab_size, val_equation_dir, tokenizer)
-
-        inputs, outputs = data_generator.full_dataset()
+            VAL_CACHE_DIR, val_equation_texts, tokenizer, BATCH_SIZE)
 
         early_stop = EarlyStopping(
             monitor='val_loss', patience=2, restore_best_weights=True)
@@ -80,8 +78,8 @@ class EquationParser:
 
         viz_cb_train = CtcVizCallback(
             caption_model.test_func, train_data_generator.next_batch(), True, train_num_batches)
-        viz_cb_val = VizCallback(
-            test_func, val_gen.next_batch(), False, val_num_batches)
+        viz_cb_val = CtcVizCallback(
+            caption_model.test_func, val_data_generator.next_batch(), False, val_num_batches)
 
         model.fit(train_data_generator.next_batch(),
                   steps_per_epoch=train_num_batches,

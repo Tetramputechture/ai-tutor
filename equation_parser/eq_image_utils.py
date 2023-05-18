@@ -1,9 +1,14 @@
 import random
-from PIL import Image, ImageFont, ImageOps
+import os
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+from skimage.util import random_noise
 
 EQUATION_WIDTH_PX = 600
 
 EQUATION_IMAGE_SIZE = (EQUATION_WIDTH_PX, int(EQUATION_WIDTH_PX / 3))
+
+FONTS_FOLDER = './assets/fonts'
 
 
 def equation_image(numbers) -> (Image, str):
