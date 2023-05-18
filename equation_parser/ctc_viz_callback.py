@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+from tensorflow import keras
 
 
 def decode_batch(test_func, word_batch):
@@ -41,7 +42,7 @@ def accuracies(actual_labels, predicted_labels, is_train):
     return final_accuracy, final_letter_acc
 
 
-class VizCallback(keras.callbacks.Callback):
+class CtcVizCallback(keras.callbacks.Callback):
     """
     The Custom Callback created for printing the Accuracy and Letter Accuracy Metrics at the End of Each Epoch
     """

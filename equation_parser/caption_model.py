@@ -3,6 +3,8 @@ import numpy as np
 import os
 from tensorflow.keras import datasets, layers, models, applications, optimizers, backend
 from tensorflow.keras.utils import plot_model
+from keras import backend as K
+
 
 from .tokens import MAX_EQUATION_TEXT_LENGTH
 from .base_resnet_model import BaseResnetModel
@@ -59,7 +61,9 @@ class CaptionModel:
             LSTM_UNITS, return_sequences=True), merge_mode='sum')(model)
         model = layers.Bidirectional(layers.LSTM(
             LSTM_UNITS, return_sequences=True), merge_mode='concat')(model)
-        output = layers.Dense(self.vocab_size, activation='softmax')(model)
+        model = layers.Dense(self.vocab_size)(model)
+        model_output = layers.Activation(
+            'softmax', activation='softmax')(model)
 
         labels = Input(name='ground_truth_labels', shape=[
                        MAX_EQUATION_TEXT_LENGTH], dtype='float32')
@@ -67,16 +71,19 @@ class CaptionModel:
         label_length = Input(name='label_length', shape=[1], dtype='int64')
 
         loss_out = Lambda(ctc_loss_function, output_shape=(1,), name='ctc')(
-            [output, labels, input_length, label_length])
+            [model_output, labels, input_length, label_length])
 
         self.model = models.Model(
             inputs=[model_input, labels, input_length, label_length], outputs=loss_out)
 
         self.model.compile(optimizer='adam',
-                           loss='ctc',
-                           metrics=['accuracy'])
+                           loss={'ctc': lambda y_true, y_pred: y_pred})
 
         plot_model(self.model, to_file=MODEL_IMG_PATH, show_shapes=True)
+
+        self.test_func = K.function([model_input], [model_output])
+
+        return (model_input, model_output, self.model)
 
     def load_model(self):
         if self.model_cached():

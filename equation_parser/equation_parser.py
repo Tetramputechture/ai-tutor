@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-
+import datetime
 import PIL
 import os
 import json
@@ -18,12 +18,15 @@ from .tokens import MAX_EQUATION_TEXT_LENGTH
 from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
 from .ctc_data_generator import CtcDataGenerator
+from .ctc_viz_callback import CtcVizCallback
 
 TRAIN_CACHE_DIR = './equation_parser/data/images_train'
 VAL_CACHE_DIR = './equation_parser/data/images_val'
 
-TRAIN_EQUATION_COUNT = 5
-VAL_EQUATION_COUNT = 5
+TRAIN_EQUATION_COUNT = 100
+VAL_EQUATION_COUNT = 100
+
+BATCH_SIZE = 64
 
 EPOCHS = 5
 
@@ -41,14 +44,21 @@ class EquationParser:
         val_equation_texts = train_equation_preprocessor.equation_texts
         # equation_features = equation_preprocessor.equation_features
 
-        tokenizer = EquationTokenizer(equation_texts).load_tokenizer()
+        tokenizer = EquationTokenizer(train_equation_texts).load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 1
-        steps = len(equation_texts)
+        steps = len(train_equation_texts)
 
         print('Vocab size: ', vocab_size)
 
+        caption_model = CaptionModel(vocab_size)
+
+        (model_input, model_output, model) = caption_model.create_model()
+
         train_data_generator = CtcDataGenerator(
-            vocab_size, equation_texts, tokenizer)
+            vocab_size, train_equation_texts, tokenizer)
+        val_data_generator = CtcDataGenerator(
+            vocab_size, val_equation_dir, tokenizer)
+
         inputs, outputs = data_generator.full_dataset()
 
         early_stop = EarlyStopping(
@@ -64,54 +74,21 @@ class EquationParser:
 
         logdir = os.path.join(
             "./equation_parser/logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-        # print('Equation texts: train=', len(equation_texts))
-        # print('Photos: train=', len(equation_features))
-        # print('Vocabulary Size:', vocab_size)
 
-        # next(data_generator.data_generator(
-        #      equation_texts, equation_features, tokenizer))
-        # print(a.shape, b.shape, c.shape)
+        train_num_batches = int(TRAIN_EQUATION_COUNT / BATCH_SIZE)
+        val_num_batches = int(VAL_EQUATION_COUNT / BATCH_SIZE)
 
-        # train_generator = data_generator.data_generator(
-        #     equation_texts, equation_features, tokenizer)
-        # validation_generator = data_generator.data_generator(
-        #     equation_texts, equation_features, tokenizer)
+        viz_cb_train = CtcVizCallback(
+            caption_model.test_func, train_data_generator.next_batch(), True, train_num_batches)
+        viz_cb_val = VizCallback(
+            test_func, val_gen.next_batch(), False, val_num_batches)
 
-        # history = model.model.fit(
-        #     train_generator, validation_data=validation_generator, epochs=EPOCHS, steps_per_epoch=steps, validation_steps=steps)
+        model.fit(train_data_generator.next_batch(),
+                  steps_per_epoch=train_num_batches,
+                  epochs=EPOCHS,
+                  callbacks=[viz_cb_train, viz_cb_val, train_data_generator,
+                             val_data_generator, early_stop, model_chk_pt],
+                  validation_data=val_data_generator,
+                  validation_steps=val_num_batches)
 
-        def fit():
-            history = model.model.fit(
-                x=[train_x1, train_x2],
-                y=train_y,
-                validation_data=([test_x1, test_x2], test_y),
-                epochs=1,
-                shuffle=False,
-                # steps_per_epoch=len(equation_texts),
-                batch_size=BATCH_SIZE
-            )
-            return history
-
-        for i in range(EPOCHS):
-            history = fit()
-            # model.model.reset_states()
-
-        model.save_model()
-
-        plt.subplot(2, 2, 1)
-        plt.plot(history.history['accuracy'], label='accuracy')
-        plt.plot(history.history['val_accuracy'], label='val_accuracy')
-        plt.xlabel('Epoch')
-        plt.ylabel('Accuracy')
-        plt.legend(loc='lower right')
-
-        plt.subplot(2, 2, 2)
-        plt.plot(history.history['loss'], label='loss')
-        plt.plot(history.history['val_loss'], label='val_loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend(loc='upper right')
-
-        plt.show()
-
-        return train_x1, test_x2, train_y
+        model.save('./equation_parser/best_model.h5')
