@@ -40,7 +40,7 @@ class EquationParser:
         val_equation_preprocessor = EquationPreprocessor(
             VAL_EQUATION_COUNT, VAL_CACHE_DIR)
         val_equation_preprocessor.load_equations()
-        val_equation_texts = train_equation_preprocessor.equation_texts
+        val_equation_texts = val_equation_preprocessor.equation_texts
         # equation_features = equation_preprocessor.equation_features
 
         tokenizer = EquationTokenizer(train_equation_texts).load_tokenizer()
@@ -48,11 +48,11 @@ class EquationParser:
 
         print('Vocab size: ', vocab_size)
 
-        caption_model = CaptionModel(vocab_size)
+        caption_model = CaptionModel(vocab_size, tokenizer)
 
         (model_input, model_output, model) = caption_model.create_model()
 
-        print(model.summary())
+        # print(model.summary())
 
         train_data_generator = CtcDataGenerator(
             TRAIN_CACHE_DIR, train_equation_texts, tokenizer, BATCH_SIZE)
@@ -63,9 +63,9 @@ class EquationParser:
         val_num_batches = int(VAL_EQUATION_COUNT / BATCH_SIZE)
 
         viz_cb_train = CtcVizCallback(
-            caption_model.test_func, train_data_generator.next_batch(), True, train_num_batches)
+            caption_model.test_func, train_data_generator.next_batch(), True, train_num_batches, tokenizer)
         viz_cb_val = CtcVizCallback(
-            caption_model.test_func, val_data_generator.next_batch(), False, val_num_batches)
+            caption_model.test_func, val_data_generator.next_batch(), False, val_num_batches, tokenizer)
 
         early_stop = EarlyStopping(
             monitor='val_loss', patience=2, restore_best_weights=True)
@@ -86,7 +86,7 @@ class EquationParser:
                   epochs=EPOCHS,
                   callbacks=[viz_cb_train, viz_cb_val, train_data_generator,
                              val_data_generator, early_stop, model_chk_pt],
-                  validation_data=val_data_generator,
+                  validation_data=val_data_generator.next_batch(),
                   validation_steps=val_num_batches)
 
         model.save('./equation_parser/best_model.h5')

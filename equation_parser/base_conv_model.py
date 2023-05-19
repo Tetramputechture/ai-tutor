@@ -21,7 +21,7 @@ class BaseConvModel:
             layers.Conv2D(128, (3, 3), padding="same", activation="relu"),
             layers.BatchNormalization(),
 
-            layers.Flatten()
+            # layers.Flatten()
         ])
 
     def load_model(self):

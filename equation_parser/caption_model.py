@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os
 from tensorflow.keras import datasets, models, applications, optimizers, backend
-from tensorflow.keras.layers import Activation, Dense, Input, Reshape, Bidirectional, Lambda, LSTM
+from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Input, Reshape, Bidirectional, Lambda, LSTM
 from tensorflow.keras.utils import plot_model
 from keras import backend as K
 
@@ -23,16 +23,15 @@ def ctc_loss_function(args):
     # since the first couple outputs of the RNN tend to be garbage we need to discard them, found this from other CRNN approaches
     # I Tried by including these outputs but the results turned out to be very bad and got very low accuracies on prediction
     y_pred = y_pred[:, 2:, :]
-    print(y_true.shape)
-    print(y_pred.shape)
     return K.ctc_batch_cost(y_true, y_pred, input_length, label_length)
 
 
 class CaptionModel:
-    def __init__(self, vocab_size, train=True):
+    def __init__(self, vocab_size, tokenizer, train=True):
         self.vocab_size = vocab_size
         self.base_resnet_model = BaseResnetModel()
         self.base_conv_model = BaseConvModel()
+        self.tokenizer = tokenizer
         self.train = train
 
     def decode_label(self, out):
@@ -46,11 +45,13 @@ class CaptionModel:
         out_best = [k for k, g in itertools.groupby(
             out_best)]  # remove overlap value
 
-        outstr = words_from_labels(out_best)
+        outstr = self.tokenizer.sequences_to_texts([out_best])[0]
+        print(outstr)
         return outstr
 
     def create_model(self):
         self.base_resnet_model.load_model()
+        # self.base_conv_model.load_model()
 
         UNITS_PER_TIMESTEP = 32
         LSTM_UNITS = 256
@@ -58,9 +59,10 @@ class CaptionModel:
 
         model_input = Input(shape=(100, 100, 3), name='img_input')
         model = self.base_resnet_model.model(model_input)
-        model = Dense(N, activation='relu')(model)
+        # model = Dense(N, activation='relu')(model)
         model = Reshape(target_shape=(
-            (MAX_EQUATION_TEXT_LENGTH, UNITS_PER_TIMESTEP)))(model)
+            (64, 32)))(model)
+        model = Dense(64, activation='relu')(model)
         model = Bidirectional(LSTM(
             LSTM_UNITS, return_sequences=True), merge_mode='sum')(model)
         model = Bidirectional(LSTM(

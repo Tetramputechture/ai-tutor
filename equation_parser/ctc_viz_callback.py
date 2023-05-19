@@ -3,7 +3,7 @@ import itertools
 from tensorflow import keras
 
 
-def decode_batch(test_func, word_batch):
+def decode_batch(test_func, tokenizer, word_batch):
     """
     Takes the Batch of Predictions and decodes the Predictions by Best Path Decoding and Returns the Output
     """
@@ -13,7 +13,7 @@ def decode_batch(test_func, word_batch):
     for j in range(out.shape[0]):
         out_best = list(np.argmax(out[j, 2:], 1))
         out_best = [k for k, g in itertools.groupby(out_best)]
-        outstr = words_from_labels(out_best)
+        outstr = tokenizer.sequences_to_texts([out_best])[0]
         ret.append(outstr)
     return ret
 
@@ -47,13 +47,14 @@ class CtcVizCallback(keras.callbacks.Callback):
     The Custom Callback created for printing the Accuracy and Letter Accuracy Metrics at the End of Each Epoch
     """
 
-    def __init__(self, test_func, text_img_gen, is_train, acc_compute_batches):
+    def __init__(self, test_func, text_img_gen, is_train, acc_compute_batches, tokenizer):
         self.test_func = test_func
         self.text_img_gen = text_img_gen
         # used to indicate whether the callback is called to for Train or Validation Data
         self.is_train = is_train
         # Number of Batches for which the metrics are computed typically equal to steps/epoch
         self.acc_batches = acc_compute_batches
+        self.tokenizer = tokenizer
 
     def show_accuracy_metrics(self, num_batches):
         """
@@ -66,7 +67,8 @@ class CtcVizCallback(keras.callbacks.Callback):
         while batches_cnt > 0:
             # Gets the next batch from the Data generator
             word_batch = next(self.text_img_gen)[0]
-            decoded_res = decode_batch(self.test_func, word_batch['img_input'])
+            decoded_res = decode_batch(
+                self.test_func, self.tokenizer, word_batch['img_input'])
             actual_res = word_batch['source_str']
             acc, let_acc = accuracies(actual_res, decoded_res, self.is_train)
             accuracy += acc

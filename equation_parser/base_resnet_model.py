@@ -15,7 +15,7 @@ class BaseResnetModel:
 
         self.model = models.Sequential([
             resnet_base,
-            layers.Flatten(),
+            # layers.Flatten(),
         ])
 
         for layer in resnet_base.layers:
