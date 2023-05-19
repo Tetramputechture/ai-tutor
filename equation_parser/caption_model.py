@@ -23,14 +23,17 @@ def ctc_loss_function(args):
     # since the first couple outputs of the RNN tend to be garbage we need to discard them, found this from other CRNN approaches
     # I Tried by including these outputs but the results turned out to be very bad and got very low accuracies on prediction
     y_pred = y_pred[:, 2:, :]
-    return backend.ctc_batch_cost(y_true, y_pred, input_length, label_length)
+    print(y_true.shape)
+    print(y_pred.shape)
+    return K.ctc_batch_cost(y_true, y_pred, input_length, label_length)
 
 
 class CaptionModel:
-    def __init__(self, vocab_size):
+    def __init__(self, vocab_size, train=True):
         self.vocab_size = vocab_size
         self.base_resnet_model = BaseResnetModel()
         self.base_conv_model = BaseConvModel()
+        self.train = train
 
     def decode_label(self, out):
         """

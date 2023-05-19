@@ -52,6 +52,8 @@ class EquationParser:
 
         (model_input, model_output, model) = caption_model.create_model()
 
+        print(model.summary())
+
         train_data_generator = CtcDataGenerator(
             TRAIN_CACHE_DIR, train_equation_texts, tokenizer, BATCH_SIZE)
         val_data_generator = CtcDataGenerator(

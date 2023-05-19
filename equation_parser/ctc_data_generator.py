@@ -40,6 +40,7 @@ class CtcDataGenerator(keras.callbacks.Callback):
             X_data = np.ones([self.batch_size, 100, 100, 3])
             Y_data = np.ones([self.batch_size, MAX_EQUATION_TEXT_LENGTH]) * -1
 
+            # input_length for CTC which is the number of time-steps of the RNN output
             input_length = np.ones((self.batch_size, 1)) * 32
             label_length = np.zeros((self.batch_size, 1))
 
@@ -47,6 +48,10 @@ class CtcDataGenerator(keras.callbacks.Callback):
 
             for i in range(self.batch_size):
                 eq_id, equation_text = self.next_data()
+
+                # print(f'Fetching equation {eq_id} and adding to inputs...')
+
+                # print('Equation text: ', equation_text)
 
                 eq_image = self.fetch_and_preprocess_eq_image(eq_id)
                 X_data[i] = eq_image
@@ -57,6 +62,8 @@ class CtcDataGenerator(keras.callbacks.Callback):
                 sequence = self.tokenizer.texts_to_sequences([equation_text])[
                     0]
                 lbl_len = len(sequence)
+
+                # print('Equation length: ', lbl_len)
 
                 Y_data[i, 0:lbl_len] = sequence
                 label_length[i] = lbl_len
@@ -69,6 +76,7 @@ class CtcDataGenerator(keras.callbacks.Callback):
                 'label_length': label_length,
                 'source_str': source_str  # used for viz only
             }
+            # prepare output for the Model and initialize to zeros
             outputs = {'ctc': np.zeros([self.batch_size])}
 
             yield (inputs, outputs)
