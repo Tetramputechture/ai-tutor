@@ -17,7 +17,7 @@ for idx, t in enumerate(TOKENS):
 # 18 numbers + 3 fractions + plus, equals
 MAX_EQUATION_TEXT_LENGTH = 23
 
-RNN_TIMESTEPS = 42
+RNN_TIMESTEPS = 37
 
 
 # MAX_EQUATIN_TEXT_LENGTH = 13

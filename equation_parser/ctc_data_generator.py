@@ -8,6 +8,8 @@ import random
 import pandas as pd
 import numpy as np
 
+import cv2
+
 from .tokens import RNN_TIMESTEPS
 
 # http://man.hubwiz.com/docset/TensorFlow.docset/Contents/Resources/Documents/api_docs/python/tf/keras/backend/ctc_batch_cost.html
@@ -24,8 +26,10 @@ class CtcDataGenerator(keras.callbacks.Callback):
         self.indexes = list(range(self.equation_count))
 
     def fetch_and_preprocess_eq_image(self, eq_id):
-        eq_image = Image.open(f'{self.img_dir}/{eq_id}.bmp')
-        eq_image = np.array(eq_image.resize((100, 100)))
+        eq_image = cv2.imread(f'{self.img_dir}/{eq_id}.bmp')
+        eq_image = eq_image[:, :, 1]  # Extracting Single Channel Image
+        eq_image = cv2.resize(eq_image, (150, 50))
+        eq_image = eq_image / 255
         return eq_image
 
     def next_data(self):
@@ -39,7 +43,7 @@ class CtcDataGenerator(keras.callbacks.Callback):
 
     def next_batch(self):
         while True:
-            X_data = np.ones([self.batch_size, 100, 100, 3])
+            X_data = np.ones([self.batch_size, 150, 50, 1])
             Y_data = np.ones([self.batch_size, MAX_EQUATION_TEXT_LENGTH]) * -1
 
             # input_length for CTC which is the number of time-steps of the RNN output
@@ -56,6 +60,8 @@ class CtcDataGenerator(keras.callbacks.Callback):
                 # print('Equation text: ', equation_text)
 
                 eq_image = self.fetch_and_preprocess_eq_image(eq_id)
+                eq_image = eq_image.T
+                eq_image = np.expand_dims(eq_image, -1)
                 X_data[i] = eq_image
 
                 # img_to_predict = img_to_predict / 127.5

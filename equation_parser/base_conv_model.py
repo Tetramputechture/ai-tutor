@@ -10,27 +10,26 @@ class BaseConvModel:
     def create_model(self):
         # input is 100x100
         self.model = models.Sequential([
-            layers.Resizing(84, 84),
             layers.Conv2D(56, (7, 7), padding="same",
-                          activation="relu", input_shape=(84, 84, 3)),
+                          activation="relu", input_shape=(150, 50, 1)),
             layers.BatchNormalization(),
             layers.MaxPooling2D(pool_size=(2, 2)),
 
             layers.Conv2D(64, (5, 5), padding="same", activation="relu"),
             layers.BatchNormalization(),
-            layers.MaxPooling2D(pool_size=(1, 1), padding='same'),
+            layers.MaxPooling2D(pool_size=(2, 2)),
 
             layers.Conv2D(128, (3, 3), padding="same", activation="relu"),
             layers.BatchNormalization(),
-            layers.MaxPooling2D(pool_size=(1, 2)),
+            layers.MaxPooling2D(pool_size=(1, 1)),
 
             layers.Conv2D(128, (3, 3), padding="same", activation="relu"),
             layers.BatchNormalization(),
-            layers.MaxPooling2D(pool_size=(1, 2)),
+            layers.MaxPooling2D(pool_size=(1, 1)),
             # layers.Flatten()
         ])
 
-        self.model.build((None, 100, 100, 3))
+        self.model.build((None, 150, 50, 1))
         self.model.summary()
 
     def load_model(self):

@@ -38,15 +38,14 @@ class CaptionModel:
         # self.base_resnet_model.load_model()
         self.base_conv_model.load_model()
 
-        UNITS_PER_TIMESTEP = RNN_TIMESTEPS
         LSTM_UNITS = 256
-        N = int(MAX_EQUATION_TEXT_LENGTH * UNITS_PER_TIMESTEP)
+        N = int(MAX_EQUATION_TEXT_LENGTH * RNN_TIMESTEPS)
 
-        model_input = Input(shape=(100, 100, 3), name='img_input')
+        model_input = Input(shape=(150, 50, 1), name='img_input')
         model = self.base_conv_model.model(model_input)
         # model = Dense(N, activation='relu')(model)
         model = Reshape(target_shape=(
-            (42, 1280)))(model)
+            (RNN_TIMESTEPS, 1536)))(model)
         model = Dense(64, activation='relu')(model)
         model = Bidirectional(LSTM(
             LSTM_UNITS, return_sequences=True), merge_mode='sum')(model)
