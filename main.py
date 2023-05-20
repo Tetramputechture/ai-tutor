@@ -125,11 +125,12 @@ def run_eq_parser():
             plt.text(0, 0, predicted_desc)
         plt.show()
     elif VIZ:
-        for i in range(2):
+        for i in range(5):
             plt.figure(i)
-            eq_id, tokens = EquationGenerator().generate_equation_image()
+            eq_id, tokens = EquationGenerator(
+                './equation_parser/data/images_viz').generate_equation_image()
             plt.imshow(Image.open(
-                f'./equation_parser/data/images/{eq_id}.bmp'))
+                f'./equation_parser/data/images_viz/{eq_id}.bmp'))
         plt.show()
 
 

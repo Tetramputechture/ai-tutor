@@ -34,21 +34,6 @@ class CaptionModel:
         self.tokenizer = tokenizer
         self.train = train
 
-    def decode_label(self, out):
-        """
-        Takes the predicted ouput matrix from the Model and returns the output text for the image
-        """
-        # out : (1, 42, 37)
-        # discarding first 2 outputs of RNN as they tend to be garbage
-        out_best = list(np.argmax(out[0, 2:], axis=1))
-
-        out_best = [k for k, g in itertools.groupby(
-            out_best)]  # remove overlap value
-
-        outstr = self.tokenizer.sequences_to_texts([out_best])[0]
-        print(outstr)
-        return outstr
-
     def create_model(self):
         self.base_resnet_model.load_model()
         # self.base_conv_model.load_model()

@@ -22,12 +22,12 @@ from .ctc_viz_callback import CtcVizCallback
 TRAIN_CACHE_DIR = './equation_parser/data/images_train'
 VAL_CACHE_DIR = './equation_parser/data/images_val'
 
-TRAIN_EQUATION_COUNT = 100
-VAL_EQUATION_COUNT = 100
+TRAIN_EQUATION_COUNT = 200000
+VAL_EQUATION_COUNT = 10000
 
-BATCH_SIZE = 16
+BATCH_SIZE = 64
 
-EPOCHS = 5
+EPOCHS = 10
 
 
 class EquationParser:
@@ -44,7 +44,8 @@ class EquationParser:
         # equation_features = equation_preprocessor.equation_features
 
         tokenizer = EquationTokenizer(train_equation_texts).load_tokenizer()
-        vocab_size = len(tokenizer.word_index) + 1
+        # + 2 for padding, ctc blank token
+        vocab_size = len(tokenizer.word_index) + 2
 
         print('Vocab size: ', vocab_size)
 

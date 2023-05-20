@@ -14,6 +14,8 @@ def decode_batch(test_func, tokenizer, word_batch):
         out_best = list(np.argmax(out[j, 2:], 1))
         out_best = [k for k, g in itertools.groupby(out_best)]
         outstr = tokenizer.sequences_to_texts([out_best])[0]
+        outstr = outstr.replace(' ', '')
+        outstr = outstr.replace('e', '')
         ret.append(outstr)
     return ret
 
@@ -70,6 +72,8 @@ class CtcVizCallback(keras.callbacks.Callback):
             decoded_res = decode_batch(
                 self.test_func, self.tokenizer, word_batch['img_input'])
             actual_res = word_batch['source_str']
+            # print('Decoded: ', decoded_res[0])
+            # print('Actual: ', actual_res[0])
             acc, let_acc = accuracies(actual_res, decoded_res, self.is_train)
             accuracy += acc
             letter_accuracy += let_acc
@@ -77,7 +81,7 @@ class CtcVizCallback(keras.callbacks.Callback):
         accuracy = accuracy/num_batches
         letter_accuracy = letter_accuracy/num_batches
         if self.is_train:
-            print("Train Average Accuracy of "+str(num_batches) +
+            print("\nTrain Average Accuracy of "+str(num_batches) +
                   " Batches: ", np.round(accuracy, 2), " %")
             print("Train Average Letter Accuracy of "+str(num_batches) +
                   " Batches: ", np.round(letter_accuracy, 2), " %")

@@ -4,11 +4,11 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from skimage.util import random_noise
 
-EQUATION_WIDTH_PX = 600
+EQUATION_WIDTH_PX = 400
 
 EQUATION_IMAGE_SIZE = (EQUATION_WIDTH_PX, int(EQUATION_WIDTH_PX / 3))
 
-FONTS_FOLDER = './assets/fonts'
+FONTS_FOLDER = './assets/fonts-temp'
 
 
 def equation_image(numbers) -> (Image, str):
@@ -101,9 +101,8 @@ def rand_font():
 
 
 def rand_font_size():
-    rand_range = int(EQUATION_WIDTH_PX * 0.015)  # 2
     rand_begin = int(EQUATION_WIDTH_PX * 0.06)  # 15
-    return random.randint(rand_begin, rand_begin + rand_range)
+    return rand_begin
 
 
 def rand_rotation_angle():
@@ -112,13 +111,13 @@ def rand_rotation_angle():
 
 def rand_plus_size():
     rand_range = int(EQUATION_WIDTH_PX * 0.02)  # 3
-    rand_begin = int(EQUATION_WIDTH_PX * 0.11)  # 16
+    rand_begin = int(EQUATION_WIDTH_PX * 0.13)  # 16
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
 def rand_equals_size():
     rand_range = int(EQUATION_WIDTH_PX * 0.015)  # 2
-    rand_begin = int(EQUATION_WIDTH_PX * 0.115)  # 17
+    rand_begin = int(EQUATION_WIDTH_PX * 0.125)  # 17
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
@@ -141,21 +140,23 @@ def rand_operator_post_x_offset():
 
 
 def rand_text_color():
-    return (random.randint(215, 255), random.randint(215, 255), random.randint(215, 255))
+    return (random.randint(225, 255), random.randint(225, 255), random.randint(225, 255))
 
 
 def rand_background_color():
-    return (random.randint(0, 20), random.randint(0, 20), random.randint(0, 20))
+    return (random.randint(0, 15), random.randint(0, 15), random.randint(0, 15))
 
 
 def draw_fraction(draw, pos, font, font_size, num, denom):
     # TODO: rotate each number individually?
-    draw.text(pos, str(num), font=font, fill=rand_text_color())
+    draw.text(pos, str(num), font=font,
+              fill=rand_text_color(), spacing=5)
     _, _, num_width, num_height = font.getbbox(str(num))
 
     denom_pos = (pos[0] + rand_denom_x_offset(), pos[1] +
                  num_height + rand_denom_y_offset())
-    draw.text(denom_pos, str(denom), font=font, fill=rand_text_color())
+    draw.text(denom_pos, str(denom), font=font,
+              fill=rand_text_color(), spacing=5)
 
     _, _, denom_width, denom_height = font.getbbox(str(denom))
 
@@ -184,7 +185,7 @@ def draw_equals(draw, pos):
 
 def draw_noise(eq_image):
     im_arr = np.asarray(eq_image)
-    rand_variance = random.uniform(0.002, 0.005)
+    rand_variance = random.uniform(0.0005, 0.003)
     noise_img = random_noise(im_arr, mode='gaussian', var=rand_variance)
     noise_img = (255*noise_img).astype(np.uint8)
     return Image.fromarray(noise_img)
