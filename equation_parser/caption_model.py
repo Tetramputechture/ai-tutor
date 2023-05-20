@@ -7,7 +7,7 @@ from tensorflow.keras.utils import plot_model
 from keras import backend as K
 
 
-from .tokens import MAX_EQUATION_TEXT_LENGTH
+from .tokens import RNN_TIMESTEPS, MAX_EQUATION_TEXT_LENGTH
 from .base_resnet_model import BaseResnetModel
 from .base_conv_model import BaseConvModel
 
@@ -35,18 +35,18 @@ class CaptionModel:
         self.train = train
 
     def create_model(self):
-        self.base_resnet_model.load_model()
-        # self.base_conv_model.load_model()
+        # self.base_resnet_model.load_model()
+        self.base_conv_model.load_model()
 
-        UNITS_PER_TIMESTEP = 32
+        UNITS_PER_TIMESTEP = RNN_TIMESTEPS
         LSTM_UNITS = 256
         N = int(MAX_EQUATION_TEXT_LENGTH * UNITS_PER_TIMESTEP)
 
         model_input = Input(shape=(100, 100, 3), name='img_input')
-        model = self.base_resnet_model.model(model_input)
+        model = self.base_conv_model.model(model_input)
         # model = Dense(N, activation='relu')(model)
         model = Reshape(target_shape=(
-            (64, 32)))(model)
+            (42, 1280)))(model)
         model = Dense(64, activation='relu')(model)
         model = Bidirectional(LSTM(
             LSTM_UNITS, return_sequences=True), merge_mode='sum')(model)

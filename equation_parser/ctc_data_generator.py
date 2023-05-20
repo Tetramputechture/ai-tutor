@@ -8,6 +8,8 @@ import random
 import pandas as pd
 import numpy as np
 
+from .tokens import RNN_TIMESTEPS
+
 # http://man.hubwiz.com/docset/TensorFlow.docset/Contents/Resources/Documents/api_docs/python/tf/keras/backend/ctc_batch_cost.html
 
 
@@ -41,7 +43,7 @@ class CtcDataGenerator(keras.callbacks.Callback):
             Y_data = np.ones([self.batch_size, MAX_EQUATION_TEXT_LENGTH]) * -1
 
             # input_length for CTC which is the number of time-steps of the RNN output
-            input_length = np.ones((self.batch_size, 1)) * 32
+            input_length = np.ones((self.batch_size, 1)) * (RNN_TIMESTEPS - 2)
             label_length = np.zeros((self.batch_size, 1))
 
             source_str = []

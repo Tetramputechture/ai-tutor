@@ -22,12 +22,12 @@ from .ctc_viz_callback import CtcVizCallback
 TRAIN_CACHE_DIR = './equation_parser/data/images_train'
 VAL_CACHE_DIR = './equation_parser/data/images_val'
 
-TRAIN_EQUATION_COUNT = 200000
-VAL_EQUATION_COUNT = 10000
+TRAIN_EQUATION_COUNT = 50000
+VAL_EQUATION_COUNT = 1000
 
 BATCH_SIZE = 64
 
-EPOCHS = 10
+EPOCHS = 5
 
 
 class EquationParser:
