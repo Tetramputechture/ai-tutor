@@ -26,7 +26,7 @@ def to_clean_tokens(rand_numbers):
 
 
 def rand_frac_number():
-    return random.randint(100, 999)
+    return random.randint(1, 999)
 
 
 class EquationGenerator:

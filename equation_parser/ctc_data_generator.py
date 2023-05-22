@@ -1,4 +1,4 @@
-from .tokens import MAX_EQUATION_TEXT_LENGTH
+from .constants import MAX_EQUATION_TEXT_LENGTH
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
 from tensorflow import keras
@@ -10,7 +10,7 @@ import numpy as np
 
 import cv2
 
-from .tokens import RNN_TIMESTEPS
+from .constants import RNN_TIMESTEPS, EQ_IMAGE_HEIGHT, EQ_IMAGE_WIDTH
 
 # http://man.hubwiz.com/docset/TensorFlow.docset/Contents/Resources/Documents/api_docs/python/tf/keras/backend/ctc_batch_cost.html
 
@@ -28,7 +28,7 @@ class CtcDataGenerator(keras.callbacks.Callback):
     def fetch_and_preprocess_eq_image(self, eq_id):
         eq_image = cv2.imread(f'{self.img_dir}/{eq_id}.bmp')
         eq_image = eq_image[:, :, 1]  # Extracting Single Channel Image
-        eq_image = cv2.resize(eq_image, (150, 50))
+        eq_image = cv2.resize(eq_image, (EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT))
         eq_image = eq_image / 255
         return eq_image
 
@@ -43,7 +43,8 @@ class CtcDataGenerator(keras.callbacks.Callback):
 
     def next_batch(self):
         while True:
-            X_data = np.ones([self.batch_size, 150, 50, 1])
+            X_data = np.ones(
+                [self.batch_size, EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT, 1])
             Y_data = np.ones([self.batch_size, MAX_EQUATION_TEXT_LENGTH]) * -1
 
             # input_length for CTC which is the number of time-steps of the RNN output

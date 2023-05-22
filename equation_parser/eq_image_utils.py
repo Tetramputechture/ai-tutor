@@ -6,7 +6,7 @@ from skimage.util import random_noise
 
 EQUATION_WIDTH_PX = 400
 
-EQUATION_IMAGE_SIZE = (EQUATION_WIDTH_PX, int(EQUATION_WIDTH_PX / 3))
+EQUATION_IMAGE_SIZE = (EQUATION_WIDTH_PX, int(EQUATION_WIDTH_PX * 0.25))
 
 FONTS_FOLDER = './assets/fonts-temp'
 
@@ -77,16 +77,18 @@ def rand_fraction_tilt_offset():
 
 
 def rand_fraction_start_pos():
-    rand_range = int(EQUATION_WIDTH_PX * 0.035)  # 5
-    rand_begin = int(EQUATION_WIDTH_PX * 0.015)  # 2
-    x_coord = random.randint(rand_begin, rand_begin + rand_range)
-    y_coord = random.randint(rand_begin, rand_begin + rand_range)
+    rand_range_x = int(EQUATION_WIDTH_PX * 0.03)  # 5
+    rand_begin_x = int(EQUATION_WIDTH_PX * 0.01)  # 2
+    rand_range_y = int(EQUATION_WIDTH_PX * 0.035)  # 5
+    rand_begin_y = int(EQUATION_WIDTH_PX * 0.005)  # 2
+    x_coord = random.randint(rand_begin_x, rand_begin_x + rand_range_x)
+    y_coord = random.randint(rand_begin_y, rand_begin_y + rand_range_x)
     return (x_coord, y_coord)
 
 
 def rand_denom_y_offset():
     rand_range = int(EQUATION_WIDTH_PX * 0.02)  # 3
-    rand_begin = int(EQUATION_WIDTH_PX * 0.06)  # 6
+    rand_begin = int(EQUATION_WIDTH_PX * 0.05)  # 6
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
@@ -101,7 +103,7 @@ def rand_font():
 
 
 def rand_font_size():
-    rand_begin = int(EQUATION_WIDTH_PX * 0.06)  # 15
+    rand_begin = int(EQUATION_WIDTH_PX * 0.07)  # 15
     return rand_begin
 
 
@@ -122,7 +124,7 @@ def rand_equals_size():
 
 
 def rand_operator_x_offset():
-    rand_range = int(EQUATION_WIDTH_PX * 0.015)  # 2
+    rand_range = int(EQUATION_WIDTH_PX * 0.01)  # 2
     rand_begin = int(EQUATION_WIDTH_PX * 0.07)  # 12
     return random.randint(rand_begin, rand_begin + rand_range)
 
@@ -185,7 +187,7 @@ def draw_equals(draw, pos):
 
 def draw_noise(eq_image):
     im_arr = np.asarray(eq_image)
-    rand_variance = random.uniform(0.0005, 0.003)
+    rand_variance = random.uniform(0.001, 0.003)
     noise_img = random_noise(im_arr, mode='gaussian', var=rand_variance)
     noise_img = (255*noise_img).astype(np.uint8)
     return Image.fromarray(noise_img)

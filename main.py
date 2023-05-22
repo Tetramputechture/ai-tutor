@@ -19,7 +19,7 @@ from equation_parser.caption_model import CaptionModel
 from equation_parser.equation_tokenizer import EquationTokenizer
 from equation_parser.equation_preprocessor import EquationPreprocessor
 
-from equation_parser.tokens import MAX_EQUATION_TEXT_LENGTH
+from equation_parser.constants import MAX_EQUATION_TEXT_LENGTH
 
 TRAIN = False
 TEST = False
@@ -104,28 +104,29 @@ def run_eq_parser():
         return data
     elif TEST:
         tokenizer = EquationTokenizer().load_tokenizer()
-        vocab_size = len(tokenizer.word_index) + 1
-        # feature_extractor = FeatureExtractor()
-        # feature_extractor.load_features()
-        caption_model = CaptionModel(vocab_size)
-        caption_model.load_model()
+        vocab_size = len(tokenizer.word_index) + 2
+        # # feature_extractor = FeatureExtractor()
+        # # feature_extractor.load_features()
+        # caption_model = CaptionModel(vocab_size)
+        # caption_model.load_model()
+        ep = EquationParser()
+        model = CaptionModel(vocab_size, tokenizer, False)
+        model.create_model()
+        model.load_model()
         for i in range(5):
-            eq_id, tokens = EquationGenerator().generate_equation_image()
-            eq_image = Image.open(f'./equation_parser/data/images/{eq_id}.bmp')
-            eq_image = eq_image.resize((300, 300))
+            eq_id, tokens = EquationGenerator(
+                './equation_parser/data/images_test').generate_equation_image()
+            img_path = f'./equation_parser/data/images_test/{eq_id}.bmp'
+            predicted_desc = ep.test_model(model.model, img_path, tokens)
             # eq_image_features = feature_extractor.features_from_image(eq_image)
             # print(eq_image_features)
-            predicted_desc = generate_desc(
-                caption_model.model, tokenizer, eq_image)
-            print(tokens)
-            print(predicted_desc)
-
+            eq_image = Image.open(img_path)
             plt.figure()
             plt.imshow(eq_image)
-            plt.text(0, 0, predicted_desc)
+            plt.text(0, -5, predicted_desc, fontsize=15)
         plt.show()
     elif VIZ:
-        for i in range(5):
+        for i in range(10):
             plt.figure(i)
             eq_id, tokens = EquationGenerator(
                 './equation_parser/data/images_viz').generate_equation_image()

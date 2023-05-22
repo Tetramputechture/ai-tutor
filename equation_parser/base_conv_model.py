@@ -1,35 +1,48 @@
+from .constants import EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT
 import tensorflow as tf
 import numpy as np
 import os
-from tensorflow.keras import datasets, layers, models
+from tensorflow.keras import datasets, models
+from tensorflow.keras.layers import Conv2D, Dropout, BatchNormalization, MaxPooling2D
 
 MODEL_PATH = './equation_parser/conv_base.h5'
+
+DROPOUT_RATE = 0.3
 
 
 class BaseConvModel:
     def create_model(self):
         # input is 100x100
         self.model = models.Sequential([
-            layers.Conv2D(56, (7, 7), padding="same",
-                          activation="relu", input_shape=(150, 50, 1)),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D(pool_size=(2, 2)),
+            Conv2D(64, (3, 3), padding="same",
+                   activation="relu", input_shape=(EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT, 1)),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(2, 2)),
 
-            layers.Conv2D(64, (5, 5), padding="same", activation="relu"),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D(pool_size=(2, 2)),
+            Conv2D(128, (3, 3), padding="same", activation="relu"),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(2, 2)),
 
-            layers.Conv2D(128, (3, 3), padding="same", activation="relu"),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D(pool_size=(1, 1)),
+            Conv2D(256, (3, 3), padding="same", activation="relu"),
+            BatchNormalization(),
+            Conv2D(256, (3, 3), padding="same", activation="relu"),
+            Dropout(DROPOUT_RATE),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(1, 2)),
 
-            layers.Conv2D(128, (3, 3), padding="same", activation="relu"),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D(pool_size=(1, 1)),
-            # layers.Flatten()
+            Conv2D(512, (3, 3), padding="same", activation="relu"),
+            BatchNormalization(),
+            Conv2D(512, (3, 3), padding="same", activation="relu"),
+            Dropout(DROPOUT_RATE),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(1, 2)),
+
+            Conv2D(512, (2, 2), padding='same', activation='relu'),
+            Dropout(0.25),
+            BatchNormalization()
         ])
 
-        self.model.build((None, 150, 50, 1))
+        self.model.build((None, EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT, 1))
         self.model.summary()
 
     def load_model(self):

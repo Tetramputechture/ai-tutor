@@ -7,7 +7,7 @@ from tensorflow.keras.utils import plot_model
 from keras import backend as K
 
 
-from .tokens import RNN_TIMESTEPS, MAX_EQUATION_TEXT_LENGTH
+from .constants import RNN_TIMESTEPS, MAX_EQUATION_TEXT_LENGTH, EQ_IMAGE_HEIGHT, EQ_IMAGE_WIDTH
 from .base_resnet_model import BaseResnetModel
 from .base_conv_model import BaseConvModel
 
@@ -41,7 +41,8 @@ class CaptionModel:
         LSTM_UNITS = 256
         N = int(MAX_EQUATION_TEXT_LENGTH * RNN_TIMESTEPS)
 
-        model_input = Input(shape=(150, 50, 1), name='img_input')
+        model_input = Input(
+            shape=(EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT, 1), name='img_input')
         model = self.base_conv_model.model(model_input)
         # model = Dense(N, activation='relu')(model)
         model = Reshape(target_shape=(
@@ -63,25 +64,30 @@ class CaptionModel:
         loss_out = Lambda(ctc_loss_function, output_shape=(1,), name='ctc')(
             [model_output, labels, input_length, label_length])
 
-        self.model = models.Model(
-            inputs=[model_input, labels, input_length, label_length], outputs=loss_out)
+        if self.train:
+            self.model = models.Model(
+                inputs=[model_input, labels, input_length, label_length], outputs=loss_out)
 
-        self.model.compile(optimizer='adam',
-                           loss={'ctc': lambda y_true, y_pred: y_pred})
+            self.model.compile(optimizer='adam',
+                               loss={'ctc': lambda y_true, y_pred: y_pred})
 
-        plot_model(self.model, to_file=MODEL_IMG_PATH, show_shapes=True)
+            plot_model(self.model, to_file=MODEL_IMG_PATH, show_shapes=True)
 
-        self.test_func = K.function([model_input], [model_output])
+            self.test_func = K.function([model_input], [model_output])
 
-        return (model_input, model_output, self.model)
+            return (model_input, model_output, self.model)
+        else:
+            self.model = models.Model(
+                inputs=[model_input], outputs=model_output)
 
     def load_model(self):
         if self.model_cached():
             print('Model cached. Loading model...')
-            self.model = models.load_model(MODEL_PATH, compile=False)
-            self.model.compile(optimizer='adam',
-                               loss='categorical_crossentropy',
-                               metrics=['accuracy'])
+            self.model.load_weights('./equation_parser/caption_model.h5')
+            # self.model = models.load_model(MODEL_PATH, compile=False)
+            # self.model.compile(optimizer='adam',
+            #                    loss='categorical_crossentropy',
+            #                    metrics=['accuracy'])
         else:
             print('Model not cached. Creating model...')
             self.create_model()
