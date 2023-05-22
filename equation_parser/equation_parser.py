@@ -4,95 +4,129 @@ import math
 import tensorflow as tf
 import numpy as np
 from sklearn.model_selection import train_test_split
-
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from datetime import datetime
 import PIL
 import os
 import json
 import sys
+from datetime import datetime
+import cv2
+import itertools
 
 import string
 
 from .caption_model import CaptionModel
-from .tokens import MAX_EQUATION_TEXT_LENGTH
 from .equation_preprocessor import EquationPreprocessor
 from .equation_tokenizer import EquationTokenizer
-from .data_generator import DataGenerator
+from .ctc_data_generator import CtcDataGenerator
+from .ctc_viz_callback import CtcVizCallback
 
-EQUATION_COUNT = 100
+from .constants import EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT
 
-EPOCHS = 100
+TRAIN_CACHE_DIR = './equation_parser/data/images_train'
+VAL_CACHE_DIR = './equation_parser/data/images_val'
 
-TEST_SIZE = 0.2
+TRAIN_EQUATION_COUNT = 400000
+VAL_EQUATION_COUNT = 25000
 
 BATCH_SIZE = 64
+
+EPOCHS = 20
 
 
 class EquationParser:
     def train_model(self):
-        equation_preprocessor = EquationPreprocessor(
-            EQUATION_COUNT)
-        equation_preprocessor.load_equations()
-        equation_texts = equation_preprocessor.equation_texts
+        train_equation_preprocessor = EquationPreprocessor(
+            TRAIN_EQUATION_COUNT, TRAIN_CACHE_DIR)
+        train_equation_preprocessor.load_equations()
+        train_equation_texts = train_equation_preprocessor.equation_texts
+
+        val_equation_preprocessor = EquationPreprocessor(
+            VAL_EQUATION_COUNT, VAL_CACHE_DIR)
+        val_equation_preprocessor.load_equations()
+        val_equation_texts = val_equation_preprocessor.equation_texts
         # equation_features = equation_preprocessor.equation_features
 
-        tokenizer = EquationTokenizer(equation_texts).load_tokenizer()
-        vocab_size = len(tokenizer.word_index) + 1
-        steps = len(equation_texts)
+        tokenizer = EquationTokenizer(train_equation_texts).load_tokenizer()
+        # + 2 for padding, ctc blank token
+        vocab_size = len(tokenizer.word_index) + 2
 
-        data_generator = DataGenerator(
-            vocab_size, equation_texts, tokenizer)
-        X1, X2, y = data_generator.full_dataset()
-        data_generator.save_data()
-        model = CaptionModel(vocab_size)
+        print('Vocab size: ', vocab_size)
 
-        print('Shapes:')
-        print(X1.shape)
-        print(X2.shape)
-        print(y.shape)
+        caption_model = CaptionModel(vocab_size, tokenizer)
 
-        train_x1, test_x1, train_x2, test_x2, train_y, test_y = train_test_split(
-            X1, X2, y, test_size=TEST_SIZE, shuffle=False
-        )
+        (model_input, model_output, model) = caption_model.create_model()
 
-        # print('Equation texts: train=', len(equation_texts))
-        # print('Photos: train=', len(equation_features))
-        # print('Vocabulary Size:', vocab_size)
+        # print(model.summary())
 
-        # next(data_generator.data_generator(
-        #      equation_texts, equation_features, tokenizer))
-        # print(a.shape, b.shape, c.shape)
+        train_data_generator = CtcDataGenerator(
+            TRAIN_CACHE_DIR, train_equation_texts, tokenizer, BATCH_SIZE)
+        val_data_generator = CtcDataGenerator(
+            VAL_CACHE_DIR, val_equation_texts, tokenizer, BATCH_SIZE)
 
-        model.load_model()
-        # train_generator = data_generator.data_generator(
-        #     equation_texts, equation_features, tokenizer)
-        # validation_generator = data_generator.data_generator(
-        #     equation_texts, equation_features, tokenizer)
+        train_num_batches = int(TRAIN_EQUATION_COUNT / BATCH_SIZE)
+        val_num_batches = int(VAL_EQUATION_COUNT / BATCH_SIZE)
 
-        # history = model.model.fit(
-        #     train_generator, validation_data=validation_generator, epochs=EPOCHS, steps_per_epoch=steps, validation_steps=steps)
-        history = model.model.fit(
-            x=[train_x1, train_x2],
-            y=train_y,
-            validation_data=([test_x1, test_x2], test_y),
-            epochs=EPOCHS,
-            # steps_per_epoch=len(equation_texts),
-            batch_size=BATCH_SIZE,
-            shuffle=False
-        )
-        model.save_model()
+        viz_cb_train = CtcVizCallback(
+            caption_model.test_func, train_data_generator.next_batch(), True, train_num_batches, tokenizer)
+        viz_cb_val = CtcVizCallback(
+            caption_model.test_func, val_data_generator.next_batch(), False, val_num_batches, tokenizer)
 
-        plt.subplot(2, 2, 1)
-        plt.plot(history.history['accuracy'], label='accuracy')
-        plt.plot(history.history['val_accuracy'], label='val_accuracy')
-        plt.xlabel('Epoch')
-        plt.ylabel('Accuracy')
-        plt.legend(loc='lower right')
+        early_stop = EarlyStopping(
+            monitor='val_loss', patience=2, restore_best_weights=True)
+        model_chk_pt = ModelCheckpoint(
+            './equation_parser/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
+            monitor='val_loss',
+            save_best_only=False,
+            save_weights_only=True,
+            verbose=0,
+            mode='auto',
+            period=2)
 
-        plt.subplot(2, 2, 2)
-        plt.plot(history.history['loss'], label='loss')
-        plt.plot(history.history['val_loss'], label='val_loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend(loc='upper right')
+        model.fit(train_data_generator.next_batch(),
+                  steps_per_epoch=train_num_batches,
+                  epochs=EPOCHS,
+                  callbacks=[viz_cb_train, viz_cb_val, train_data_generator,
+                             val_data_generator, early_stop, model_chk_pt],
+                  validation_data=val_data_generator.next_batch(),
+                  validation_steps=val_num_batches)
 
-        plt.show()
+        model.save('./equation_parser/caption_model.h5')
+
+    def decode_label(self, tokenizer, model_output):
+        out_best = list(np.argmax(model_output[0, 2:], axis=1))
+        out_best = [k for k, g in itertools.groupby(out_best)]
+        outstr = tokenizer.sequences_to_texts([out_best])[0]
+        outstr = outstr.replace(' ', '')
+        outstr = outstr.replace('e', '')
+        return outstr
+
+    def test_model(self, model, img, label):
+        start = datetime.now()
+        accuracy = 0
+        letter_acc = 0
+        letter_cnt = 0
+        count = 0
+        img = cv2.imread(img)
+        img_resized = cv2.resize(img, (EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT))
+        img = img_resized[:, :, 1]
+        img = img.T
+        img = np.expand_dims(img, axis=-1)
+        img = np.expand_dims(img, axis=0)
+        img = img / 255
+        model_output = model.predict(img)
+        tokenizer = EquationTokenizer().load_tokenizer()
+        predicted_output = self.decode_label(tokenizer, model_output)
+        actual_output = label
+        letter_mismatch = 0
+        for j in range(min(len(predicted_output), len(actual_output))):
+            if predicted_output[j] == actual_output[j]:
+                letter_acc += 1
+            else:
+                letter_mismatch += 1
+        letter_cnt += max(len(predicted_output), len(actual_output))
+
+        print('Actual: ', actual_output)
+        print('Predicted: ', predicted_output)
+        return predicted_output

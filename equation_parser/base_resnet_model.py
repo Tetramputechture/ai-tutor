@@ -6,7 +6,7 @@ MODEL_PATH = './equation_parser/resnet_base.h5'
 
 
 class BaseResnetModel:
-    def create_model(self, input_shape=(150, 150, 3)):
+    def create_model(self, input_shape=(100, 100, 3)):
         resnet_base = applications.resnet.ResNet50(
             include_top=False,
             input_shape=input_shape,
@@ -15,8 +15,14 @@ class BaseResnetModel:
 
         self.model = models.Sequential([
             resnet_base,
-            layers.Flatten(),
+            # layers.Flatten(),
         ])
+
+        for layer in resnet_base.layers:
+            layer.trainable = False
+
+        for layer in resnet_base.layers[-24:]:
+            layer.trainable = True
 
         self.model.compile(optimizer='adam',
                            loss='mse',
@@ -36,4 +42,3 @@ class BaseResnetModel:
 
     def save_model(self):
         self.model.save(MODEL_PATH)
-
