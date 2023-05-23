@@ -8,6 +8,8 @@ import string
 import random
 import sys
 
+from matplotlib import pyplot as plt
+
 
 def random_text():
     text_len = random.randint(5, 15)
@@ -32,14 +34,8 @@ def random_sheet_color():
     ])
 
 
-def random_font():
-    return random.choice([
-        './assets/fonts/ArefRuqaa-Regular.ttf',
-        './assets/fonts/BungeeColor-Regular_colr_Windows.ttf',
-        './assets/fonts/FreeMono.ttf',
-        './assets/fonts/NotoSans-Regular.ttf',
-        './assets/fonts/OpenSansCondensed-LightItalic.ttf'
-    ])
+def rand_frac_number():
+    return random.randint(1, 999)
 
 
 class EquationSheetDecorator:
@@ -47,13 +43,12 @@ class EquationSheetDecorator:
         sheet_width, sheet_height = sheet_image.size
 
         rand_numbers = [rand_frac_number() for _ in range(6)]
-        # equation_image, _ = EquationImageGenerator().generate_equation_image()
         eq_image = equation_image(rand_numbers, False)
         original_image_width, original_image_height = eq_image.size
 
         iterations = 0
         while iterations < 100000:
-            scale_factor = random.uniform(0.17, 0.23)
+            scale_factor = random.uniform(0.3, 0.4)
             eq_image = eq_image.resize(
                 (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
@@ -80,8 +75,11 @@ class EquationSheetDecorator:
             if collision:
                 iterations += 1
             else:
+                eq_image = eq_image.convert('RGBA')
                 sheet_image.paste(
-                    equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
+                    eq_image,
+                    (int(eq_position[0]), int(eq_position[1])),
+                    eq_image)
                 break
 
         eq_box = EquationBox((eq_position[0] - 1, eq_position[1] - 1),

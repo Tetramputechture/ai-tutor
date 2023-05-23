@@ -135,34 +135,15 @@ def run_eq_parser():
         plt.show()
 
 
-def visualize_data():
-    equation_preprocessor = EquationPreprocessor(
-        10)
-    equation_preprocessor.load_equations()
-    equation_texts = equation_preprocessor.equation_texts
-    equation_features = equation_preprocessor.equation_features
-
-    tokenizer = EquationTokenizer(equation_texts).load_tokenizer()
-    vocab_size = len(tokenizer.word_index) + 1
-    generator = DataGenerator(vocab_size)
-
-    full_dataset = generator.data_viz_generator(
-        equation_texts, equation_features, tokenizer)
-
-    pandas_data = {'eq_id': [], 'x2_str': [], 'y_str': []}
-
-    for datum in full_dataset:
-        pandas_data['eq_id'].append(datum['eq_id'])
-        pandas_data['x2_str'].append(datum['x2_str'])
-        pandas_data['y_str'].append(datum['y_str'])
-
-    pd.DataFrame(pandas_data).to_csv(
-        './equation_analyzer/equation_parser/full_dataset.csv', index=False)
+def viz_sheets():
+    for _ in range(5):
+        equation_sheet_image, eq_box = EquationSheetGenerator().clean_sheet_with_equation()
+        plt.imshow(equation_sheet_image)
+        plt.show()
 
 
 def main():
-    data = run_eq_parser()
-    return data
+    viz_sheets()
 
 
 if __name__ == '__main__':

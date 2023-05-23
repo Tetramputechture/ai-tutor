@@ -36,17 +36,6 @@ def random_sheet_color():
     ])
 
 
-def random_font():
-    return random.choice([
-        './assets/fonts/ArefRuqaa-Regular.ttf',
-        './assets/fonts/BungeeColor-Regular_colr_Windows.ttf',
-        './assets/fonts/FreeMono.ttf',
-        './assets/fonts/KhmerOSBattambang-Regular.ttf',
-        './assets/fonts/NotoSans-Regular.ttf',
-        './assets/fonts/OpenSansCondensed-LightItalic.ttf'
-    ])
-
-
 class EquationSheetGenerator:
     def __init__(self, sheet_size=(224, 224), cache_dir=''):
         self.sheet_size = sheet_size
@@ -121,7 +110,7 @@ class EquationSheetGenerator:
 
     def new_sheet_image(self, color='white'):
         return Image.new(
-            mode="RGBA", size=self.sheet_size, color=color)
+            mode="RGB", size=self.sheet_size, color=color)
 
     # sheet with white background and 1 equation image; no misc background images
     def clean_sheet_with_equation(self, noise=True):
@@ -129,6 +118,9 @@ class EquationSheetGenerator:
         if noise and random.choice([True, False]):
             sheet_image = EquationSheetDecorator.add_noise(sheet_image)
         eq_box = EquationSheetDecorator.add_equation(sheet_image)
+
+        if random.choice([True, False]):
+            sheet_image = ImageOps.invert(sheet_image)
 
         return (sheet_image, eq_box)
 
@@ -197,9 +189,8 @@ class EquationSheetGenerator:
         sheet_image = EquationSheetDecorator.adjust_color(
             sheet_image, random.uniform(0.9, 1.1))
 
-        # 0.5 chance to invert color
-        if random.random() < 0.5:
-            sheet_image = EquationSheetDecorator.invert_color(sheet_image)
+        if random.choice([True, False]):
+            sheet_image = ImageOps.invert(sheet_image)
 
         # rotate sheet
         # rotation_degrees = random.choice([0, 90, 180, 270])
@@ -286,6 +277,9 @@ class EquationSheetGenerator:
             sheet_image, [], rotation_degrees)
 
         sheet_image = EquationSheetDecorator.add_noise(sheet_image)
+
+        if random.choice([True, False]):
+            sheet_image = ImageOps.invert(sheet_image)
 
         return (sheet_image, EquationBox((0, 0), (0, 0)))
 

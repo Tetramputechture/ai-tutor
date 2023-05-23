@@ -11,17 +11,22 @@ EQUATION_IMAGE_SIZE = (EQUATION_WIDTH_PX, int(EQUATION_WIDTH_PX * 0.25))
 FONTS_FOLDER = './assets/fonts-temp'
 
 
-def white_to_transparency(img):
-    x = np.asarray(img.convert('RGBA')).copy()
-    x[:, :, 3] = (255 * (x[:, :, :3] != 255).any(axis=2)).astype(np.uint8)
-    return Image.fromarray(x)
+def white_to_transparent(img):
+    width, height = img.size
+    pixdata = img.load()
+    for y in range(height):
+        for x in range(width):
+            if pixdata[x, y] == (255, 255, 255, 255):
+                pixdata[x, y] = (255, 255, 255, 0)
+
+    return img
 
 
 def equation_image(numbers, background=True) -> (Image, str):
     if background:
         background_color = rand_background_color()
     else:
-        background_color = (255, 255, 255, 255)
+        background_color = (0, 0, 0)
 
     eq_image = Image.new(mode="RGB", size=EQUATION_IMAGE_SIZE,
                          color=background_color)
@@ -55,13 +60,14 @@ def equation_image(numbers, background=True) -> (Image, str):
     eq_image = eq_image.rotate(
         rand_rotation_angle(), expand=1, fillcolor=background_color)
 
-    eq_image = draw_noise(eq_image)
-
-    if random.choice([True, False]):
+    if background:
+        eq_image = draw_noise(eq_image)
+        if random.choice([True, False]):
+            eq_image = ImageOps.invert(eq_image)
+    else:
         eq_image = ImageOps.invert(eq_image)
-
-    if not background:
-        eq_image = white_to_transparency(eq_image)
+        eq_image = eq_image.convert('RGBA')
+        eq_image = white_to_transparent(eq_image)
 
     return eq_image
 
