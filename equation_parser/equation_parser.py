@@ -27,8 +27,8 @@ from .constants import EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT
 TRAIN_CACHE_DIR = './equation_parser/data/images_train'
 VAL_CACHE_DIR = './equation_parser/data/images_val'
 
-TRAIN_EQUATION_COUNT = 400000
-VAL_EQUATION_COUNT = 25000
+TRAIN_EQUATION_COUNT = 350000
+VAL_EQUATION_COUNT = 20000
 
 BATCH_SIZE = 64
 

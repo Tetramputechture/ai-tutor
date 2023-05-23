@@ -46,7 +46,7 @@ class CaptionModel:
         model = self.base_conv_model.model(model_input)
         # model = Dense(N, activation='relu')(model)
         model = Reshape(target_shape=(
-            (RNN_TIMESTEPS, 1536)))(model)
+            (RNN_TIMESTEPS, 1024)))(model)
         model = Dense(64, activation='relu')(model)
         model = Bidirectional(LSTM(
             LSTM_UNITS, return_sequences=True), merge_mode='sum')(model)

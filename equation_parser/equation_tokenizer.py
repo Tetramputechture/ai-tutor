@@ -11,7 +11,10 @@ class EquationTokenizer:
         self.equation_texts = equation_texts
 
     def equation_texts_list(self):
-        return list(self.equation_texts.values())
+        # texts = list(self.equation_texts.values())
+        # print(list(''.join(texts)))
+        # return list(''.join(list(self.equation_texts.values())))
+        return list(''.join('0123456789/=+'))
 
     def load_tokenizer(self):
         print('Loading equation text tokenizer...')
