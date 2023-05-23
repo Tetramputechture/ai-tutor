@@ -1,14 +1,12 @@
+from equation_analyzer.equation_image_utils.equation_image_utils import equation_image
+from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
+from .equation_image_generator import EquationImageGenerator
+from .equation_box import EquationBox
+from skimage.util import random_noise
+import numpy as np
 import string
 import random
 import sys
-import numpy as np
-
-from skimage.util import random_noise
-
-from .equation_box import EquationBox
-from .equation_image_generator import EquationImageGenerator
-
-from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
 
 def random_text():
@@ -45,6 +43,52 @@ def random_font():
 
 
 class EquationSheetDecorator:
+    def add_equation(sheet_image, eq_boxes=[]):
+        sheet_width, sheet_height = sheet_image.size
+
+        rand_numbers = [rand_frac_number() for _ in range(6)]
+        # equation_image, _ = EquationImageGenerator().generate_equation_image()
+        eq_image = equation_image(rand_numbers, False)
+        original_image_width, original_image_height = eq_image.size
+
+        iterations = 0
+        while iterations < 100000:
+            scale_factor = random.uniform(0.17, 0.23)
+            eq_image = eq_image.resize(
+                (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
+
+            image_width, image_height = eq_image.size
+
+            max_x_pos, max_y_pos = (
+                (sheet_width - image_width - 15),
+                (sheet_height - image_height - 15)
+            )
+
+            eq_position = (random.randint(
+                5, max_x_pos), random.randint(5, max_y_pos))
+
+            eq_box = EquationBox(
+                eq_position, (eq_position[0] + image_width, eq_position[1] + image_height))
+
+            collision = False
+
+            for box in eq_boxes:
+                if box.collision(eq_box):
+                    collision = True
+                    break
+
+            if collision:
+                iterations += 1
+            else:
+                sheet_image.paste(
+                    equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
+                break
+
+        eq_box = EquationBox((eq_position[0] - 1, eq_position[1] - 1),
+                             (eq_position[0] + image_width + 1, eq_position[1] + image_height + 1))
+
+        return eq_box
+
     def add_text(sheet_image, text_count, eq_boxes):
         text_image = Image.new(
             'RGBA', sheet_image.size, (255, 255, 255, 0))
@@ -151,50 +195,6 @@ class EquationSheetDecorator:
                     break
 
         return sheet_image
-
-    def add_equation(sheet_image, eq_boxes=[]):
-        sheet_width, sheet_height = sheet_image.size
-
-        equation_image, _ = EquationImageGenerator().generate_equation_image()
-        original_image_width, original_image_height = equation_image.size
-
-        iterations = 0
-        while iterations < 100000:
-            scale_factor = random.uniform(0.17, 0.23)
-            equation_image = equation_image.resize(
-                (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
-
-            image_width, image_height = equation_image.size
-
-            max_x_pos, max_y_pos = (
-                (sheet_width - image_width - 15),
-                (sheet_height - image_height - 15)
-            )
-
-            eq_position = (random.randint(
-                5, max_x_pos), random.randint(5, max_y_pos))
-
-            eq_box = EquationBox(
-                eq_position, (eq_position[0] + image_width, eq_position[1] + image_height))
-
-            collision = False
-
-            for box in eq_boxes:
-                if box.collision(eq_box):
-                    collision = True
-                    break
-
-            if collision:
-                iterations += 1
-            else:
-                sheet_image.paste(
-                    equation_image, (int(eq_position[0]), int(eq_position[1])), equation_image)
-                break
-
-        eq_box = EquationBox((eq_position[0] - 1, eq_position[1] - 1),
-                             (eq_position[0] + image_width + 1, eq_position[1] + image_height + 1))
-
-        return eq_box
 
     def add_rectangle(sheet_image, xy, fill):
         sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)

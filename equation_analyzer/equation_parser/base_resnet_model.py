@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 from tensorflow.keras import datasets, layers, models, optimizers, applications
 
-MODEL_PATH = './equation_parser/resnet_base.h5'
+MODEL_PATH = './equation_analyzer/equation_parser/resnet_base.h5'
 
 
 class BaseResnetModel:

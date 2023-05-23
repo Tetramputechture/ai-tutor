@@ -11,8 +11,17 @@ EQUATION_IMAGE_SIZE = (EQUATION_WIDTH_PX, int(EQUATION_WIDTH_PX * 0.25))
 FONTS_FOLDER = './assets/fonts-temp'
 
 
-def equation_image(numbers) -> (Image, str):
-    background_color = rand_background_color()
+def white_to_transparency(img):
+    x = np.asarray(img.convert('RGBA')).copy()
+    x[:, :, 3] = (255 * (x[:, :, :3] != 255).any(axis=2)).astype(np.uint8)
+    return Image.fromarray(x)
+
+
+def equation_image(numbers, background=True) -> (Image, str):
+    if background:
+        background_color = rand_background_color()
+    else:
+        background_color = (255, 255, 255, 255)
 
     eq_image = Image.new(mode="RGB", size=EQUATION_IMAGE_SIZE,
                          color=background_color)
@@ -50,6 +59,9 @@ def equation_image(numbers) -> (Image, str):
 
     if random.choice([True, False]):
         eq_image = ImageOps.invert(eq_image)
+
+    if not background:
+        eq_image = white_to_transparency(eq_image)
 
     return eq_image
 

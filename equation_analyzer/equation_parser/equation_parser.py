@@ -24,8 +24,8 @@ from .ctc_viz_callback import CtcVizCallback
 
 from .constants import EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT
 
-TRAIN_CACHE_DIR = './equation_parser/data/images_train'
-VAL_CACHE_DIR = './equation_parser/data/images_val'
+TRAIN_CACHE_DIR = './equation_analyzer/equation_parser/data/images_train'
+VAL_CACHE_DIR = './equation_analyzer/equation_parser/data/images_val'
 
 TRAIN_EQUATION_COUNT = 300000
 VAL_EQUATION_COUNT = 20000
@@ -76,7 +76,7 @@ class EquationParser:
         early_stop = EarlyStopping(
             monitor='val_loss', patience=2, restore_best_weights=True)
         model_chk_pt = ModelCheckpoint(
-            './equation_parser/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
+            './equation_analyzer/equation_parser/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
             monitor='val_loss',
             save_best_only=False,
             save_weights_only=True,
@@ -92,7 +92,7 @@ class EquationParser:
                   validation_data=val_data_generator.next_batch(),
                   validation_steps=val_num_batches)
 
-        model.save('./equation_parser/caption_model.h5')
+        model.save('./equation_analyzer/equation_parser/caption_model.h5')
 
     def decode_label(self, tokenizer, model_output):
         out_best = list(np.argmax(model_output[0, 2:], axis=1))
@@ -101,6 +101,21 @@ class EquationParser:
         outstr = outstr.replace(' ', '')
         outstr = outstr.replace('e', '')
         return outstr
+
+    def test_model_raw_img(self, model, raw_img, label):
+        img = np.array(raw_img)
+        img = img[:, :, ::-1].copy()
+        img_resized = cv2.resize(img, (EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT))
+        img = img_resized[:, :, 1]
+        img = img.T
+        img = np.expand_dims(img, axis=-1)
+        img = np.expand_dims(img, axis=0)
+        img = img / 255
+        model_output = model.predict(img)
+        tokenizer = EquationTokenizer().load_tokenizer()
+        predicted_output = self.decode_label(tokenizer, model_output)
+
+        return predicted_output
 
     def test_model(self, model, img, label):
         start = datetime.now()

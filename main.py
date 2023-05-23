@@ -7,19 +7,19 @@ import sys
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import pandas as pd
 
-from equation_finder.equation_finder import EquationFinder
-from equation_finder.equation_sheet_generator import EquationSheetGenerator
-from equation_finder.equation_sheet_decorator import EquationSheetDecorator
-from equation_finder.equation_sheet_processor import EquationSheetProcessor
+from equation_analyzer.equation_finder.equation_finder import EquationFinder
+from equation_analyzer.equation_finder.equation_sheet_generator import EquationSheetGenerator
+from equation_analyzer.equation_finder.equation_sheet_decorator import EquationSheetDecorator
+from equation_analyzer.equation_finder.equation_sheet_processor import EquationSheetProcessor
 
-from equation_parser.equation_parser import EquationParser
+from equation_analyzer.equation_parser.equation_parser import EquationParser
 # from equation_parser.equation_parser_simple import EquationParserSimple
-from equation_parser.equation_generator import EquationGenerator
-from equation_parser.caption_model import CaptionModel
-from equation_parser.equation_tokenizer import EquationTokenizer
-from equation_parser.equation_preprocessor import EquationPreprocessor
+from equation_analyzer.equation_parser.equation_generator import EquationGenerator
+from equation_analyzer.equation_parser.caption_model import CaptionModel
+from equation_analyzer.equation_parser.equation_tokenizer import EquationTokenizer
+from equation_analyzer.equation_parser.equation_preprocessor import EquationPreprocessor
 
-from equation_parser.constants import MAX_EQUATION_TEXT_LENGTH
+from equation_analyzer.equation_parser.constants import MAX_EQUATION_TEXT_LENGTH
 
 TRAIN = False
 TEST = False
@@ -41,7 +41,7 @@ def run_eq_finder():
         #     eq_boxes.append(EquationSheetDecorator.add_equation(
         #         equation_sheet_image, eq_boxes))
 
-        (img, predictions) = esp.find_equations(equation_sheet_image)
+        img = esp.find_equation(equation_sheet_image)
 
         fig, ax = plt.subplots()
         ax.imshow(img)
@@ -115,8 +115,8 @@ def run_eq_parser():
         model.load_model()
         for i in range(5):
             eq_id, tokens = EquationGenerator(
-                './equation_parser/data/images_test').generate_equation_image()
-            img_path = f'./equation_parser/data/images_test/{eq_id}.bmp'
+                './equation_analyzer/equation_parser/data/images_test').generate_equation_image()
+            img_path = f'./equation_analyzer/equation_parser/data/images_test/{eq_id}.bmp'
             predicted_desc = ep.test_model(model.model, img_path, tokens)
             # eq_image_features = feature_extractor.features_from_image(eq_image)
             # print(eq_image_features)
@@ -129,9 +129,9 @@ def run_eq_parser():
         for i in range(10):
             plt.figure(i)
             eq_id, tokens = EquationGenerator(
-                './equation_parser/data/images_viz').generate_equation_image()
+                './equation_analyzer/equation_parser/data/images_viz').generate_equation_image()
             plt.imshow(Image.open(
-                f'./equation_parser/data/images_viz/{eq_id}.bmp'))
+                f'./equation_analyzer/equation_parser/data/images_viz/{eq_id}.bmp'))
         plt.show()
 
 
@@ -157,7 +157,7 @@ def visualize_data():
         pandas_data['y_str'].append(datum['y_str'])
 
     pd.DataFrame(pandas_data).to_csv(
-        './equation_parser/full_dataset.csv', index=False)
+        './equation_analyzer/equation_parser/full_dataset.csv', index=False)
 
 
 def main():

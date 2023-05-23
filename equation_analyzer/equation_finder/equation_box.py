@@ -16,10 +16,10 @@ class EquationBox:
         self.topLeft = topLeft
         self.bottomRight = bottomRight
 
-    def scale(self, factor=1.0):
+    def scale(self, factor=(1.0, 1.0)):
         width, height = self.size()
-        newWidth = width * factor
-        newHeight = height * factor
+        newWidth = width * factor[0]
+        newHeight = height * factor[1]
         newBottomRight = (self.topLeft[0] +
                           newWidth, self.topLeft[1] + newHeight)
         return EquationBox((self.topLeft[0], self.topLeft[1]), newBottomRight)

@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-from .eq_image_utils import equation_image
+from ..equation_image_utils.equation_image_utils import equation_image
 
 TOKENS_FILENAME = 'tokens'
 TOKENS_HEADERS = ['eq_id', 'tokens']

@@ -5,7 +5,7 @@ import os
 from tensorflow.keras import datasets, models
 from tensorflow.keras.layers import Conv2D, Dropout, BatchNormalization, MaxPooling2D
 
-MODEL_PATH = './equation_parser/conv_base.h5'
+MODEL_PATH = './equation_analyzer/equation_parser/conv_base.h5'
 
 DROPOUT_RATE = 0.3
 

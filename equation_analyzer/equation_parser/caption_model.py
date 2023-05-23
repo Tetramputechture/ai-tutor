@@ -11,8 +11,8 @@ from .constants import RNN_TIMESTEPS, MAX_EQUATION_TEXT_LENGTH, EQ_IMAGE_HEIGHT,
 from .base_resnet_model import BaseResnetModel
 from .base_conv_model import BaseConvModel
 
-MODEL_PATH = './equation_parser/caption_model.h5'
-MODEL_IMG_PATH = './equation_parser/equation_parser.png'
+MODEL_PATH = './equation_analyzer/equation_parser/caption_model.h5'
+MODEL_IMG_PATH = './equation_analyzer/equation_parser/equation_parser.png'
 
 
 def ctc_loss_function(args):
@@ -83,7 +83,8 @@ class CaptionModel:
     def load_model(self):
         if self.model_cached():
             print('Model cached. Loading model...')
-            self.model.load_weights('./equation_parser/caption_model.h5')
+            self.model.load_weights(
+                './equation_analyzer/equation_parser/caption_model.h5')
             # self.model = models.load_model(MODEL_PATH, compile=False)
             # self.model.compile(optimizer='adam',
             #                    loss='categorical_crossentropy',
