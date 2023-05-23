@@ -97,7 +97,7 @@ def rand_fraction_tilt_offset():
 def rand_fraction_start_pos():
     rand_range_x = int(EQUATION_WIDTH_PX * 0.03)  # 5
     rand_begin_x = int(EQUATION_WIDTH_PX * 0.01)  # 2
-    rand_range_y = int(EQUATION_WIDTH_PX * 0.035)  # 5
+    rand_range_y = int(EQUATION_WIDTH_PX * 0.03)  # 5
     rand_begin_y = int(EQUATION_WIDTH_PX * 0.005)  # 2
     x_coord = random.randint(rand_begin_x, rand_begin_x + rand_range_x)
     y_coord = random.randint(rand_begin_y, rand_begin_y + rand_range_x)
@@ -160,7 +160,7 @@ def rand_operator_post_x_offset():
 
 
 def rand_text_color():
-    return (random.randint(225, 255), random.randint(225, 255), random.randint(225, 255))
+    return (random.randint(235, 255), random.randint(235, 255), random.randint(235, 255))
 
 
 def rand_background_color():

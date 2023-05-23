@@ -19,16 +19,18 @@ from .equation_sheet_generator import EquationSheetGenerator
 
 from .resnet_model import ResnetModel
 
-sheet_count = 15000
+sheet_count = 20000
 
 epochs = 20
 
-batch_size = 128
+BATCH_SIZE = 64
+
+STEPS_PER_EPOCH = int(sheet_count / BATCH_SIZE)
 
 test_size = 0.1
 
-MODEL_PATH = './equation_finder/equation_finder.h5'
-SHEET_DATA_PATH = './equation_finder/data'
+MODEL_PATH = './equation_analyzer/equation_finder/equation_finder.h5'
+SHEET_DATA_PATH = './equation_analyzer/equation_finder/data'
 SHEET_IMAGE_DATA_PATH = f'{SHEET_DATA_PATH}/sheet_image_data.npy'
 SHEET_EQ_COORDS_PATH = f'{SHEET_DATA_PATH}/sheet_eq_coords.npy'
 
@@ -61,68 +63,95 @@ class EquationFinder:
         # Step 1: Fetch equation sheets
         print('Initializing equation sheet image data...')
 
+
+class EquationFinder:
+    def __init__(self):
+        self.model = ResnetModel().create_model()
+        self.sheet_image_data = []
+        self.sheet_eq_coords = []
+
+    def train_model(self):
+        # Step 1: Fetch equation sheets
+        print('Initializing equation sheet image data...')
+
         if self.data_cached():
             print('Cached equation sheet data found.')
-            self.sheet_image_data = np.load(SHEET_IMAGE_DATA_PATH)
-            self.sheet_eq_coords = np.load(SHEET_EQ_COORDS_PATH)
+            # self.sheet_image_data = np.load(SHEET_IMAGE_DATA_PATH)
+            # self.sheet_eq_coords = np.load(SHEET_EQ_COORDS_PATH)
         else:
-            sheet_images_path = './data/equation-sheet-images'
+            sheet_images_path = './equation_analyzer/equation_finder/data/equation-sheet-images'
             sheets = EquationSheetGenerator(
                 sheet_size=(224, 224),
                 cache_dir=sheet_images_path
             ).generate_sheets(sheet_count)
 
-            # Step 2: Prepare train and test data
-
             for sheet in sheets:
                 sheet_image, eq_box = sheet
                 sheet_image = sheet_image.convert('RGB')
-                self.sheet_image_data.append(image.img_to_array(sheet_image))
+                sheet_image = image.img_to_array(sheet_image)
+                # Extracting Single Channel Image
+                # sheet_image = sheet_image[:, :, 1]
+                # sheet_image = sheet_image / 255
+                self.sheet_image_data.append(sheet_image)
                 self.sheet_eq_coords.append(eq_box.to_array())
-
-            del sheets
-
-            self.sheet_image_data = np.array(
-                self.sheet_image_data).astype('float32')
-            self.sheet_eq_coords = np.array(
-                self.sheet_eq_coords).astype('float32')
 
             if not os.path.isdir(SHEET_DATA_PATH):
                 os.makedirs(SHEET_DATA_PATH)
 
-            np.save(SHEET_IMAGE_DATA_PATH, self.sheet_image_data)
-            np.save(SHEET_EQ_COORDS_PATH, self.sheet_eq_coords)
+            # np.save(SHEET_IMAGE_DATA_PATH, self.sheet_image_data)
+            # np.save(SHEET_EQ_COORDS_PATH, self.sheet_eq_coords)
 
-        # train_image_data, test_image_data, train_eq_coords, test_eq_coords = train_test_split(
-        #     self.sheet_image_data, self.sheet_eq_coords, test_size=test_size
-        # )
+        # Step 2: Prepare train and test data
 
-        # # Step 3: Train model
+        train_image_data, test_image_data, train_eq_coords, test_eq_coords = train_test_split(
+            self.sheet_image_data, self.sheet_eq_coords, test_size=test_size
+        )
 
-        # callback = tf.keras.callbacks.EarlyStopping(
-        #     monitor='loss', patience=5)
+        # Step 3: Train model
 
-        # history = self.model.fit(train_image_data, train_eq_coords, epochs=epochs,
-        #                          validation_data=(test_image_data, test_eq_coords), batch_size=batch_size, callbacks=[callback])
+        train_gen = self.data_generator(train_image_data, train_eq_coords)
+        val_gen = self.data_generator(test_image_data, test_eq_coords)
 
-        # plt.subplot(2, 2, 1)
-        # plt.plot(history.history['accuracy'], label='accuracy')
-        # plt.plot(history.history['val_accuracy'], label='val_accuracy')
-        # plt.xlabel('Epoch')
-        # plt.ylabel('Accuracy')
-        # plt.legend(loc='lower right')
+        callback = tf.keras.callbacks.EarlyStopping(
+            monitor='loss', patience=2, restore_best_weights=True)
 
-        # plt.subplot(2, 2, 2)
-        # plt.plot(history.history['loss'], label='loss')
-        # plt.plot(history.history['val_loss'], label='val_loss')
-        # plt.xlabel('Epoch')
-        # plt.ylabel('Loss')
-        # plt.legend(loc='upper right')
+        history = self.model.fit(train_gen, steps_per_epoch=STEPS_PER_EPOCH, epochs=epochs, validation_steps=STEPS_PER_EPOCH,
+                                 validation_data=val_gen, batch_size=BATCH_SIZE, callbacks=[callback])
 
-        # test_loss, test_acc = self.model.evaluate(
-        #     test_image_data, test_eq_coords, verbose=2)
+        plt.subplot(2, 2, 1)
+        plt.plot(history.history['accuracy'], label='accuracy')
+        plt.plot(history.history['val_accuracy'], label='val_accuracy')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend(loc='lower right')
 
-        # print(test_acc)
+        plt.subplot(2, 2, 2)
+        plt.plot(history.history['loss'], label='loss')
+        plt.plot(history.history['val_loss'], label='val_loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend(loc='upper right')
+
+        test_loss, test_acc = self.model.evaluate(
+            val_gen, batch_size=BATCH_SIZE, steps=STEPS_PER_EPOCH, verbose=2)
+
+        print(test_acc)
+
+    def data_generator(self, image_data, coords):
+        while True:
+            X = []
+            Y = []
+            start = 0
+            end = BATCH_SIZE
+
+            while start < len(image_data):
+                X = np.array(image_data[start:end])
+                Y = np.array(coords[start:end])
+
+                yield (X, Y)
+
+                start += BATCH_SIZE
+                end += BATCH_SIZE
 
     def data_cached(self):
         return os.path.isdir(SHEET_DATA_PATH) and \

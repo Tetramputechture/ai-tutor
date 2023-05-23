@@ -102,7 +102,7 @@ class EquationParser:
         outstr = outstr.replace('e', '')
         return outstr
 
-    def test_model_raw_img(self, model, raw_img, label):
+    def test_model_raw_img(self, model, raw_img):
         img = np.array(raw_img)
         img = img[:, :, ::-1].copy()
         img_resized = cv2.resize(img, (EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT))

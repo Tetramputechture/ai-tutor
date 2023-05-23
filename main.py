@@ -19,6 +19,7 @@ from equation_analyzer.equation_parser.caption_model import CaptionModel
 from equation_analyzer.equation_parser.equation_tokenizer import EquationTokenizer
 from equation_analyzer.equation_parser.equation_preprocessor import EquationPreprocessor
 
+from equation_analyzer.equation_analyzer import EquationAnalyzer
 from equation_analyzer.equation_parser.constants import MAX_EQUATION_TEXT_LENGTH
 
 TRAIN = False
@@ -41,23 +42,24 @@ def run_eq_finder():
         #     eq_boxes.append(EquationSheetDecorator.add_equation(
         #         equation_sheet_image, eq_boxes))
 
-        img = esp.find_equation(equation_sheet_image)
+        img, pred_box = esp.find_equation(equation_sheet_image)
+
+        if img is None:
+            continue
 
         fig, ax = plt.subplots()
         ax.imshow(img)
         ax.imshow(equation_sheet_image)
 
-        for box in predictions:
-            width, height = box.size()
-            ax.add_patch(Rectangle(box.topLeft, width, height,
-                                   fill=False, edgecolor="r"))
+        width, height = pred_box.size()
+        ax.add_patch(Rectangle(pred_box.topLeft, width, height,
+                               fill=False, edgecolor="r"))
 
         width, height = eq_box.size()
         ax.add_patch(Rectangle(eq_box.topLeft, width, height,
                                fill=False, edgecolor="b"))
 
-        if len(predictions) > 0:
-            print('Inferred vs ground truth IOU: ', predictions[0].iou(eq_box))
+        print('Inferred vs ground truth IOU: ', pred_box.iou(eq_box))
         # for i in range(0, 1900, 50):
         #     sheet = EquationSheetGenerator().sheet_from_file(
         #         f'./data/equation-sheet-images/eq-sheet-{i}.bmp')
@@ -136,14 +138,22 @@ def run_eq_parser():
 
 
 def viz_sheets():
-    for _ in range(5):
+    for i in range(5):
         equation_sheet_image, eq_box = EquationSheetGenerator().clean_sheet_with_equation()
-        plt.imshow(equation_sheet_image)
-        plt.show()
+        fig, ax = plt.subplots()
+        width, height = eq_box.size()
+        ax.add_patch(Rectangle(eq_box.topLeft, width, height,
+                               fill=False, edgecolor="b"))
+        ax.imshow(equation_sheet_image)
+    plt.show()
 
 
 def main():
-    viz_sheets()
+    # run_eq_parser()
+    # viz_sheets()
+    # EquationSheetProcessor()
+    # run_eq_finder()
+    EquationAnalyzer().start_stream()
 
 
 if __name__ == '__main__':

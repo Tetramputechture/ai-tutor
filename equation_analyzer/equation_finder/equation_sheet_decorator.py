@@ -1,14 +1,12 @@
 from equation_analyzer.equation_image_utils.equation_image_utils import equation_image
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
-from .equation_image_generator import EquationImageGenerator
 from .equation_box import EquationBox
 from skimage.util import random_noise
 import numpy as np
 import string
 import random
 import sys
-
-from matplotlib import pyplot as plt
+import os
 
 
 def random_text():
@@ -38,49 +36,41 @@ def rand_frac_number():
     return random.randint(1, 999)
 
 
+FONTS_FOLDER = './assets/fonts'
+
+
+def rand_font():
+    return f'{FONTS_FOLDER}/{random.choice(os.listdir(FONTS_FOLDER))}'
+
+
 class EquationSheetDecorator:
     def add_equation(sheet_image, eq_boxes=[]):
         sheet_width, sheet_height = sheet_image.size
 
         rand_numbers = [rand_frac_number() for _ in range(6)]
+        # equation_image, _ = EquationImageGenerator().generate_equation_image()
         eq_image = equation_image(rand_numbers, False)
         original_image_width, original_image_height = eq_image.size
 
-        iterations = 0
-        while iterations < 100000:
-            scale_factor = random.uniform(0.3, 0.4)
-            eq_image = eq_image.resize(
-                (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
+        scale_factor = random.uniform(0.45, 0.5)
+        eq_image = eq_image.resize(
+            (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
-            image_width, image_height = eq_image.size
+        image_width, image_height = eq_image.size
 
-            max_x_pos, max_y_pos = (
-                (sheet_width - image_width - 15),
-                (sheet_height - image_height - 15)
-            )
+        max_x_pos, max_y_pos = (
+            (sheet_width - image_width - 2),
+            (sheet_height - image_height - 5)
+        )
 
-            eq_position = (random.randint(
-                5, max_x_pos), random.randint(5, max_y_pos))
+        eq_position = (random.randint(
+            1, max_x_pos), random.randint(0, max_y_pos))
 
-            eq_box = EquationBox(
-                eq_position, (eq_position[0] + image_width, eq_position[1] + image_height))
+        eq_box = EquationBox(
+            eq_position, (eq_position[0] + image_width, eq_position[1] + image_height))
 
-            collision = False
-
-            for box in eq_boxes:
-                if box.collision(eq_box):
-                    collision = True
-                    break
-
-            if collision:
-                iterations += 1
-            else:
-                eq_image = eq_image.convert('RGBA')
-                sheet_image.paste(
-                    eq_image,
-                    (int(eq_position[0]), int(eq_position[1])),
-                    eq_image)
-                break
+        sheet_image.paste(
+            eq_image, (int(eq_position[0]), int(eq_position[1])), eq_image)
 
         eq_box = EquationBox((eq_position[0] - 1, eq_position[1] - 1),
                              (eq_position[0] + image_width + 1, eq_position[1] + image_height + 1))
@@ -97,7 +87,7 @@ class EquationSheetDecorator:
         for i in range(text_count):
             iterations = 0
 
-            fnt = ImageFont.truetype(random_font(), random.randint(6, 14))
+            fnt = ImageFont.truetype(rand_font(), random.randint(6, 14))
             text = random_text()
             while iterations < 1000000:
                 text_position = (random.randint(1, sheet_size[0]),
@@ -126,6 +116,7 @@ class EquationSheetDecorator:
                     image_draw_ctx.text(text_position, text,
                                         font=fnt, fill=(*random_color(), random.randint(150, 255)))
 
+                    sheet_image = sheet_image.convert('RGBA')
                     sheet_image = Image.alpha_composite(
                         sheet_image, text_image)
                     break
@@ -146,7 +137,7 @@ class EquationSheetDecorator:
             line_size = (random.randint(
                 20, max_x_pos - line_position[0] + 20), random.randint(20, max_y_pos - line_position[1] + 20))
             sheet_image_draw_ctx.line(
-                line_position + line_size, fill=(*random_color(), random.randint(150, 255)), width=1)
+                line_position + line_size, width=1)
 
         return sheet_image
 
@@ -213,9 +204,11 @@ class EquationSheetDecorator:
     def invert_color(sheet_image):
         return ImageOps.invert(sheet_image.convert('RGB'))
 
-    def add_noise(sheet_image):
+    def add_noise(sheet_image, extra=False):
         im_arr = np.asarray(sheet_image)
         rand_variance = random.uniform(0.001, 0.002)
+        if extra:
+            rand_variance = random.uniform(0.01, 0.05)
         noise_img = random_noise(im_arr, mode='gaussian', var=rand_variance)
         noise_img = (255*noise_img).astype(np.uint8)
         return Image.fromarray(noise_img)
