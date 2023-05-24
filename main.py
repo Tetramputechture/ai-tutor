@@ -1,11 +1,12 @@
 from multiprocessing import freeze_support
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
-from PIL import Image
+from PIL import Image, ImageOps
 import numpy as np
 import sys
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import pandas as pd
+import os
 
 from equation_analyzer.equation_finder.equation_finder import EquationFinder
 from equation_analyzer.equation_finder.equation_sheet_generator import EquationSheetGenerator
@@ -33,33 +34,40 @@ elif "test" in str(sys.argv[1]).lower():
 else:
     VIZ = True
 
+TEST_IMAGES_DIR = './test_images'
+
 
 def run_eq_finder():
     esp = EquationSheetProcessor()
-    for _ in range(5):
-        equation_sheet_image, eq_box = EquationSheetGenerator().clean_sheet_with_equation()
+    # for i in range(5):
+    for filename in os.listdir(TEST_IMAGES_DIR):
+
+        img_file = os.path.join(TEST_IMAGES_DIR, filename)
+        # test_image, eq_box = EquationSheetGenerator().clean_sheet_with_equation()
+        test_image = Image.open(img_file)
+        test_image = test_image.resize((224, 224), Image.BICUBIC)
+
         # for i in range(1):
         #     eq_boxes.append(EquationSheetDecorator.add_equation(
         #         equation_sheet_image, eq_boxes))
 
-        img, pred_box = esp.find_equation(equation_sheet_image)
-
-        if img is None:
-            continue
+        img, pred_box = esp.find_equation(test_image)
 
         fig, ax = plt.subplots()
-        ax.imshow(img)
-        ax.imshow(equation_sheet_image)
+        ax.imshow(test_image)
+
+        if pred_box is None:
+            continue
 
         width, height = pred_box.size()
         ax.add_patch(Rectangle(pred_box.topLeft, width, height,
                                fill=False, edgecolor="r"))
 
-        width, height = eq_box.size()
-        ax.add_patch(Rectangle(eq_box.topLeft, width, height,
-                               fill=False, edgecolor="b"))
+        # width, height = eq_box.size()
+        # ax.add_patch(Rectangle(eq_box.topLeft, width, height,
+        #                        fill=False, edgecolor="b"))
 
-        print('Inferred vs ground truth IOU: ', pred_box.iou(eq_box))
+        # print('Inferred vs ground truth IOU: ', pred_box.iou(eq_box))
         # for i in range(0, 1900, 50):
         #     sheet = EquationSheetGenerator().sheet_from_file(
         #         f'./data/equation-sheet-images/eq-sheet-{i}.bmp')
@@ -152,8 +160,8 @@ def main():
     # run_eq_parser()
     # viz_sheets()
     # EquationSheetProcessor()
-    # run_eq_finder()
-    EquationAnalyzer().start_stream()
+    run_eq_finder()
+    # EquationAnalyzer().start_stream()
 
 
 if __name__ == '__main__':
