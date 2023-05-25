@@ -52,9 +52,11 @@ class EquationSheetDecorator:
         eq_image = equation_image(rand_numbers, False)
         original_image_width, original_image_height = eq_image.size
 
-        scale_factor = random.uniform(0.3, 0.5)
+        scale_factor = 0.5
         eq_image = eq_image.resize(
             (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
+
+        eq_image = EquationSheetDecorator.adjust_brightness(eq_image, 1.5)
 
         image_width, image_height = eq_image.size
 

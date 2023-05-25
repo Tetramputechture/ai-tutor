@@ -43,7 +43,7 @@ def run_eq_finder():
     for filename in os.listdir(TEST_IMAGES_DIR):
 
         img_file = os.path.join(TEST_IMAGES_DIR, filename)
-        # test_image, eq_box = EquationSheetGenerator().clean_sheet_with_equation()
+        # test_image, eq_box = EquationSheetGenerator().dirty_sheet_with_equation(True)
         test_image = Image.open(img_file)
         test_image = test_image.resize((224, 224), Image.BICUBIC)
 

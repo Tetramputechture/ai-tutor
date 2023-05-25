@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras import datasets, models
-from tensorflow.keras.layers import Conv2D, Dense, BatchNormalization, MaxPooling2D
+from tensorflow.keras.layers import Conv2D, Dense, Flatten, BatchNormalization, MaxPooling2D
 
 SHEET_WIDTH = 224
 SHEET_HEIGHT = 224
@@ -34,6 +34,7 @@ class ConvModel:
             BatchNormalization(),
             MaxPooling2D(pool_size=(1, 2)),
 
+            Flatten(),
             Dense(256, activation="relu"),
             Dense(128, activation='relu'),
             Dense(64, activation='relu'),
@@ -43,5 +44,7 @@ class ConvModel:
         model.compile(optimizer='adam',
                       loss='mse',
                       metrics=['accuracy'])
+
+        # model.summary()
 
         return model

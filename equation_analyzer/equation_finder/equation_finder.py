@@ -21,7 +21,7 @@ from .resnet_model import ResnetModel
 from .conv_model import ConvModel
 from .vgg_model import VggModel
 
-sheet_count = 5000
+sheet_count = 10000
 
 epochs = 20
 
@@ -163,9 +163,7 @@ class EquationFinder:
         self.model.save(MODEL_PATH)
 
     def infer_from_model(self, image_data) -> EquationBox:
-        imdata = image.img_to_array(image_data)
-        imdata = imdata[:, :, 1]
-        imdata = imdata / 255
+        imdata = image_data / 255
         imdata = np.expand_dims(imdata, axis=0)
         predictions = self.model.predict(imdata)[0]
         return EquationBox((int(predictions[0]), int(predictions[1])),

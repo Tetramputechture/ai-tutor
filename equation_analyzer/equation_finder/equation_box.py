@@ -13,8 +13,8 @@ def rotate_point(origin, point, angle):
 
 class EquationBox:
     def __init__(self, topLeft=(0, 0), bottomRight=(0, 0)):
-        self.topLeft = topLeft
-        self.bottomRight = bottomRight
+        self.topLeft = (int(topLeft[0]), int(topLeft[1]))
+        self.bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
 
     def scale(self, factor=(1.0, 1.0)):
         width, height = self.size()
@@ -23,7 +23,7 @@ class EquationBox:
         newX = self.topLeft[0] * factor[0]
         newY = self.topLeft[1] * factor[1]
         newBottomRight = (newX + newWidth, newY + newHeight)
-        return EquationBox((self.topLeft[0], self.topLeft[1]), newBottomRight)
+        return EquationBox((newX, newY), newBottomRight)
 
     def rotate(self, origin, angle_degrees):
         angle_radians = math.radians(angle_degrees)

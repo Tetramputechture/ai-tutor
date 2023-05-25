@@ -51,8 +51,8 @@ class EquationSheetGenerator:
             print('Cached equation sheets found.')
             return self.sheets_from_cache(sheet_count)
 
-        dirty_eq_sheet_count = int(sheet_count * 0.7)
-        dirty_eq_img_sheet_count = int(sheet_count * 0.1)
+        dirty_eq_sheet_count = int(sheet_count * 0.1)
+        dirty_eq_img_sheet_count = int(sheet_count * 0.7)
         clean_single_eq_sheet_count = int(sheet_count * 0.1)
         clean_multiple_eq_sheet_count = 0
         blank_clean_sheet_count = int(sheet_count * 0.05)
@@ -90,8 +90,8 @@ class EquationSheetGenerator:
         sheets.extend([self.dirty_sheet_with_equation()
                       for _ in range(dirty_eq_sheet_count)])
         print('Generating dirty sheets with imagenet equation...')
-        sheets.extend([self.dirty_sheet_with_equation()
-                      for _ in range(dirty_eq_sheet_count)])
+        sheets.extend([self.dirty_sheet_with_equation(True)
+                      for _ in range(dirty_eq_img_sheet_count)])
         print('Generating rand img sheets...')
         sheets.extend([self.random_image_sheet()
                       for _ in range(rand_img_sheet_count)])
@@ -179,22 +179,6 @@ class EquationSheetGenerator:
         #     sheet_image = EquationSheetDecorator.add_ellipses(
         #         sheet_image, ellipse_count, [eq_box])
 
-        # sharpness
-        sheet_image = EquationSheetDecorator.adjust_sharpness(
-            sheet_image, random.uniform(0.5, 0.7))
-
-        # brightness
-        sheet_image = EquationSheetDecorator.adjust_brightness(
-            sheet_image, random.uniform(0.05, 0.1))
-
-        # contrast
-        sheet_image = EquationSheetDecorator.adjust_contrast(
-            sheet_image, random.uniform(0.4, 0.6))
-
-        # color
-        sheet_image = EquationSheetDecorator.adjust_color(
-            sheet_image, random.uniform(0.5, 0.6))
-
         if include_bg:
             fg_sheet = self.new_sheet_image()
             unscaled_eq_box = EquationSheetDecorator.add_equation(fg_sheet)
@@ -202,18 +186,36 @@ class EquationSheetGenerator:
             fg_sheet_scale = (random.uniform(0.3, 0.8),
                               random.uniform(0.3, 0.8))
 
-            fg_sheet = fg_sheet.resize(
-                (self.sheet_size[0] * fg_sheet_scale[0], self.sheet_size[1] * fg_sheet_scale[1]))
+            fg_sheet = fg_sheet.resize((int(self.sheet_size[0] * fg_sheet_scale[0]),
+                                        int(self.sheet_size[1] * fg_sheet_scale[1])))
 
-            fg_sheet_size = fg_sheet.size()
+            fg_sheet_size = fg_sheet.size
 
-            fg_pos = (random.randint(0, fg_sheet_size[0] - self.sheet_size[0]),
-                      random.randint(0, fg_sheet_size[1] - self.sheet_size[1]))
+            fg_pos = (random.randint(0, self.sheet_size[0] - fg_sheet_size[0]),
+                      random.randint(0, self.sheet_size[1] - fg_sheet_size[1]))
 
             eq_box = unscaled_eq_box.scale(fg_sheet_scale)
 
-            sheet_image.paste(fg_sheet)
+            eq_box = EquationBox((eq_box.topLeft[0] + fg_pos[0], eq_box.topLeft[1] + fg_pos[1]),
+                                 (eq_box.bottomRight[0] + fg_pos[0], eq_box.bottomRight[1] + fg_pos[1]))
+
+            sheet_image.paste(fg_sheet, fg_pos)
         else:
+            # sharpness
+            sheet_image = EquationSheetDecorator.adjust_sharpness(
+                sheet_image, random.uniform(0.5, 0.7))
+
+            # brightness
+            sheet_image = EquationSheetDecorator.adjust_brightness(
+                sheet_image, random.uniform(0.05, 0.1))
+
+            # contrast
+            sheet_image = EquationSheetDecorator.adjust_contrast(
+                sheet_image, random.uniform(0.4, 0.6))
+
+            # color
+            sheet_image = EquationSheetDecorator.adjust_color(
+                sheet_image, random.uniform(0.1, 0.4))
             eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
         if random.choice([True, False]):
@@ -224,6 +226,10 @@ class EquationSheetGenerator:
         # rotation_degrees = random.choice([0, 90, 180, 270])
         # sheet_image, eq_boxes = EquationSheetDecorator.rotate_sheet(
         #     sheet_image, [eq_box], rotation_degrees)
+
+        # # debug
+        # ImageDraw.Draw(sheet_image).rectangle(
+        #     [eq_box.topLeft[0], eq_box.topLeft[1], eq_box.bottomRight[0], eq_box.bottomRight[1]], outline='red')
 
         return (sheet_image, eq_box)
 

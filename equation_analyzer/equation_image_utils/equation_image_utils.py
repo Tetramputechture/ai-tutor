@@ -73,7 +73,7 @@ def equation_image(numbers, background=True) -> (Image, str):
 
 
 def rand_fraction_width():
-    return random.randint(3, 4)
+    return random.randint(4, 5)
 
 
 def rand_fraction_y_offset():

@@ -10,10 +10,10 @@ PREDICTED_EQ_IMAGE_PADDING = 5
 
 
 def is_valid(eq_box):
-    return abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) >= 120 and \
-        abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) <= 310 and \
-        abs(eq_box.bottomRight[1] - eq_box.topLeft[1]) >= 15 and \
-        abs(eq_box.bottomRight[1] - eq_box.topLeft[1]) <= 200
+    return abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) >= 40 and \
+        abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) <= 224 and \
+        abs(eq_box.bottomRight[1] - eq_box.topLeft[1]) >= 5 and \
+        abs(eq_box.bottomRight[1] - eq_box.topLeft[1]) <= 224
 
 
 class EquationSheetProcessor:
@@ -28,6 +28,8 @@ class EquationSheetProcessor:
             new_sheet_image.convert('L'))
         inferred_box = self.equation_finder.infer_from_model(
             sheet_image_data)
+
+        print(inferred_box)
 
         if is_valid(inferred_box):
             eq_image = new_sheet_image.crop((
