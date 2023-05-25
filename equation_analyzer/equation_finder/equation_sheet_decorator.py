@@ -52,7 +52,7 @@ class EquationSheetDecorator:
         eq_image = equation_image(rand_numbers, False)
         original_image_width, original_image_height = eq_image.size
 
-        scale_factor = random.uniform(0.45, 0.5)
+        scale_factor = random.uniform(0.3, 0.5)
         eq_image = eq_image.resize(
             (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
@@ -72,8 +72,8 @@ class EquationSheetDecorator:
         sheet_image.paste(
             eq_image, (int(eq_position[0]), int(eq_position[1])), eq_image)
 
-        eq_box = EquationBox((eq_position[0] - 1, eq_position[1] - 1),
-                             (eq_position[0] + image_width + 1, eq_position[1] + image_height + 1))
+        eq_box = EquationBox((eq_position[0], eq_position[1]),
+                             (eq_position[0] + image_width, eq_position[1] + image_height))
 
         return eq_box
 

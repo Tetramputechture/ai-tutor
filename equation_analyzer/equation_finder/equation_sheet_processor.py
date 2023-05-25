@@ -25,7 +25,7 @@ class EquationSheetProcessor:
         new_sheet_image = sheet_image.copy()
 
         sheet_image_data = image.img_to_array(
-            new_sheet_image.convert('RGB'))
+            new_sheet_image.convert('L'))
         inferred_box = self.equation_finder.infer_from_model(
             sheet_image_data)
 

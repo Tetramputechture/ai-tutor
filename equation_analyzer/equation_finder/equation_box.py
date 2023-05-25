@@ -20,8 +20,9 @@ class EquationBox:
         width, height = self.size()
         newWidth = width * factor[0]
         newHeight = height * factor[1]
-        newBottomRight = (self.topLeft[0] +
-                          newWidth, self.topLeft[1] + newHeight)
+        newX = self.topLeft[0] * factor[0]
+        newY = self.topLeft[1] * factor[1]
+        newBottomRight = (newX + newWidth, newY + newHeight)
         return EquationBox((self.topLeft[0], self.topLeft[1]), newBottomRight)
 
     def rotate(self, origin, angle_degrees):

@@ -1,30 +1,43 @@
 import tensorflow as tf
 import numpy as np
-from tensorflow.keras import datasets, layers, models
+from tensorflow.keras import datasets, models
+from tensorflow.keras.layers import Conv2D, Dense, BatchNormalization, MaxPooling2D
+
+SHEET_WIDTH = 224
+SHEET_HEIGHT = 224
 
 
 class ConvModel:
     def create_model(self):
         model = models.Sequential([
-            layers.Conv2D(32, (7, 7), padding="same",
-                          activation="relu", input_shape=(224, 224, 3)),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D(pool_size=(2, 2)),
+            Conv2D(64, (5, 5),
+                   activation="relu", input_shape=(SHEET_WIDTH, SHEET_HEIGHT, 1)),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(2, 2)),
 
-            layers.Conv2D(64, (5, 5), padding="same", activation="relu"),
-            layers.BatchNormalization(),
-            layers.MaxPooling2D(pool_size=(2, 2)),
+            Conv2D(128, (3, 3), activation="relu"),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(2, 2)),
 
-            layers.Conv2D(128, (3, 3), padding="same", activation="relu"),
-            layers.BatchNormalization(),
-            layers.Flatten(),
+            Conv2D(128, (3, 3), activation="relu"),
+            # Dropout(DROPOUT_RATE),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(2, 2)),
 
-            layers.Dense(256, activation="relu"),
-            layers.Dropout(0.5),
-            layers.Dense(256, activation="relu"),
-            layers.Dropout(0.5),
+            Conv2D(128, (3, 3), activation="relu"),
+            # Dropout(DROPOUT_RATE),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(1, 2)),
 
-            layers.Dense(4, activation='relu')
+            Conv2D(128, (3, 3), activation="relu"),
+            # Dropout(DROPOUT_RATE),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(1, 2)),
+
+            Dense(256, activation="relu"),
+            Dense(128, activation='relu'),
+            Dense(64, activation='relu'),
+            Dense(4, activation='relu')
         ])
 
         model.compile(optimizer='adam',

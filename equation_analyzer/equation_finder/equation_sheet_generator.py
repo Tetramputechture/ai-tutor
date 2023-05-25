@@ -52,10 +52,11 @@ class EquationSheetGenerator:
             return self.sheets_from_cache(sheet_count)
 
         dirty_eq_sheet_count = int(sheet_count * 0.7)
+        dirty_eq_img_sheet_count = int(sheet_count * 0.1)
         clean_single_eq_sheet_count = int(sheet_count * 0.1)
         clean_multiple_eq_sheet_count = 0
-        blank_clean_sheet_count = int(sheet_count * 0.1)
-        rand_img_sheet_count = int(sheet_count * 0.1)
+        blank_clean_sheet_count = int(sheet_count * 0.05)
+        rand_img_sheet_count = int(sheet_count * 0.05)
 
         sheets = []
         should_cache = len(self.cache_dir) > 0
@@ -66,6 +67,8 @@ class EquationSheetGenerator:
               clean_single_eq_sheet_count)
         print('Sheets with one equation and dirty background: ',
               dirty_eq_sheet_count)
+        print('Sheets with one equation on sheet and dirty background: ',
+              dirty_eq_img_sheet_count)
         print('Sheets with multiple equations and clean background: ',
               clean_multiple_eq_sheet_count)
         print('Sheets with no equations and clean background: ',
@@ -84,6 +87,9 @@ class EquationSheetGenerator:
         sheets.extend([self.clean_sheet_with_equations()
                       for _ in range(clean_multiple_eq_sheet_count)])
         print('Generating dirty sheets with equation...')
+        sheets.extend([self.dirty_sheet_with_equation()
+                      for _ in range(dirty_eq_sheet_count)])
+        print('Generating dirty sheets with imagenet equation...')
         sheets.extend([self.dirty_sheet_with_equation()
                       for _ in range(dirty_eq_sheet_count)])
         print('Generating rand img sheets...')
@@ -135,7 +141,7 @@ class EquationSheetGenerator:
 
     # sheet with colored background and equation image + other misc equation images;
     # includes misc background images
-    def dirty_sheet_with_equation(self):
+    def dirty_sheet_with_equation(self, include_bg=False):
         # sheet_image = self.new_sheet_image(color=random_sheet_color())
         # if random.choice([True, False]):
         #     sheet_image = EquationSheetDecorator.add_noise(sheet_image)
@@ -189,7 +195,26 @@ class EquationSheetGenerator:
         sheet_image = EquationSheetDecorator.adjust_color(
             sheet_image, random.uniform(0.5, 0.6))
 
-        eq_box = EquationSheetDecorator.add_equation(sheet_image)
+        if include_bg:
+            fg_sheet = self.new_sheet_image()
+            unscaled_eq_box = EquationSheetDecorator.add_equation(fg_sheet)
+
+            fg_sheet_scale = (random.uniform(0.3, 0.8),
+                              random.uniform(0.3, 0.8))
+
+            fg_sheet = fg_sheet.resize(
+                (self.sheet_size[0] * fg_sheet_scale[0], self.sheet_size[1] * fg_sheet_scale[1]))
+
+            fg_sheet_size = fg_sheet.size()
+
+            fg_pos = (random.randint(0, fg_sheet_size[0] - self.sheet_size[0]),
+                      random.randint(0, fg_sheet_size[1] - self.sheet_size[1]))
+
+            eq_box = unscaled_eq_box.scale(fg_sheet_scale)
+
+            sheet_image.paste(fg_sheet)
+        else:
+            eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
         if random.choice([True, False]):
             sheet_image = sheet_image.convert('RGB')
