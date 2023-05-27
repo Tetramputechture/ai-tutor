@@ -21,7 +21,7 @@ from .resnet_model import ResnetModel
 from .conv_model import ConvModel
 from .vgg_model import VggModel
 
-sheet_count = 10000
+sheet_count = 20000
 
 epochs = 20
 
@@ -29,7 +29,7 @@ BATCH_SIZE = 64
 
 STEPS_PER_EPOCH = int(sheet_count / BATCH_SIZE)
 
-test_size = 0.1
+test_size = 0.2
 
 MODEL_PATH = './equation_analyzer/equation_finder/equation_finder.h5'
 SHEET_DATA_PATH = './equation_analyzer/equation_finder/data'
@@ -57,7 +57,7 @@ def coord_accuracy(coord, coord_diff):
 
 class EquationFinder:
     def __init__(self):
-        self.model = ConvModel().create_model()
+        self.model = ResnetModel().create_model()
         self.sheet_image_data = []
         self.sheet_eq_coords = []
 
@@ -76,13 +76,13 @@ class EquationFinder:
                 cache_dir=sheet_images_path
             ).generate_sheets(sheet_count)
 
-            for sheet in sheets:
+            for idx, sheet in enumerate(sheets):
                 sheet_image, eq_box = sheet
-                sheet_image = sheet_image.convert('L')
+                sheet_image = sheet_image.convert('RGB')
                 sheet_image = image.img_to_array(sheet_image)
                 # Extracting Single Channel Image
                 # sheet_image = sheet_image[:, :, 1]
-                sheet_image = sheet_image / 255
+                # sheet_image = sheet_image / 255
                 self.sheet_image_data.append(sheet_image)
                 self.sheet_eq_coords.append(eq_box.to_array())
 
@@ -104,7 +104,7 @@ class EquationFinder:
         val_gen = self.data_generator(test_image_data, test_eq_coords)
 
         callback = tf.keras.callbacks.EarlyStopping(
-            monitor='loss', patience=2, restore_best_weights=True)
+            monitor='loss', patience=5, restore_best_weights=True)
 
         history = self.model.fit(train_gen, steps_per_epoch=STEPS_PER_EPOCH, epochs=epochs, validation_steps=STEPS_PER_EPOCH,
                                  validation_data=val_gen, batch_size=BATCH_SIZE, callbacks=[callback])
@@ -163,8 +163,8 @@ class EquationFinder:
         self.model.save(MODEL_PATH)
 
     def infer_from_model(self, image_data) -> EquationBox:
-        imdata = image_data / 255
-        imdata = np.expand_dims(imdata, axis=0)
+        # imdata = image_data / 255
+        imdata = np.expand_dims(image_data, axis=0)
         predictions = self.model.predict(imdata)[0]
         return EquationBox((int(predictions[0]), int(predictions[1])),
                            (int(predictions[2]), int(predictions[3])))

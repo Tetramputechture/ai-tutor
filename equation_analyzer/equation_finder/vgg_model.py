@@ -4,7 +4,7 @@ from tensorflow.keras import datasets, layers, models, optimizers, applications
 
 
 class VggModel:
-    def create_model(self, input_shape=(224, 224, 1)):
+    def create_model(self, input_shape=(224, 224, 3)):
         resnet_base = applications.VGG16(
             include_top=False,
             input_shape=input_shape

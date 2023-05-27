@@ -102,7 +102,7 @@ class EquationParser:
         outstr = outstr.replace('e', '')
         return outstr
 
-    def test_model_raw_img(self, model, raw_img):
+    def test_model_raw_img(self, tokenizer, model, raw_img):
         img = np.array(raw_img)
         img = img[:, :, ::-1].copy()
         img_resized = cv2.resize(img, (EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT))
@@ -112,7 +112,6 @@ class EquationParser:
         img = np.expand_dims(img, axis=0)
         img = img / 255
         model_output = model.predict(img)
-        tokenizer = EquationTokenizer().load_tokenizer()
         predicted_output = self.decode_label(tokenizer, model_output)
 
         return predicted_output

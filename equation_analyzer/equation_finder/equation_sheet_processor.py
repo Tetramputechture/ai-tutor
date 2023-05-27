@@ -10,7 +10,7 @@ PREDICTED_EQ_IMAGE_PADDING = 5
 
 
 def is_valid(eq_box):
-    return abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) >= 40 and \
+    return abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) >= 30 and \
         abs(eq_box.bottomRight[0] - eq_box.topLeft[0]) <= 224 and \
         abs(eq_box.bottomRight[1] - eq_box.topLeft[1]) >= 5 and \
         abs(eq_box.bottomRight[1] - eq_box.topLeft[1]) <= 224
@@ -24,12 +24,11 @@ class EquationSheetProcessor:
     def find_equation(self, sheet_image):
         new_sheet_image = sheet_image.copy()
 
-        sheet_image_data = image.img_to_array(
-            new_sheet_image.convert('L'))
+        sheet_image_data = image.img_to_array(new_sheet_image)
         inferred_box = self.equation_finder.infer_from_model(
             sheet_image_data)
 
-        print(inferred_box)
+        # print(inferred_box)
 
         if is_valid(inferred_box):
             eq_image = new_sheet_image.crop((

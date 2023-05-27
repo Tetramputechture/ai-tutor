@@ -22,8 +22,10 @@ class EquationBox:
         newHeight = height * factor[1]
         newX = self.topLeft[0] * factor[0]
         newY = self.topLeft[1] * factor[1]
+        newX2 = self.bottomRight[0] * factor[0]
+        newY2 = self.bottomRight[1] * factor[1]
         newBottomRight = (newX + newWidth, newY + newHeight)
-        return EquationBox((newX, newY), newBottomRight)
+        return EquationBox((newX, newY), (newX2, newY2))
 
     def rotate(self, origin, angle_degrees):
         angle_radians = math.radians(angle_degrees)
@@ -41,6 +43,12 @@ class EquationBox:
         x_max, y_max = np.max(rotated_points, axis=0)
 
         return EquationBox((x_min, y_min), (x_max, y_max))
+
+    def shift(self, shift):
+        return EquationBox(
+            (self.topLeft[0] + shift[0], self.topLeft[1] + shift[1]),
+            (self.bottomRight[0] + shift[0], self.bottomRight[1] + shift[1])
+        )
 
     def to_eq_coord(self):
         return {
@@ -99,6 +107,12 @@ class EquationBox:
             float(self_area + rect_area - intersection_area)
 
         return iou
+
+    def is_zero(self) -> bool:
+        return self.topLeft[0] == 0 and \
+            self.topLeft[1] == 0 and \
+            self.bottomRight[0] == 0 and \
+            self.bottomRight[1] == 0
 
     def __repr__(self):
         return f'EquationBox(topLeft={self.topLeft}, bottomRight={self.bottomRight}'

@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras import datasets, models
-from tensorflow.keras.layers import Conv2D, Dense, Flatten, BatchNormalization, MaxPooling2D
+from tensorflow.keras.layers import Conv2D, Dense, Dropout, Flatten, BatchNormalization, MaxPooling2D
 
 SHEET_WIDTH = 224
 SHEET_HEIGHT = 224

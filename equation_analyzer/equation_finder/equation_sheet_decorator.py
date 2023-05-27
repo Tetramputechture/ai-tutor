@@ -56,7 +56,7 @@ class EquationSheetDecorator:
         eq_image = eq_image.resize(
             (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
-        eq_image = EquationSheetDecorator.adjust_brightness(eq_image, 1.5)
+        eq_image = EquationSheetDecorator.adjust_brightness(eq_image, 2)
 
         image_width, image_height = eq_image.size
 

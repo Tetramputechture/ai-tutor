@@ -5,6 +5,7 @@ import json
 import os
 import string
 import sys
+import csv
 
 from .equation_box import EquationBox
 from .equation_sheet_decorator import EquationSheetDecorator
@@ -18,10 +19,33 @@ RANDOM_LINE_COUNT_MAX = 6
 RANDOM_ELLIPSE_COUNT_MAX = 12
 
 IMAGE_DIR = './data/images'
+CUSTOM_EQ_IMAGE_DIR = './data/images_custom'
 
 
 def rand_image():
     return Image.open(f'{IMAGE_DIR}/{random.choice(os.listdir(IMAGE_DIR))}')
+
+
+def rand_custom_eq_image():
+    jpg_files = [f for f in os.listdir(
+        CUSTOM_EQ_IMAGE_DIR) if f.endswith('.jpg')]
+    rand_file = random.choice(jpg_files)
+    return (
+        Image.open(
+            f'{CUSTOM_EQ_IMAGE_DIR}/{rand_file}'),
+        rand_file.split('.')[0]
+    )
+
+
+def custom_image_eq_box(img_idx):
+    eq_boxes = []
+    with open('./data/images_custom/eq_boxes.csv', 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for line in reader:
+            eq_boxes.append(line)
+
+    box = [box for box in eq_boxes if box['image'] == img_idx][0]
+    return EquationBox((box['x1'], box['y1']), (box['x2'], box['y2']))
 
 
 def random_color():
@@ -52,11 +76,12 @@ class EquationSheetGenerator:
             return self.sheets_from_cache(sheet_count)
 
         dirty_eq_sheet_count = int(sheet_count * 0.1)
-        dirty_eq_img_sheet_count = int(sheet_count * 0.7)
-        clean_single_eq_sheet_count = int(sheet_count * 0.1)
+        dirty_eq_img_sheet_count = int(sheet_count * 0.3)
+        clean_single_eq_sheet_count = int(sheet_count * 0.05)
         clean_multiple_eq_sheet_count = 0
-        blank_clean_sheet_count = int(sheet_count * 0.05)
-        rand_img_sheet_count = int(sheet_count * 0.05)
+        blank_clean_sheet_count = int(sheet_count * 0.1)
+        rand_img_sheet_count = int(sheet_count * 0.4)
+        custom_sheet_count = int(sheet_count * 0.05)
 
         sheets = []
         should_cache = len(self.cache_dir) > 0
@@ -75,6 +100,8 @@ class EquationSheetGenerator:
               blank_clean_sheet_count)
         print('Sheets with no equations and img background: ',
               rand_img_sheet_count)
+        print('Sheets with custom equation and img background: ',
+              custom_sheet_count)
         print('Total sheets: ', sheet_count)
         print('Generating equation sheets...')
 
@@ -92,6 +119,9 @@ class EquationSheetGenerator:
         print('Generating dirty sheets with imagenet equation...')
         sheets.extend([self.dirty_sheet_with_equation(True)
                       for _ in range(dirty_eq_img_sheet_count)])
+        print('Generating custom sheets...')
+        sheets.extend([self.custom_sheet()
+                      for _ in range(custom_sheet_count)])
         print('Generating rand img sheets...')
         sheets.extend([self.random_image_sheet()
                       for _ in range(rand_img_sheet_count)])
@@ -124,10 +154,14 @@ class EquationSheetGenerator:
             sheet_image = EquationSheetDecorator.add_noise(sheet_image)
         eq_box = EquationSheetDecorator.add_equation(sheet_image)
 
+        rotation_degrees = random.choice([0, 90, 180, 270])
+        sheet_image, eq_boxes = EquationSheetDecorator.rotate_sheet(
+            sheet_image, [eq_box], rotation_degrees)
+
         if random.choice([True, False]):
             sheet_image = ImageOps.invert(sheet_image)
 
-        return (sheet_image, eq_box)
+        return (sheet_image, eq_boxes[0])
 
     def clean_sheet_with_equations(self):
         sheet_image, eq_box = self.clean_sheet_with_equation()
@@ -195,9 +229,7 @@ class EquationSheetGenerator:
                       random.randint(0, self.sheet_size[1] - fg_sheet_size[1]))
 
             eq_box = unscaled_eq_box.scale(fg_sheet_scale)
-
-            eq_box = EquationBox((eq_box.topLeft[0] + fg_pos[0], eq_box.topLeft[1] + fg_pos[1]),
-                                 (eq_box.bottomRight[0] + fg_pos[0], eq_box.bottomRight[1] + fg_pos[1]))
+            eq_box = eq_box.shift(fg_pos)
 
             sheet_image.paste(fg_sheet, fg_pos)
         else:
@@ -223,10 +255,11 @@ class EquationSheetGenerator:
             sheet_image = ImageOps.invert(sheet_image)
 
         # rotate sheet
-        # rotation_degrees = random.choice([0, 90, 180, 270])
-        # sheet_image, eq_boxes = EquationSheetDecorator.rotate_sheet(
-        #     sheet_image, [eq_box], rotation_degrees)
+        rotation_degrees = random.choice([0, 90, 180, 270])
+        sheet_image, eq_boxes = EquationSheetDecorator.rotate_sheet(
+            sheet_image, [eq_box], rotation_degrees)
 
+        eq_box = eq_boxes[0]
         # # debug
         # ImageDraw.Draw(sheet_image).rectangle(
         #     [eq_box.topLeft[0], eq_box.topLeft[1], eq_box.bottomRight[0], eq_box.bottomRight[1]], outline='red')
@@ -261,6 +294,10 @@ class EquationSheetGenerator:
         if random.choice([True, False]):
             rand_img = rand_img.convert('RGB')
             rand_img = ImageOps.invert(rand_img)
+
+        rotation_degrees = random.choice([0, 90, 180, 270])
+        rand_img, eq_boxes = EquationSheetDecorator.rotate_sheet(
+            rand_img, [], rotation_degrees)
 
         EquationSheetDecorator.add_noise(rand_img, True)
 
@@ -328,6 +365,60 @@ class EquationSheetGenerator:
             sheet_image = ImageOps.invert(sheet_image)
 
         return (sheet_image, EquationBox((0, 0), (0, 0)))
+
+    def rand_rotation_angle(self):
+        return random.randint(-15, 15)
+
+    def custom_sheet(self):
+        img, idx = rand_custom_eq_image()
+        eq_box = custom_image_eq_box(idx)
+
+        eq_box_is_zero = eq_box.is_zero()
+
+        rotation_degrees = self.rand_rotation_angle()
+        sheet_image, eq_boxes = EquationSheetDecorator.rotate_sheet(
+            img, [eq_box], rotation_degrees)
+
+        if random.choice([True, False]):
+            sheet_image = sheet_image.convert('RGB')
+            sheet_image = ImageOps.invert(sheet_image)
+
+        full_img = rand_image()
+        full_img = full_img.resize(self.sheet_size)
+
+        random_scale = (random.uniform(0.85, 1), random.uniform(0.85, 1))
+        new_size = (int(self.sheet_size[0] * random_scale[0]),
+                    int(self.sheet_size[1] * random_scale[1]))
+        sheet_image = sheet_image.resize(new_size)
+
+        sheet_location = (
+            (random.randint(0, self.sheet_size[0] - new_size[0]),
+             random.randint(0, self.sheet_size[1] - new_size[1]))
+        )
+        full_img.paste(sheet_image, sheet_location)
+        scaled_eq_box = eq_boxes[0]
+        if not scaled_eq_box.is_zero():
+            scaled_eq_box = eq_boxes[0].scale(random_scale)
+            scaled_eq_box = scaled_eq_box.shift(sheet_location)
+
+        rotation_degrees = random.choice([0, 90, 180, 270])
+        full_img, eq_boxes = EquationSheetDecorator.rotate_sheet(
+            full_img, [scaled_eq_box], rotation_degrees)
+
+        eq_box = eq_boxes[0]
+
+        if eq_box_is_zero:
+            return (full_img, EquationBox((0, 0), (0, 0)))
+
+        # ImageDraw.Draw(full_img).rectangle(
+        #     [eq_box.topLeft[0],
+        #      eq_box.topLeft[1],
+        #      eq_box.bottomRight[0],
+        #      eq_box.bottomRight[1]],
+        #     outline='red'
+        # )
+
+        return (full_img, eq_box)
 
     def sheets_cached(self):
         return os.path.isdir(self.cache_dir) and len(

@@ -12,6 +12,8 @@ class ResnetModel:
         model = models.Sequential([
             resnet_base,
             layers.Flatten(),
+            layers.Dense(256, activation='relu'),
+            layers.Dropout(0.2),
             layers.Dense(4, activation='relu')
         ])
 
@@ -25,7 +27,8 @@ class ResnetModel:
         #     if isinstance(layer, layers.BatchNormalization):
         #         layer.trainable = False
 
-        model.compile(optimizer='adam',
+        optimizer = optimizers.Adam(learning_rate=1e-4)
+        model.compile(optimizer=optimizer,
                       loss='mse',
                       metrics=['accuracy'])
         return model

@@ -34,15 +34,17 @@ elif "test" in str(sys.argv[1]).lower():
 else:
     VIZ = True
 
-TEST_IMAGES_DIR = './test_images'
+TEST_IMAGES_DIR = './data/images'
+CUSTOM_IMAGES_DIR = './data/images_custom'
 
 
 def run_eq_finder():
     esp = EquationSheetProcessor()
     # for i in range(5):
-    for filename in os.listdir(TEST_IMAGES_DIR):
-
-        img_file = os.path.join(TEST_IMAGES_DIR, filename)
+    for filename in os.listdir(CUSTOM_IMAGES_DIR):
+        if not filename.endswith('jpg'):
+            continue
+        img_file = os.path.join(CUSTOM_IMAGES_DIR, filename)
         # test_image, eq_box = EquationSheetGenerator().dirty_sheet_with_equation(True)
         test_image = Image.open(img_file)
         test_image = test_image.resize((224, 224), Image.BICUBIC)
@@ -156,12 +158,24 @@ def viz_sheets():
     plt.show()
 
 
+def viz_custom_images():
+    for i in range(5):
+        equation_sheet_image, eq_box = EquationSheetGenerator().custom_sheet()
+        fig, ax = plt.subplots()
+        width, height = eq_box.size()
+        ax.add_patch(Rectangle(eq_box.topLeft, width, height,
+                               fill=False, edgecolor="b"))
+        ax.imshow(equation_sheet_image)
+    plt.show()
+
+
 def main():
     # run_eq_parser()
     # viz_sheets()
     # EquationSheetProcessor()
-    run_eq_finder()
-    # EquationAnalyzer().start_stream()
+    # run_eq_finder()
+    EquationAnalyzer().start_stream()
+    # viz_custom_images()
 
 
 if __name__ == '__main__':
