@@ -51,14 +51,16 @@ def equation_image(numbers, background=True) -> (Image, str):
         draw,
         (fraction_two_pos[0] + rand_operator_x_offset(),
          fraction_two_pos[1] - rand_operator_y_offset()))
-    draw_fraction(
+    eq_x, _, = draw_fraction(
         draw,
         (fraction_two_pos[0] + equals_size[0] + rand_operator_post_x_offset(),
          fraction_one_start_pos[1]), font, font_size,
         numbers[4], numbers[5])
 
-    eq_image = eq_image.rotate(
-        rand_rotation_angle(), expand=1, fillcolor=background_color)
+    # crop eq image to end of equation
+    eq_image = eq_image.resize((eq_x, eq_image.size[1]), Image.BICUBIC)
+
+    eq_image = eq_image.rotate(0, expand=1, fillcolor=background_color)
 
     if background:
         eq_image = draw_noise(eq_image)
@@ -74,6 +76,10 @@ def equation_image(numbers, background=True) -> (Image, str):
 
 def rand_fraction_width():
     return random.randint(4, 5)
+
+
+def rand_text_spacing():
+    return random.randint(3, 6)
 
 
 def rand_fraction_y_offset():
@@ -170,13 +176,13 @@ def rand_background_color():
 def draw_fraction(draw, pos, font, font_size, num, denom):
     # TODO: rotate each number individually?
     draw.text(pos, str(num), font=font,
-              fill=rand_text_color(), spacing=5)
+              fill=rand_text_color(), spacing=rand_text_spacing())
     _, _, num_width, num_height = font.getbbox(str(num))
 
     denom_pos = (pos[0] + rand_denom_x_offset(), pos[1] +
                  num_height + rand_denom_y_offset())
     draw.text(denom_pos, str(denom), font=font,
-              fill=rand_text_color(), spacing=5)
+              fill=rand_text_color(), spacing=rand_text_spacing())
 
     _, _, denom_width, denom_height = font.getbbox(str(denom))
 
@@ -186,7 +192,7 @@ def draw_fraction(draw, pos, font, font_size, num, denom):
                 pos[0] + line_width + rand_fraction_x_offset(), line_height + rand_fraction_tilt_offset()]
     draw.line(line_pos, width=rand_fraction_width(), fill=rand_text_color())
 
-    return (pos[0] + line_width, pos[1] + num_height)
+    return (pos[0] + (line_pos[2] - pos[0]), pos[1] + num_height)
 
 
 def draw_plus(draw, pos):

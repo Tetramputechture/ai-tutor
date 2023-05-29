@@ -36,6 +36,14 @@ def rand_frac_number():
     return random.randint(1, 999)
 
 
+def rand_scale_factor():
+    return random.uniform(0.4, 0.5)
+
+
+def rand_eq_sheet_padding():
+    return random.randint(5, 20)
+
+
 FONTS_FOLDER = './assets/fonts'
 
 
@@ -44,7 +52,7 @@ def rand_font():
 
 
 class EquationSheetDecorator:
-    def add_equation(sheet_image, eq_boxes=[]):
+    def add_equation(sheet_image, eq_boxes=[], include_sheet_bg=False):
         sheet_width, sheet_height = sheet_image.size
 
         rand_numbers = [rand_frac_number() for _ in range(6)]
@@ -52,11 +60,11 @@ class EquationSheetDecorator:
         eq_image = equation_image(rand_numbers, False)
         original_image_width, original_image_height = eq_image.size
 
-        scale_factor = 0.5
+        scale_factor = rand_scale_factor()
         eq_image = eq_image.resize(
             (int(original_image_width * scale_factor), int(original_image_height * scale_factor)), Image.BICUBIC)
 
-        eq_image = EquationSheetDecorator.adjust_brightness(eq_image, 2)
+        # eq_image = EquationSheetDecorator.adjust_brightness(eq_image, 2)
 
         image_width, image_height = eq_image.size
 
@@ -71,6 +79,15 @@ class EquationSheetDecorator:
         eq_box = EquationBox(
             eq_position, (eq_position[0] + image_width, eq_position[1] + image_height))
 
+        if include_sheet_bg:
+            sheet_bg_rect = [
+                eq_box.topLeft[0] - rand_eq_sheet_padding(),
+                eq_box.topLeft[1] - rand_eq_sheet_padding(),
+                eq_box.bottomRight[0] + rand_eq_sheet_padding(),
+                eq_box.bottomRight[1] + rand_eq_sheet_padding()
+            ]
+            ImageDraw.Draw(sheet_image).rectangle(sheet_bg_rect, fill='white')
+
         sheet_image.paste(
             eq_image, (int(eq_position[0]), int(eq_position[1])), eq_image)
 
@@ -78,118 +95,6 @@ class EquationSheetDecorator:
                              (eq_position[0] + image_width, eq_position[1] + image_height))
 
         return eq_box
-
-    def add_text(sheet_image, text_count, eq_boxes):
-        text_image = Image.new(
-            'RGBA', sheet_image.size, (255, 255, 255, 0))
-        image_draw_ctx = ImageDraw.Draw(text_image)
-        sheet_size = sheet_image.size
-
-        # add misc other text
-        for i in range(text_count):
-            iterations = 0
-
-            fnt = ImageFont.truetype(rand_font(), random.randint(6, 14))
-            text = random_text()
-            while iterations < 1000000:
-                text_position = (random.randint(1, sheet_size[0]),
-                                 random.randint(1, sheet_size[1]))
-                image_draw_ctx.text(text_position, text,
-                                    font=fnt, fill=(*random_color(), 0))
-
-                text_width, text_height = image_draw_ctx.textsize(
-                    text, font=fnt, spacing=4)
-
-                text_bounding_rect = EquationBox(
-                    text_position,
-                    (text_position[0] + text_width,
-                     text_position[1] + text_height)
-                )
-
-                collision = False
-                for box in eq_boxes:
-                    if box.collision(text_bounding_rect):
-                        collision = True
-                        break
-
-                if collision:
-                    iterations += 1
-                else:
-                    image_draw_ctx.text(text_position, text,
-                                        font=fnt, fill=(*random_color(), random.randint(150, 255)))
-
-                    sheet_image = sheet_image.convert('RGBA')
-                    sheet_image = Image.alpha_composite(
-                        sheet_image, text_image)
-                    break
-
-        return sheet_image
-
-    def add_lines(sheet_image, line_count):
-        sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
-        sheet_size = sheet_image.size
-        max_x_pos, max_y_pos = (
-            (sheet_size[0] - 20),
-            (sheet_size[1] - 20)
-        )
-
-        for i in range(line_count):
-            line_position = (random.randint(1, max_x_pos),
-                             random.randint(1, max_y_pos))
-            line_size = (random.randint(
-                20, max_x_pos - line_position[0] + 20), random.randint(20, max_y_pos - line_position[1] + 20))
-            sheet_image_draw_ctx.line(
-                line_position + line_size, width=1)
-
-        return sheet_image
-
-    def add_ellipses(sheet_image, ellipse_count, eq_boxes):
-        sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
-        sheet_size = sheet_image.size
-        max_x_pos, max_y_pos = (
-            (sheet_size[0]),
-            (sheet_size[1])
-        )
-
-        for i in range(ellipse_count):
-            iterations = 0
-            while iterations < 1000000:
-                ellipse_position = (random.randint(1, max_x_pos),
-                                    random.randint(1, max_y_pos))
-                ellipse_width, ellipse_height = (
-                    random.randint(5, 30), random.randint(5, 30))
-
-                ellipse_bounding_rect = EquationBox(
-                    ellipse_position,
-                    (ellipse_position[0] + ellipse_width,
-                     ellipse_position[1] + ellipse_height)
-                )
-
-                collision = False
-
-                for box in eq_boxes:
-                    if box.collision(ellipse_bounding_rect):
-                        collision = True
-                        break
-
-                if collision:
-                    iterations += 1
-                else:
-                    fill_color = None
-                    if random.random() > 0.5:
-                        fill_color = random_color()
-                    sheet_image_draw_ctx.ellipse(
-                        [ellipse_position, (ellipse_position[0] + ellipse_width,
-                                            ellipse_position[1] + ellipse_height)],
-                        fill=fill_color, outline=random_color(), width=1
-                    )
-                    break
-
-        return sheet_image
-
-    def add_rectangle(sheet_image, xy, fill):
-        sheet_image_draw_ctx = ImageDraw.Draw(sheet_image)
-        sheet_image_draw_ctx.rectangle(xy, fill)
 
     def adjust_sharpness(sheet_image, value=1):
         return ImageEnhance.Sharpness(sheet_image).enhance(value)

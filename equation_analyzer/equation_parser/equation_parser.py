@@ -105,7 +105,10 @@ class EquationParser:
     def test_model_raw_img(self, tokenizer, model, raw_img):
         img = np.array(raw_img)
         img = img[:, :, ::-1].copy()
-        img_resized = cv2.resize(img, (EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT))
+        if img.shape[0] == 0 or img.shape[1] == 0:
+            return ''
+        img_resized = cv2.resize(
+            img, (EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT), interpolation=cv2.INTER_AREA)
         img = img_resized[:, :, 1]
         img = img.T
         img = np.expand_dims(img, axis=-1)

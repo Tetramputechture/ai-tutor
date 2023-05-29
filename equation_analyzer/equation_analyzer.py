@@ -34,12 +34,15 @@ class EquationAnalyzer:
             ret, frame = cap.read()
 
             original_frame_res = frame.shape
+            pil_frame_img = Image.fromarray(
+                cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
-            scale = (original_frame_res[0] / EQUATION_FINDER_SIZE[0],
-                     original_frame_res[1] / EQUATION_FINDER_SIZE[1])
+            scale = (original_frame_res[1] / EQUATION_FINDER_SIZE[0],
+                     original_frame_res[0] / EQUATION_FINDER_SIZE[1])
 
             # resize frame to EQ finder size
-            resized_frame = cv2.resize(frame, EQUATION_FINDER_SIZE)
+            resized_frame = cv2.resize(
+                frame, EQUATION_FINDER_SIZE, interpolation=cv2.INTER_AREA)
 
             # # cv2.imshow(resized_frame)
 
@@ -53,28 +56,33 @@ class EquationAnalyzer:
             if eq_box is not None:
                 # print('Found equation: ', eq_box)
 
-                found_img = np.array(found_img)
-                found_img = found_img[:, :, ::-1].copy()
-                cv2.imshow('localized EQ', found_img)
+                cv2.rectangle(
+                    resized_frame, eq_box.topLeft, eq_box.bottomRight, color=(255, 0, 0), thickness=2)
+                cv2.imshow('Localized EQ', resized_frame)
 
                 # rescale the localized equation box and then get the image data from that
                 scaled_eq_box = eq_box.scale(scale)
 
+                # print('Original EQ box: ', eq_box)
+                # print('Scaled box: ', scaled_eq_box)
+
                 eq_image = frame[scaled_eq_box.topLeft[1]:scaled_eq_box.bottomRight[1],
                                  scaled_eq_box.topLeft[0]:scaled_eq_box.bottomRight[0]]
 
-                cv2.rectangle(
-                    resized_frame, eq_box.topLeft, eq_box.bottomRight, color=(255, 0, 0), thickness=2)
-                cv2.imshow('Test 1', resized_frame)
+                cv2.rectangle(frame, scaled_eq_box.topLeft, scaled_eq_box.bottomRight, color=(
+                    0, 0, 255), thickness=2)
 
-                cv2.imshow('Test', eq_image)
+                # eq_image = pil_frame_img.crop(
+                #     (scaled_eq_box.topLeft[0],
+                #      scaled_eq_box.topLeft[1],
+                #      scaled_eq_box.bottomRight[0],
+                #      scaled_eq_box.bottomRight[1])
+                # )
 
                 # tokenize the equation image
                 tokens = self.eq_parser.test_model_raw_img(tokenizer,
                                                            self.caption_model.model, eq_image)
 
-                cv2.rectangle(frame, scaled_eq_box.topLeft, scaled_eq_box.bottomRight, color=(
-                    0, 0, 255), thickness=2)
                 if len(tokens) > 0:
                     # print('Predicted tokens: ', tokens)
 

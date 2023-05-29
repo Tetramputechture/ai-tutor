@@ -21,15 +21,15 @@ from .resnet_model import ResnetModel
 from .conv_model import ConvModel
 from .vgg_model import VggModel
 
-sheet_count = 20000
+sheet_count = 30000
 
-epochs = 20
+epochs = 50
 
 BATCH_SIZE = 64
 
 STEPS_PER_EPOCH = int(sheet_count / BATCH_SIZE)
 
-test_size = 0.2
+test_size = 0.1
 
 MODEL_PATH = './equation_analyzer/equation_finder/equation_finder.h5'
 SHEET_DATA_PATH = './equation_analyzer/equation_finder/data'
@@ -78,12 +78,14 @@ class EquationFinder:
 
             for idx, sheet in enumerate(sheets):
                 sheet_image, eq_box = sheet
-                sheet_image = sheet_image.convert('RGB')
+                sheet_image = sheet_image.convert('L').convert('RGB')
                 sheet_image = image.img_to_array(sheet_image)
                 # Extracting Single Channel Image
                 # sheet_image = sheet_image[:, :, 1]
                 # sheet_image = sheet_image / 255
                 self.sheet_image_data.append(sheet_image)
+                scaled_eq_box = [
+                    (val - 224) / 224 for val in eq_box.to_array()]
                 self.sheet_eq_coords.append(eq_box.to_array())
 
             if not os.path.isdir(SHEET_DATA_PATH):
@@ -104,7 +106,7 @@ class EquationFinder:
         val_gen = self.data_generator(test_image_data, test_eq_coords)
 
         callback = tf.keras.callbacks.EarlyStopping(
-            monitor='loss', patience=5, restore_best_weights=True)
+            monitor='loss', patience=10, restore_best_weights=True)
 
         history = self.model.fit(train_gen, steps_per_epoch=STEPS_PER_EPOCH, epochs=epochs, validation_steps=STEPS_PER_EPOCH,
                                  validation_data=val_gen, batch_size=BATCH_SIZE, callbacks=[callback])

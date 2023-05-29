@@ -28,7 +28,8 @@ class CtcDataGenerator(keras.callbacks.Callback):
     def fetch_and_preprocess_eq_image(self, eq_id):
         eq_image = cv2.imread(f'{self.img_dir}/{eq_id}.bmp')
         eq_image = eq_image[:, :, 1]  # Extracting Single Channel Image
-        eq_image = cv2.resize(eq_image, (EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT))
+        eq_image = cv2.resize(
+            eq_image, (EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT), interpolation=cv2.INTER_AREA)
         eq_image = eq_image / 255
         return eq_image
 

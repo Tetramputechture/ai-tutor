@@ -159,13 +159,20 @@ def viz_sheets():
 
 
 def viz_custom_images():
-    for i in range(5):
-        equation_sheet_image, eq_box = EquationSheetGenerator().custom_sheet()
+    for filename in os.listdir(CUSTOM_IMAGES_DIR):
+        if not filename.endswith('jpg'):
+            continue
+        img_file = os.path.join(CUSTOM_IMAGES_DIR, filename)
+
+        img_idx = filename.split('.')[0]
+        eq_box = EquationSheetGenerator().custom_image_eq_box(img_idx)
+        eq_sheet_image = Image.open(img_file)
         fig, ax = plt.subplots()
         width, height = eq_box.size()
         ax.add_patch(Rectangle(eq_box.topLeft, width, height,
                                fill=False, edgecolor="b"))
-        ax.imshow(equation_sheet_image)
+        ax.set_title(filename)
+        ax.imshow(eq_sheet_image)
     plt.show()
 
 
