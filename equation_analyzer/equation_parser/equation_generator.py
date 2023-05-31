@@ -38,21 +38,23 @@ class EquationGenerator:
         eq_image = equation_image(rand_numbers)
         eq_tokens = to_clean_tokens(rand_numbers)
 
-        if not self.images_cached():
-            os.makedirs(self.cache_dir)
-            with open(f'{self.cache_dir}/{TOKENS_FILENAME}.csv', 'a', newline='', encoding='utf-8') as tokens_file:
-                writer = csv.writer(tokens_file)
-                writer.writerow(TOKENS_HEADERS)
+        # if not self.images_cached():
+        #     os.makedirs(self.cache_dir)
+        #     with open(f'{self.cache_dir}/{TOKENS_FILENAME}.csv', 'a', newline='', encoding='utf-8') as tokens_file:
+        #         writer = csv.writer(tokens_file)
+        #         writer.writerow(TOKENS_HEADERS)
 
         cached_eq_id = self.cache_image(eq_image, eq_tokens)
         return (cached_eq_id, eq_tokens)
 
     def cache_image(self, eq_image, eq_tokens):
         eq_id = uuid.uuid4()
-        with open(f'{self.cache_dir}/{TOKENS_FILENAME}.csv', 'a', newline='', encoding='utf-8') as tokens_file:
-            writer = csv.writer(tokens_file)
-            writer.writerow([eq_id, eq_tokens])
+        # with open(f'{self.cache_dir}/{TOKENS_FILENAME}.csv', 'a', newline='', encoding='utf-8') as tokens_file:
+        #     writer = csv.writer(tokens_file)
+        #     writer.writerow([eq_id, eq_tokens])
 
+        if not os.path.isdir(self.cache_dir):
+            os.makedirs(self.cache_dir)
         eq_image.save(f'{self.cache_dir}/{eq_id}.bmp')
 
         return str(eq_id)

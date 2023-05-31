@@ -27,12 +27,12 @@ from .constants import EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT
 TRAIN_CACHE_DIR = './equation_analyzer/equation_parser/data/images_train'
 VAL_CACHE_DIR = './equation_analyzer/equation_parser/data/images_val'
 
-TRAIN_EQUATION_COUNT = 300000
-VAL_EQUATION_COUNT = 20000
+TRAIN_EQUATION_COUNT = 500000
+VAL_EQUATION_COUNT = 50000
 
 BATCH_SIZE = 64
 
-EPOCHS = 20
+EPOCHS = 6
 
 
 class EquationParser:
@@ -74,15 +74,14 @@ class EquationParser:
             caption_model.test_func, val_data_generator.next_batch(), False, val_num_batches, tokenizer)
 
         early_stop = EarlyStopping(
-            monitor='val_loss', patience=2, restore_best_weights=True)
+            monitor='val_loss', patience=3, restore_best_weights=True)
         model_chk_pt = ModelCheckpoint(
             './equation_analyzer/equation_parser/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
             monitor='val_loss',
             save_best_only=False,
             save_weights_only=True,
-            verbose=0,
-            mode='auto',
-            period=2)
+            verbose=1,
+            mode='auto')
 
         model.fit(train_data_generator.next_batch(),
                   steps_per_epoch=train_num_batches,

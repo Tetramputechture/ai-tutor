@@ -83,6 +83,7 @@ class CaptionModel:
     def load_model(self):
         if self.model_cached():
             print('Model cached. Loading model...')
+            self.create_model()
             self.model.load_weights(
                 './equation_analyzer/equation_parser/caption_model.h5')
             # self.model = models.load_model(MODEL_PATH, compile=False)

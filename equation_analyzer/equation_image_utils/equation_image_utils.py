@@ -37,14 +37,14 @@ def equation_image(numbers, background=True) -> (Image, str):
     font_size = rand_font_size()
     fraction_one_start_pos = rand_fraction_start_pos()
     fraction_one = draw_fraction(
-        draw, fraction_one_start_pos, font, font_size,
+        draw, fraction_one_start_pos,
         numbers[0], numbers[1])
     plus_size = draw_plus(
         draw, (fraction_one[0] + rand_operator_x_offset(),
                fraction_one[1] - rand_operator_y_offset()))
     fraction_two_pos = draw_fraction(
         draw, (fraction_one[0] + plus_size[0] + rand_operator_post_x_offset(),
-               fraction_one_start_pos[1]), font, font_size,
+               fraction_one_start_pos[1]),
         numbers[2], numbers[3])
 
     equals_size = draw_equals(
@@ -54,13 +54,16 @@ def equation_image(numbers, background=True) -> (Image, str):
     eq_x, _, = draw_fraction(
         draw,
         (fraction_two_pos[0] + equals_size[0] + rand_operator_post_x_offset(),
-         fraction_one_start_pos[1]), font, font_size,
+         fraction_one_start_pos[1]),
         numbers[4], numbers[5])
 
     # crop eq image to end of equation
-    eq_image = eq_image.resize((eq_x, eq_image.size[1]), Image.BICUBIC)
+    eq_image = eq_image.crop(
+        (0, 0, min(eq_x + 10, eq_image.size[0]), eq_image.size[1]))
 
-    eq_image = eq_image.rotate(0, expand=1, fillcolor=background_color)
+    # rotate
+    eq_image = eq_image.rotate(
+        rand_rotation_angle(), expand=1, fillcolor=background_color)
 
     if background:
         eq_image = draw_noise(eq_image)
@@ -75,16 +78,16 @@ def equation_image(numbers, background=True) -> (Image, str):
 
 
 def rand_fraction_width():
-    return random.randint(4, 5)
+    return random.randint(3, 5)
 
 
 def rand_text_spacing():
-    return random.randint(3, 6)
+    return 25
 
 
 def rand_fraction_y_offset():
     rand_range = int(EQUATION_WIDTH_PX * 0.015)
-    rand_begin = int(EQUATION_WIDTH_PX * 0.015)
+    rand_begin = int(EQUATION_WIDTH_PX * 0.005)
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
@@ -95,29 +98,29 @@ def rand_fraction_x_offset():
 
 
 def rand_fraction_tilt_offset():
-    rand_range = int(EQUATION_WIDTH_PX * 0.02)
-    rand_begin = int(EQUATION_WIDTH_PX * 0.01)
+    rand_range = int(EQUATION_WIDTH_PX * 0.015)
+    rand_begin = int(EQUATION_WIDTH_PX * 0.005)
     return random.randint(-rand_begin, rand_begin + rand_range)
 
 
 def rand_fraction_start_pos():
     rand_range_x = int(EQUATION_WIDTH_PX * 0.03)  # 5
     rand_begin_x = int(EQUATION_WIDTH_PX * 0.01)  # 2
-    rand_range_y = int(EQUATION_WIDTH_PX * 0.03)  # 5
-    rand_begin_y = int(EQUATION_WIDTH_PX * 0.005)  # 2
+    rand_range_y = int(EQUATION_WIDTH_PX * 0.01)  # 5
+    rand_begin_y = 0  # 2
     x_coord = random.randint(rand_begin_x, rand_begin_x + rand_range_x)
-    y_coord = random.randint(rand_begin_y, rand_begin_y + rand_range_x)
+    y_coord = random.randint(rand_begin_y, rand_begin_y + rand_range_y)
     return (x_coord, y_coord)
 
 
 def rand_denom_y_offset():
-    rand_range = int(EQUATION_WIDTH_PX * 0.02)  # 3
-    rand_begin = int(EQUATION_WIDTH_PX * 0.05)  # 6
+    rand_range = int(EQUATION_WIDTH_PX * 0.005)  # 3
+    rand_begin = int(EQUATION_WIDTH_PX * 0.035)  # 6
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
 def rand_denom_x_offset():
-    rand_range = int(EQUATION_WIDTH_PX * 0.035)  # 5
+    rand_range = int(EQUATION_WIDTH_PX * 0.025)  # 5
     rand_begin = 0
     return random.randint(rand_begin, rand_begin + rand_range)
 
@@ -127,41 +130,43 @@ def rand_font():
 
 
 def rand_font_size():
-    rand_begin = int(EQUATION_WIDTH_PX * 0.07)  # 15
-    return rand_begin
+    return int(EQUATION_WIDTH_PX * 0.085)
+    # return random.randint(
+    #     int(EQUATION_WIDTH_PX * 0.08), int(EQUATION_WIDTH_PX * 0.08))  # 15
 
 
 def rand_rotation_angle():
-    return random.randint(-10, 10)
+    # return 0
+    return random.randint(-5, 5)
 
 
 def rand_plus_size():
-    rand_range = int(EQUATION_WIDTH_PX * 0.02)  # 3
-    rand_begin = int(EQUATION_WIDTH_PX * 0.13)  # 16
+    rand_range = int(EQUATION_WIDTH_PX * 0.03)  # 3
+    rand_begin = int(EQUATION_WIDTH_PX * 0.11)  # 16
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
 def rand_equals_size():
-    rand_range = int(EQUATION_WIDTH_PX * 0.015)  # 2
-    rand_begin = int(EQUATION_WIDTH_PX * 0.125)  # 17
+    rand_range = int(EQUATION_WIDTH_PX * 0.02)  # 2
+    rand_begin = int(EQUATION_WIDTH_PX * 0.1)  # 17
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
 def rand_operator_x_offset():
     rand_range = int(EQUATION_WIDTH_PX * 0.01)  # 2
-    rand_begin = int(EQUATION_WIDTH_PX * 0.07)  # 12
+    rand_begin = int(EQUATION_WIDTH_PX * 0.03)  # 12
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
 def rand_operator_y_offset():
-    rand_range = int(EQUATION_WIDTH_PX * 0.015)  # 2
-    rand_begin = int(EQUATION_WIDTH_PX * 0.055)  # 10
+    rand_range = int(EQUATION_WIDTH_PX * 0.02)  # 2
+    rand_begin = int(EQUATION_WIDTH_PX * 0.05)  # 10
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
 def rand_operator_post_x_offset():
     rand_range = int(EQUATION_WIDTH_PX * 0.015)  # 2
-    rand_begin = int(EQUATION_WIDTH_PX * 0.13)  # 17
+    rand_begin = int(EQUATION_WIDTH_PX * 0.08)  # 17
     return random.randint(rand_begin, rand_begin + rand_range)
 
 
@@ -173,26 +178,46 @@ def rand_background_color():
     return (random.randint(0, 15), random.randint(0, 15), random.randint(0, 15))
 
 
-def draw_fraction(draw, pos, font, font_size, num, denom):
-    # TODO: rotate each number individually?
-    draw.text(pos, str(num), font=font,
-              fill=rand_text_color(), spacing=rand_text_spacing())
-    _, _, num_width, num_height = font.getbbox(str(num))
+def rand_number_spacing():
+    return random.randint(1, 4)
 
-    denom_pos = (pos[0] + rand_denom_x_offset(), pos[1] +
-                 num_height + rand_denom_y_offset())
-    draw.text(denom_pos, str(denom), font=font,
-              fill=rand_text_color(), spacing=rand_text_spacing())
 
-    _, _, denom_width, denom_height = font.getbbox(str(denom))
+def draw_fraction(draw, pos, num, denom):
+    # draw each number in numerator
+    number_pos_x = pos[0]
+    max_number_height = 0
+    num_width = 0
+    for number in str(num):
+        font = ImageFont.truetype(
+            rand_font(), size=rand_font_size())
 
-    line_height = pos[1] + num_height + rand_fraction_y_offset()
+        number_pos = (number_pos_x, pos[1])
+        draw.text(number_pos, number, font=font,
+                  fill=rand_text_color())
+        number_pos_x += font.getlength(number) + rand_number_spacing()
+        num_width += font.getlength(number)
+        max_number_height = max(max_number_height, font.getbbox(number)[3])
+
+    # draw each number in denominator
+    number_pos_x = pos[0]
+    denom_width = 0
+    for number in str(denom):
+        font = ImageFont.truetype(
+            rand_font(), size=rand_font_size())
+
+        number_pos = (number_pos_x, max_number_height + rand_denom_y_offset())
+        draw.text(number_pos, number, font=font,
+                  fill=rand_text_color())
+        number_pos_x += font.getlength(number) + rand_number_spacing()
+        denom_width += font.getlength(number)
+
+    line_height = pos[1] + max_number_height + rand_fraction_y_offset()
     line_width = max(num_width, denom_width)
     line_pos = [pos[0] - rand_fraction_x_offset(), line_height,
                 pos[0] + line_width + rand_fraction_x_offset(), line_height + rand_fraction_tilt_offset()]
     draw.line(line_pos, width=rand_fraction_width(), fill=rand_text_color())
 
-    return (pos[0] + (line_pos[2] - pos[0]), pos[1] + num_height)
+    return (pos[0] + (line_pos[2] - pos[0]), pos[1] + max_number_height)
 
 
 def draw_plus(draw, pos):
@@ -211,7 +236,7 @@ def draw_equals(draw, pos):
 
 def draw_noise(eq_image):
     im_arr = np.asarray(eq_image)
-    rand_variance = random.uniform(0.001, 0.003)
+    rand_variance = random.uniform(0.005, 0.025)
     noise_img = random_noise(im_arr, mode='gaussian', var=rand_variance)
     noise_img = (255*noise_img).astype(np.uint8)
     return Image.fromarray(noise_img)

@@ -7,7 +7,7 @@ from tensorflow.keras.layers import Conv2D, Dropout, BatchNormalization, MaxPool
 
 MODEL_PATH = './equation_analyzer/equation_parser/conv_base.h5'
 
-DROPOUT_RATE = 0.3
+DROPOUT_RATE = 0.25
 
 
 class BaseConvModel:
@@ -38,7 +38,7 @@ class BaseConvModel:
             MaxPooling2D(pool_size=(1, 2)),
 
             Conv2D(512, (2, 2), padding='same', activation='relu'),
-            Dropout(0.25),
+            Dropout(DROPOUT_RATE),
             BatchNormalization()
         ])
 

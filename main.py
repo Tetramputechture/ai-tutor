@@ -112,8 +112,7 @@ def generate_desc(model, tokenizer, photo):
 
 def run_eq_parser():
     if TRAIN:
-        data = EquationParser().train_model()
-        return data
+        EquationParser().train_model()
     elif TEST:
         tokenizer = EquationTokenizer().load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 2
@@ -123,7 +122,7 @@ def run_eq_parser():
         # caption_model.load_model()
         ep = EquationParser()
         model = CaptionModel(vocab_size, tokenizer, False)
-        model.create_model()
+        # model.create_model()
         model.load_model()
         for i in range(5):
             eq_id, tokens = EquationGenerator(

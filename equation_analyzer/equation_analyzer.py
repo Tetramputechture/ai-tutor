@@ -34,8 +34,6 @@ class EquationAnalyzer:
             ret, frame = cap.read()
 
             original_frame_res = frame.shape
-            pil_frame_img = Image.fromarray(
-                cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
             scale = (original_frame_res[1] / EQUATION_FINDER_SIZE[0],
                      original_frame_res[0] / EQUATION_FINDER_SIZE[1])
@@ -56,10 +54,6 @@ class EquationAnalyzer:
             if eq_box is not None:
                 # print('Found equation: ', eq_box)
 
-                cv2.rectangle(
-                    resized_frame, eq_box.topLeft, eq_box.bottomRight, color=(255, 0, 0), thickness=2)
-                cv2.imshow('Localized EQ', resized_frame)
-
                 # rescale the localized equation box and then get the image data from that
                 scaled_eq_box = eq_box.scale(scale)
 
@@ -68,6 +62,9 @@ class EquationAnalyzer:
 
                 eq_image = frame[scaled_eq_box.topLeft[1]:scaled_eq_box.bottomRight[1],
                                  scaled_eq_box.topLeft[0]:scaled_eq_box.bottomRight[0]]
+
+                color_eq_image = cv2.cvtColor(eq_image, cv2.COLOR_BGR2RGB)
+                pil_eq_image = Image.fromarray(color_eq_image)
 
                 cv2.rectangle(frame, scaled_eq_box.topLeft, scaled_eq_box.bottomRight, color=(
                     0, 0, 255), thickness=2)
@@ -88,6 +85,10 @@ class EquationAnalyzer:
 
                     cv2.putText(frame, tokens, (10, 40),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1, 2)
+
+                cv2.rectangle(
+                    resized_frame, eq_box.topLeft, eq_box.bottomRight, color=(255, 0, 0), thickness=2)
+                cv2.imshow('Localized EQ', resized_frame)
 
             cv2.imshow('Webcam', frame)
 

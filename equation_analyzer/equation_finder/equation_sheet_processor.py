@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 from .equation_box import EquationBox
 from .equation_finder import EquationFinder
 
-PREDICTED_EQ_IMAGE_PADDING = 5
+PREDICTED_EQ_IMAGE_PADDING = 7
 
 
 def is_valid(eq_box):
