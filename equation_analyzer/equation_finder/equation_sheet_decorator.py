@@ -57,7 +57,7 @@ class EquationSheetDecorator:
 
         rand_numbers = [rand_frac_number() for _ in range(6)]
         # equation_image, _ = EquationImageGenerator().generate_equation_image()
-        eq_image = equation_image(rand_numbers, False)
+        eq_image, rand_numbers = equation_image(rand_numbers, False)
         original_image_width, original_image_height = eq_image.size
 
         scale_factor = rand_scale_factor()

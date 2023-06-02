@@ -32,7 +32,7 @@ VAL_EQUATION_COUNT = 50000
 
 BATCH_SIZE = 64
 
-EPOCHS = 6
+EPOCHS = 5
 
 
 class EquationParser:

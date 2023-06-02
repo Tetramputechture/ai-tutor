@@ -63,6 +63,7 @@ class CtcDataGenerator(keras.callbacks.Callback):
 
                 eq_image = self.fetch_and_preprocess_eq_image(eq_id)
                 eq_image = eq_image.T
+                # eq_image = cv2.merge([eq_image, eq_image, eq_image])
                 eq_image = np.expand_dims(eq_image, -1)
                 X_data[i] = eq_image
 

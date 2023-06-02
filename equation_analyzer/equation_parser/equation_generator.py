@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-from ..equation_image_utils.equation_image_utils import equation_image
+from ..equation_image_utils.equation_image_utils import augment_img, equation_image, custom_equation_image
 
 TOKENS_FILENAME = 'tokens'
 TOKENS_HEADERS = ['eq_id', 'tokens']
@@ -35,8 +35,12 @@ class EquationGenerator:
 
     def generate_equation_image(self, cache=True) -> (Image, str):
         rand_numbers = [rand_frac_number() for _ in range(6)]
-        eq_image = equation_image(rand_numbers)
-        eq_tokens = to_clean_tokens(rand_numbers)
+        if random.randint(1, 2) == 1:
+            eq_image, eq_tokens = custom_equation_image()
+            eq_image = augment_img(eq_image)
+        else:
+            eq_image = equation_image(rand_numbers)
+            eq_tokens = to_clean_tokens(rand_numbers)
 
         # if not self.images_cached():
         #     os.makedirs(self.cache_dir)

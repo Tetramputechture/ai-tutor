@@ -3,23 +3,25 @@ from .equation_parser.equation_parser import EquationParser
 from .equation_parser.caption_model import CaptionModel
 from .equation_parser.equation_tokenizer import EquationTokenizer
 import numpy as np
-
+from datetime import datetime
 import cv2
 from PIL import Image
 
 
 EQUATION_FINDER_SIZE = (224, 224)
 
+PREDICTION_SECONDS = 3
+
 
 class EquationAnalyzer:
     def __init__(self):
         self.eq_localizer = EquationSheetProcessor()
         self.eq_parser = EquationParser()
-        tokenizer = EquationTokenizer().load_tokenizer()
-        vocab_size = len(tokenizer.word_index) + 2
+        self.tokenizer = EquationTokenizer().load_tokenizer()
+        vocab_size = len(self.tokenizer.word_index) + 2
 
-        self.caption_model = CaptionModel(vocab_size, tokenizer, False)
-        self.caption_model.create_model()
+        self.caption_model = CaptionModel(vocab_size, self.tokenizer, False)
+        # self.caption_model.create_model()
         self.caption_model.load_model()
 
     def start_stream(self):
@@ -28,7 +30,17 @@ class EquationAnalyzer:
         if not cap.isOpened():
             raise IOError('Cannot open webcam')
 
-        tokenizer = EquationTokenizer().load_tokenizer()
+        # import time
+        # time to seconds (int)
+        # every  5 seconds,
+        # add each prediction per frame to array
+        # display most common prediction
+        # or
+    # if same prediction repeated 3 times
+
+        last_prediction_time = datetime.now()
+        most_common_prediction = ''
+        predictions = {}
 
         while True:
             ret, frame = cap.read()
@@ -63,11 +75,8 @@ class EquationAnalyzer:
                 eq_image = frame[scaled_eq_box.topLeft[1]:scaled_eq_box.bottomRight[1],
                                  scaled_eq_box.topLeft[0]:scaled_eq_box.bottomRight[0]]
 
-                color_eq_image = cv2.cvtColor(eq_image, cv2.COLOR_BGR2RGB)
-                pil_eq_image = Image.fromarray(color_eq_image)
-
-                cv2.rectangle(frame, scaled_eq_box.topLeft, scaled_eq_box.bottomRight, color=(
-                    0, 0, 255), thickness=2)
+                # color_eq_image = cv2.cvtColor(eq_image, cv2.COLOR_BGR2RGB)
+                # pil_eq_image = Image.fromarray(color_eq_image)
 
                 # eq_image = pil_frame_img.crop(
                 #     (scaled_eq_box.topLeft[0],
@@ -76,19 +85,42 @@ class EquationAnalyzer:
                 #      scaled_eq_box.bottomRight[1])
                 # )
 
+                cv2.imshow('eq image', eq_image)
+
                 # tokenize the equation image
-                tokens = self.eq_parser.test_model_raw_img(tokenizer,
+                tokens = self.eq_parser.test_model_raw_img(self.tokenizer,
                                                            self.caption_model.model, eq_image)
 
                 if len(tokens) > 0:
                     # print('Predicted tokens: ', tokens)
+                    if not tokens in predictions:
+                        predictions[tokens] = 1
+                    else:
+                        predictions[tokens] += 1
 
-                    cv2.putText(frame, tokens, (10, 40),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1, 2)
+                    # if it has been more than N seconds since last prediction time,
+                    # calculate most common prediction, display, and reset predictions
+                    # and set last prediction time to now
+                    now = datetime.now()
 
-                cv2.rectangle(
-                    resized_frame, eq_box.topLeft, eq_box.bottomRight, color=(255, 0, 0), thickness=2)
-                cv2.imshow('Localized EQ', resized_frame)
+                    if (now - last_prediction_time).total_seconds() >= PREDICTION_SECONDS:
+                        most_common_prediction = max(
+                            predictions, key=predictions.get)
+                        last_prediction_time = datetime.now()
+                        predictions = {}
+
+                if len(most_common_prediction) > 0:
+                    cv2.putText(frame, most_common_prediction, (10, 60),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, 3)
+
+                # cv2.putText(frame, tokens, (10, 40),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1, 2)
+
+                # cv2.rectangle(
+                #     resized_frame, eq_box.topLeft, eq_box.bottomRight, color=(255, 0, 0), thickness=2)
+                cv2.rectangle(frame, scaled_eq_box.topLeft, scaled_eq_box.bottomRight, color=(
+                    0, 0, 255), thickness=2)
+                # cv2.imshow('Localized EQ', resized_frame)
 
             cv2.imshow('Webcam', frame)
 

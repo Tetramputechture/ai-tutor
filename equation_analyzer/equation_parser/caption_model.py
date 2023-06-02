@@ -10,6 +10,7 @@ from keras import backend as K
 from .constants import RNN_TIMESTEPS, MAX_EQUATION_TEXT_LENGTH, EQ_IMAGE_HEIGHT, EQ_IMAGE_WIDTH
 from .base_resnet_model import BaseResnetModel
 from .base_conv_model import BaseConvModel
+from .base_vgg_model import BaseVggModel
 
 MODEL_PATH = './equation_analyzer/equation_parser/caption_model.h5'
 MODEL_IMG_PATH = './equation_analyzer/equation_parser/equation_parser.png'
@@ -31,6 +32,7 @@ class CaptionModel:
         self.vocab_size = vocab_size
         self.base_resnet_model = BaseResnetModel()
         self.base_conv_model = BaseConvModel()
+        self.base_vgg_model = BaseVggModel()
         self.tokenizer = tokenizer
         self.train = train
 
@@ -68,7 +70,8 @@ class CaptionModel:
             self.model = models.Model(
                 inputs=[model_input, labels, input_length, label_length], outputs=loss_out)
 
-            self.model.compile(optimizer='adam',
+            opt = optimizers.Nadam(learning_rate=1e-3)
+            self.model.compile(optimizer=opt,
                                loss={'ctc': lambda y_true, y_pred: y_pred})
 
             plot_model(self.model, to_file=MODEL_IMG_PATH, show_shapes=True)

@@ -1,3 +1,4 @@
+from tensorflow.keras import mixed_precision
 from multiprocessing import freeze_support
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
@@ -22,6 +23,14 @@ from equation_analyzer.equation_parser.equation_preprocessor import EquationPrep
 
 from equation_analyzer.equation_analyzer import EquationAnalyzer
 from equation_analyzer.equation_parser.constants import MAX_EQUATION_TEXT_LENGTH
+import tensorflow as tf
+
+# Enable XLA
+# tf.config.optimizer.set_jit(True)
+
+# Enable mixed precision
+# policy = mixed_precision.Policy('mixed_float16')
+# mixed_precision.set_global_policy('mixed_float16')
 
 TRAIN = False
 TEST = False
@@ -36,6 +45,7 @@ else:
 
 TEST_IMAGES_DIR = './data/images'
 CUSTOM_IMAGES_DIR = './data/images_custom'
+CUSTOM_EQ_DIR = './data/equations_custom'
 
 
 def run_eq_finder():
@@ -135,14 +145,25 @@ def run_eq_parser():
             plt.figure()
             plt.imshow(eq_image)
             plt.text(0, -5, predicted_desc, fontsize=15)
+        # for filename in os.listdir(CUSTOM_EQ_DIR):
+        #     img_file = os.path.join(CUSTOM_EQ_DIR, filename)
+        #     predicted_desc = ep.test_model(
+        #         model.model, img_file, '452/158+256/124=789/371')
+        #     eq_image = Image.open(img_file)
+        #     plt.figure()
+        #     plt.imshow(eq_image)
+        #     plt.text(0, -5, predicted_desc, fontsize=15)
         plt.show()
     elif VIZ:
         for i in range(10):
             plt.figure(i)
             eq_id, tokens = EquationGenerator(
                 './equation_analyzer/equation_parser/data/images_viz').generate_equation_image()
-            plt.imshow(Image.open(
-                f'./equation_analyzer/equation_parser/data/images_viz/{eq_id}.bmp'))
+            img = Image.open(
+                f'./equation_analyzer/equation_parser/data/images_viz/{eq_id}.bmp')
+            # img = img.resize((150, 38))
+            plt.text(0, -5, tokens, fontsize=15)
+            plt.imshow(img)
         plt.show()
 
 

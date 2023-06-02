@@ -12,13 +12,17 @@ DROPOUT_RATE = 0.25
 
 class BaseConvModel:
     def create_model(self):
-        # input is 100x100
         self.model = models.Sequential([
             Conv2D(64, (3, 3), padding="same",
                    activation="relu", input_shape=(EQ_IMAGE_WIDTH, EQ_IMAGE_HEIGHT, 1)),
             BatchNormalization(),
+            Conv2D(64, (3, 3), padding="same",
+                   activation="relu"),
+            BatchNormalization(),
             MaxPooling2D(pool_size=(2, 2)),
 
+            Conv2D(128, (3, 3), padding="same", activation="relu"),
+            BatchNormalization(),
             Conv2D(128, (3, 3), padding="same", activation="relu"),
             BatchNormalization(),
             MaxPooling2D(pool_size=(2, 2)),
@@ -38,7 +42,7 @@ class BaseConvModel:
             MaxPooling2D(pool_size=(1, 2)),
 
             Conv2D(512, (2, 2), padding='same', activation='relu'),
-            Dropout(DROPOUT_RATE),
+            Dropout(0.25),
             BatchNormalization()
         ])
 

@@ -24,7 +24,7 @@ class EquationPreprocessor:
         equations = []
         if self.equation_generator.images_cached():
             print('Equation texts cached. Loading texts from cache...')
-            equations = self.equation_generator.equations_from_cache()[
+            self.equations = self.equation_generator.equations_from_cache()[
                 :self.equation_count]
         else:
             print('Equation texts not cached. Generating images and texts...')
