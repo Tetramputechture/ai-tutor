@@ -48,31 +48,51 @@ def augment_img(img):
             A.OneOf([
                 # A.RandomRain(brightness_coefficient=1, drop_length=90, drop_width=1, drop_color=(
                 #     0, 0, 0), blur_value=1, rain_type='drizzle', p=0.05),
-                A.RandomShadow(shadow_dimension=4, p=1),
-                A.PixelDropout(dropout_prob=0.005, p=1),
-            ], p=0.9),
+                A.RandomShadow(shadow_dimension=4, num_shadows_upper=3, p=1),
+                # A.RandomSnow(brightness_coeff=1.5, always_apply=True,  p=1),
+                A.Spatter(intensity=0.35, p=1),
+                # A.RandomRain(
+                #     slant_lower=-20,
+                #     slant_upper=-16,
+                #     brightness_coefficient=1,
+                #     drop_length=1,
+                #     drop_width=1,
+                #     drop_color=(40, 40, 40),
+                #     blur_value=1,
+                #     rain_type='drizzle',
+                #     p=0.5
+                # ),
+            ], p=1),
 
             # add white pixels noise
             A.OneOf([
-                A.PixelDropout(drop_value=255, p=1),
-                A.RandomSnow(p=1),
-                A.RandomRain(brightness_coefficient=1, drop_length=1, drop_width=1, drop_color=(
-                    175, 175, 175), blur_value=1, rain_type='drizzle', p=1),
-            ], p=0.9),
+                # A.PixelDropout(drop_value=255, p=1),
+                A.RandomShadow(shadow_dimension=3, num_shadows_upper=4, p=1),
+                A.RandomSnow(brightness_coeff=2, always_apply=True, p=1),
+                A.Spatter(intensity=0.35, p=1),
+                # A.RandomRain(
+                #     slant_lower=-20,
+                #     slant_upper=-16,
+                #     brightness_coefficient=1,
+                #     drop_length=1,
+                #     drop_width=1,
+                #     drop_color=(40, 40, 40),
+                #     blur_value=1,
+                #     rain_type='drizzle',
+                #     p=0.5
+                # ),
+            ], p=1),
         ], p=1),
 
         # transformations
-        A.OneOf([
-                A.ShiftScaleRotate(shift_limit=0.01, scale_limit=0.01, rotate_limit=2,
-                                   value=(255, 255, 255), p=1),
-                A.ShiftScaleRotate(
-                    shift_limit=0.01, scale_limit=0.01, rotate_limit=2, value=(255, 255, 255), p=1),
-                A.ShiftScaleRotate(
-                    shift_limit=0.01, scale_limit=0.01, rotate_limit=2, value=(255, 255, 255), p=1),
-                A.Affine(shear=random.randint(-2, 2),
-                         cval=(255, 255, 255), p=1)
-                ], p=0.5),
-        A.Blur(blur_limit=3, p=0.25),
+        A.ShiftScaleRotate(
+            shift_limit=0.005,
+            scale_limit=[-0.05, 0.01],
+            rotate_limit=4,
+            value=(255, 255, 255),
+            border_mode=cv2.BORDER_CONSTANT,
+            p=1),
+        A.Blur(blur_limit=3, p=0.6),
     ])
 
     cv_img = transform(image=cv_img)['image']
@@ -116,8 +136,8 @@ def custom_equation_image():
     eq_id = filename.split('.')[0]
     tokens = [eq for eq in CUSTOM_EQUATIONS if eq['eq_id'] == eq_id]
     image = Image.open(f'{EQ_FOLDER}/{filename}').resize(EQUATION_IMAGE_SIZE)
-    if random.choice([True, False]):
-        image = ImageOps.invert(image)
+    # if random.choice([True, False]):
+    #     image = ImageOps.invert(image)
     return (image, tokens[0]['tokens'])
 
 
@@ -154,8 +174,8 @@ def equation_image(numbers, background=True) -> (Image, str):
         numbers[4], numbers[5])
 
     # # crop eq image to end of equation
-    # eq_image = eq_image.crop(
-    #     (0, 0, max(eq_x + 10, eq_image.size[0]), eq_image.size[1]))
+    eq_image = eq_image.crop(
+        (0, 0, min(eq_x + 10, eq_image.size[0]), eq_image.size[1]))
 
     # dilate or erode
     eq_image = augment_img(eq_image)
@@ -206,7 +226,7 @@ def rand_fraction_tilt_offset():
 
 def rand_fraction_start_pos():
     rand_range_x = int(EQUATION_WIDTH_PX * 0.03)  # 5
-    rand_begin_x = int(EQUATION_WIDTH_PX * 0.01)  # 2
+    rand_begin_x = int(EQUATION_WIDTH_PX * 0.015)  # 2
     rand_range_y = int(EQUATION_WIDTH_PX * 0.02)  # 5
     rand_begin_y = int(EQUATION_WIDTH_PX * 0.01)   # 2
     x_coord = random.randint(rand_begin_x, rand_begin_x + rand_range_x)

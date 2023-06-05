@@ -14,8 +14,7 @@ def decode_batch(test_func, tokenizer, word_batch):
         out_best = list(np.argmax(out[j, 2:], 1))
         out_best = [k for k, g in itertools.groupby(out_best)]
         outstr = tokenizer.sequences_to_texts([out_best])[0]
-        outstr = outstr.replace(' ', '')
-        outstr = outstr.replace('e', '')
+        outstr = outstr.replace(' ', '').replace('e', '')
         ret.append(outstr)
     return ret
 

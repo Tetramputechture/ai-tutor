@@ -2,6 +2,8 @@ from matplotlib import pyplot as plt
 import random
 import math
 import tensorflow as tf
+from tensorflow.keras import datasets, models
+
 import numpy as np
 from sklearn.model_selection import train_test_split
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -32,18 +34,26 @@ VAL_EQUATION_COUNT = 50000
 
 BATCH_SIZE = 64
 
-EPOCHS = 5
+EPOCHS = 6
 
 
 class EquationParser:
-    def train_model(self):
+    def train_model(
+        self,
+        epochs=EPOCHS,
+        train_equation_count=TRAIN_EQUATION_COUNT,
+        train_cache_dir=TRAIN_CACHE_DIR,
+        val_equation_count=VAL_EQUATION_COUNT,
+        val_cache_dir=VAL_CACHE_DIR,
+        model_path=None
+    ):
         train_equation_preprocessor = EquationPreprocessor(
-            TRAIN_EQUATION_COUNT, TRAIN_CACHE_DIR)
+            train_equation_count, train_cache_dir)
         train_equation_preprocessor.load_equations()
         train_equation_texts = train_equation_preprocessor.equation_texts
 
         val_equation_preprocessor = EquationPreprocessor(
-            VAL_EQUATION_COUNT, VAL_CACHE_DIR)
+            val_equation_count, val_cache_dir)
         val_equation_preprocessor.load_equations()
         val_equation_texts = val_equation_preprocessor.equation_texts
         # equation_features = equation_preprocessor.equation_features
@@ -56,17 +66,21 @@ class EquationParser:
 
         caption_model = CaptionModel(vocab_size, tokenizer)
 
-        (model_input, model_output, model) = caption_model.create_model()
+        if model_path is None:
+            (model_input, model_output, model) = caption_model.create_model()
+        else:
+            (model_input, model_output, model) = caption_model.create_model()
+            model.load_weights(model_path)
 
         # print(model.summary())
 
         train_data_generator = CtcDataGenerator(
-            TRAIN_CACHE_DIR, train_equation_texts, tokenizer, BATCH_SIZE)
+            train_cache_dir, train_equation_texts, tokenizer, BATCH_SIZE)
         val_data_generator = CtcDataGenerator(
-            VAL_CACHE_DIR, val_equation_texts, tokenizer, BATCH_SIZE)
+            val_cache_dir, val_equation_texts, tokenizer, BATCH_SIZE)
 
-        train_num_batches = int(TRAIN_EQUATION_COUNT / BATCH_SIZE)
-        val_num_batches = int(VAL_EQUATION_COUNT / BATCH_SIZE)
+        train_num_batches = int(train_equation_count / BATCH_SIZE)
+        val_num_batches = int(val_equation_count / BATCH_SIZE)
 
         viz_cb_train = CtcVizCallback(
             caption_model.test_func, train_data_generator.next_batch(), True, train_num_batches, tokenizer)
@@ -79,19 +93,19 @@ class EquationParser:
             './equation_analyzer/equation_parser/weights.{epoch:02d}-{val_loss:.2f}.hdf5',
             monitor='val_loss',
             save_best_only=False,
-            save_weights_only=True,
+            save_weights_only=False,
             verbose=1,
             mode='auto')
 
         model.fit(train_data_generator.next_batch(),
                   steps_per_epoch=train_num_batches,
-                  epochs=EPOCHS,
+                  epochs=epochs,
                   callbacks=[viz_cb_train, viz_cb_val, train_data_generator,
                              val_data_generator, early_stop, model_chk_pt],
                   validation_data=val_data_generator.next_batch(),
                   validation_steps=val_num_batches)
 
-        model.save('./equation_analyzer/equation_parser/caption_model.h5')
+        model.save('./equation_analyzer/equation_parser/caption_model-1.h5')
 
     def decode_label(self, tokenizer, model_output):
         out_best = list(np.argmax(model_output[0, 2:], axis=1))

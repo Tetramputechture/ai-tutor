@@ -26,7 +26,15 @@ def to_clean_tokens(rand_numbers):
 
 
 def rand_frac_number():
-    return random.randint(1, 999)
+    # 33% chance to return number between 1-10
+    if random.randint(1, 3) == 1:
+        return random.randint(1, 9)
+
+    # otherwise, 50% chance of either 2 digit or 3 digit number
+    if random.choice([True, False]):
+        return random.randint(10, 99)
+
+    return random.randint(100, 999)
 
 
 class EquationGenerator:
@@ -34,11 +42,11 @@ class EquationGenerator:
         self.cache_dir = cache_dir
 
     def generate_equation_image(self, cache=True) -> (Image, str):
-        rand_numbers = [rand_frac_number() for _ in range(6)]
-        if random.randint(1, 2) == 1:
+        if random.randint(1, 1000) == 1:
             eq_image, eq_tokens = custom_equation_image()
             eq_image = augment_img(eq_image)
         else:
+            rand_numbers = [rand_frac_number() for _ in range(6)]
             eq_image = equation_image(rand_numbers)
             eq_tokens = to_clean_tokens(rand_numbers)
 

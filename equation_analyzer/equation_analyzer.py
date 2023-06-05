@@ -2,6 +2,7 @@ from .equation_finder.equation_sheet_processor import EquationSheetProcessor
 from .equation_parser.equation_parser import EquationParser
 from .equation_parser.caption_model import CaptionModel
 from .equation_parser.equation_tokenizer import EquationTokenizer
+from .equation_evaluator.equation_evaluator import EquationEvaluator
 import numpy as np
 from datetime import datetime
 import cv2
@@ -41,6 +42,7 @@ class EquationAnalyzer:
         last_prediction_time = datetime.now()
         most_common_prediction = ''
         predictions = {}
+        first_prediction = True
 
         while True:
             ret, frame = cap.read()
@@ -75,17 +77,7 @@ class EquationAnalyzer:
                 eq_image = frame[scaled_eq_box.topLeft[1]:scaled_eq_box.bottomRight[1],
                                  scaled_eq_box.topLeft[0]:scaled_eq_box.bottomRight[0]]
 
-                # color_eq_image = cv2.cvtColor(eq_image, cv2.COLOR_BGR2RGB)
-                # pil_eq_image = Image.fromarray(color_eq_image)
-
-                # eq_image = pil_frame_img.crop(
-                #     (scaled_eq_box.topLeft[0],
-                #      scaled_eq_box.topLeft[1],
-                #      scaled_eq_box.bottomRight[0],
-                #      scaled_eq_box.bottomRight[1])
-                # )
-
-                cv2.imshow('eq image', eq_image)
+                # cv2.imshow('eq image', eq_image)
 
                 # tokenize the equation image
                 tokens = self.eq_parser.test_model_raw_img(self.tokenizer,
@@ -110,8 +102,17 @@ class EquationAnalyzer:
                         predictions = {}
 
                 if len(most_common_prediction) > 0:
-                    cv2.putText(frame, most_common_prediction, (10, 60),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, 3)
+                    text_pos = scaled_eq_box.shift((0, -10))
+                    analyzer = EquationEvaluator(most_common_prediction)
+                    if analyzer.is_correct():
+                        text_color = (0, 255, 0)
+                    else:
+                        text_color = (0, 0, 255)
+                    if not first_prediction:
+                        cv2.putText(frame, most_common_prediction, text_pos.topLeft,
+                                    cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2, 3)
+                    else:
+                        first_prediction = False
 
                 # cv2.putText(frame, tokens, (10, 40),
                 #             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1, 2)
@@ -119,7 +120,7 @@ class EquationAnalyzer:
                 # cv2.rectangle(
                 #     resized_frame, eq_box.topLeft, eq_box.bottomRight, color=(255, 0, 0), thickness=2)
                 cv2.rectangle(frame, scaled_eq_box.topLeft, scaled_eq_box.bottomRight, color=(
-                    0, 0, 255), thickness=2)
+                    255, 0, 0), thickness=2)
                 # cv2.imshow('Localized EQ', resized_frame)
 
             cv2.imshow('Webcam', frame)

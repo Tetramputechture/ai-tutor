@@ -123,6 +123,14 @@ def generate_desc(model, tokenizer, photo):
 def run_eq_parser():
     if TRAIN:
         EquationParser().train_model()
+        # EquationParser().train_model(
+        #     model_path='./equation_analyzer/equation_parser/caption_model.h5',
+        #     epochs=2,
+        #     train_equation_count=100000,
+        #     train_cache_dir='./equation_analyzer/equation_parser/data/images_train_batch_3',
+        #     val_equation_count=10000,
+        #     val_cache_dir='./equation_analyzer/equation_parser/data/images_val_batch_3',
+        # )
     elif TEST:
         tokenizer = EquationTokenizer().load_tokenizer()
         vocab_size = len(tokenizer.word_index) + 2
@@ -202,6 +210,7 @@ def main():
     # EquationSheetProcessor()
     # run_eq_finder()
     EquationAnalyzer().start_stream()
+    # run_eq_parser()
     # viz_custom_images()
 
 
